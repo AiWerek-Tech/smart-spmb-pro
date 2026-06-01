@@ -26,7 +26,7 @@ class SettingsSeeder extends Seeder
                 'updated_at' => date('Y-m-d H:i:s'),
             ],
             [
-                'key'        => 'school_tagline',
+                'key'        => 'tagline',
                 'value'      => 'Unggul dalam Prestasi, Berkarakter Mulia',
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
@@ -46,7 +46,7 @@ class SettingsSeeder extends Seeder
             ],
             // Akreditasi
             [
-                'key'        => 'accreditation_grade',
+                'key'        => 'accreditation',
                 'value'      => 'A',
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
@@ -91,7 +91,7 @@ class SettingsSeeder extends Seeder
             ],
             [
                 'key'        => 'whatsapp',
-                'value'      => '6281234567890',
+                'value'      => config('AppInfo')->developerWhatsapp,
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ],
@@ -130,6 +130,24 @@ class SettingsSeeder extends Seeder
             [
                 'key'        => 'app_version',
                 'value'      => config('AppInfo')->version,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ],
+            [
+                'key'        => 'npsn',
+                'value'      => '',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ],
+            [
+                'key'        => 'school_description',
+                'value'      => 'Membentuk generasi cerdas, berkarakter, dan siap menghadapi tantangan global dengan sistem pendidikan inovatif.',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ],
+            [
+                'key'        => 'theme_color',
+                'value'      => 'purple',
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ],

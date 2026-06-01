@@ -87,6 +87,7 @@ class SettingModel extends Model
         $keys = [
             'school_name',
             'school_logo',
+            'school_description',
             'academic_year',
             'phone',
             'email',
@@ -95,6 +96,7 @@ class SettingModel extends Model
             'maps_embed',
             'accreditation',
             'accreditation_year',
+            'npsn',
             'vision',
             'mission',
             'history',

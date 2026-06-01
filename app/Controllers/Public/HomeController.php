@@ -56,8 +56,12 @@ class HomeController extends BaseController
         // 2. Ambil Banners (Hero Section)
         $banners = $this->bannerModel->where('is_active', 1)->orderBy('sort_order', 'ASC')->findAll();
         
-        // 3. Ambil Jalur Penerimaan
-        $jalurs = $this->jalurModel->where('is_active', 1)->orderBy('sort_order', 'ASC')->findAll();
+        // 3. Ambil Jalur Penerimaan dengan jumlah pendaftar sekaligus (hindari N+1 query)
+        $jalurs = $this->jalurModel->getJalurWithRegistrantCount();
+        // Filter hanya yang aktif dan urutkan
+        $jalurs = array_filter($jalurs, fn($j) => $j['is_active'] == 1);
+        usort($jalurs, fn($a, $b) => ($a['sort_order'] ?? 0) <=> ($b['sort_order'] ?? 0));
+        $jalurs = array_values($jalurs);
         
         // 4. Ambil Statistik (Manual + Auto)
         $manualStats = $this->statisticModel->where('is_active', 1)->orderBy('sort_order', 'ASC')->findAll();
@@ -74,13 +78,15 @@ class HomeController extends BaseController
             ['label' => 'Akreditasi', 'value' => $schoolSettings['accreditation'] ?? 'A', 'icon' => 'award'],
         ];
 
-        // 5. Per-jalur stats calculation
+        // 5. Per-jalur stats calculation (data sudah ada dari JOIN, tidak perlu query tambahan)
         foreach ($jalurs as &$jalur) {
-            $count = $this->registrationModel->where('jalur_id', $jalur['id'])->whereNotIn('status', ['draft'])->countAllResults();
+            $count = (int) ($jalur['registrant_count'] ?? 0);
+            $quota = (int) ($jalur['quota'] ?? 0);
             $jalur['total_registrations'] = $count;
-            $jalur['remaining_quota']     = max(0, $jalur['quota'] - $count);
-            $jalur['percentage_filled']   = $jalur['quota'] > 0 ? round(($count / $jalur['quota']) * 100) : 0;
+            $jalur['remaining_quota']     = max(0, $quota - $count);
+            $jalur['percentage_filled']   = $quota > 0 ? min(100, round(($count / $quota) * 100)) : 0;
         }
+        unset($jalur); // break reference
 
         // 6. Ambil Pengumuman/Berita
         $announcements = $this->announcementModel->where('status', 'published')->orderBy('published_at', 'DESC')->limit(3)->findAll();
@@ -91,8 +97,8 @@ class HomeController extends BaseController
         // 8. Ambil Gallery
         $gallery = $this->galleryModel->where('is_active', 1)->orderBy('sort_order', 'ASC')->limit(6)->findAll();
 
-        // 9. Ambil Testimonials
-        $testimonials = $this->testimonialModel->where('is_active', 1)->findAll();
+        // 9. Ambil Testimonials (limit 6 untuk performa)
+        $testimonials = $this->testimonialModel->where('is_active', 1)->orderBy('id', 'DESC')->limit(6)->findAll();
 
         // 10. CTA Logic
         $loggedIn = session()->has('user_id');

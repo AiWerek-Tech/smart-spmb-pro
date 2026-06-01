@@ -37,8 +37,14 @@
                                     <h1 class="sp-hero-title"><?= esc($banner['title']) ?></h1>
                                     <p class="sp-hero-subtitle"><?= esc($banner['subtitle']) ?></p>
                                     <div class="sp-hero-actions">
-                                        <a href="<?= $banner['cta_url'] ? (strpos($banner['cta_url'], 'http') === 0 ? $banner['cta_url'] : base_url($banner['cta_url'])) : esc($ctaUrl) ?>" class="btn btn-light btn-lg rounded-pill px-5 fw-800 text-primary btn-pulse">
-                                            <?= $banner['cta_text'] ?: esc($ctaText) ?>
+                                        <?php
+                                        $heroCta = $banner['cta_url']
+                                            ? (strpos($banner['cta_url'], 'http') === 0 ? esc($banner['cta_url'], 'url') : base_url(esc($banner['cta_url'])))
+                                            : esc($ctaUrl);
+                                        $heroCtaText = !empty($banner['cta_text']) ? esc($banner['cta_text']) : esc($ctaText);
+                                        ?>
+                                        <a href="<?= $heroCta ?>" class="btn btn-light btn-lg rounded-pill px-5 fw-800 text-primary btn-pulse">
+                                            <?= $heroCtaText ?>
                                         </a>
                                         <a href="#timeline" class="btn btn-outline-light btn-lg rounded-pill px-4 fw-700">
                                             Lihat Jadwal
@@ -108,8 +114,8 @@
                                 </div>
                                 <div class="sp-mockup-bg-image" style="background-image: url('<?= base_url('assets/img/gallery-placeholder.svg') ?>');"></div>
                                 <div class="sp-mockup-body">
-                                    <div class="sp-mockup-item" style="width: 100%; background: #f1f5f9;"></div>
-                                    <div class="sp-mockup-item" style="width: 85%; background: #f1f5f9;"></div>
+                                    <div class="sp-mockup-item" style="width: 100%;"></div>
+                                    <div class="sp-mockup-item" style="width: 85%;"></div>
                                     <div class="sp-mockup-stats mt-4">
                                         <div class="sp-mockup-stat-card"><div style="width: 70%; height: 8px; background: var(--sp-primary); border-radius: 4px;"></div></div>
                                         <div class="sp-mockup-stat-card"><div style="width: 70%; height: 8px; background: var(--sp-primary); border-radius: 4px;"></div></div>
@@ -134,8 +140,8 @@
             foreach ($highlightStats as $stat): 
             ?>
             <div class="sp-trust-item">
-                <i data-lucide="<?= $stat['icon'] ?: 'award' ?>" class="sp-trust-icon"></i>
-                <div class="sp-trust-text"><?= esc($stat['value']) ?> <?= esc($stat['label']) ?><br><span class="fw-normal opacity-75 small"><?= strpos($stat['label'], 'Akreditasi') !== false ? 'Sangat Memuaskan' : 'Kualitas Terjamin' ?></span></div>
+                <i data-lucide="<?= esc($stat['icon'] ?: 'award') ?>" class="sp-trust-icon"></i>
+                <div class="sp-trust-text"><?= esc($stat['value']) ?> <?= esc($stat['label']) ?><br><span class="fw-normal opacity-75 small"><?= esc($stat['description'] ?? 'Kualitas Terjamin') ?></span></div>
             </div>
             <?php endforeach; ?>
         </div>
@@ -248,7 +254,22 @@
                 <div class="col-md-6 col-lg-4">
                     <div class="jalur-card animate-up">
                         <div class="jalur-icon-box" style="background: var(--sp-primary-light); color: var(--sp-primary);">
-                            <i data-lucide="<?= ($jalur['name'] == 'Zonasi') ? 'map-pin' : (($jalur['name'] == 'Prestasi') ? 'award' : 'graduation-cap') ?>"></i>
+                            <?php
+                            // Pilih icon berdasarkan nama jalur secara case-insensitive
+                            $jalurName = strtolower($jalur['name'] ?? '');
+                            if (str_contains($jalurName, 'zonasi') || str_contains($jalurName, 'zona')) {
+                                $jalurIcon = 'map-pin';
+                            } elseif (str_contains($jalurName, 'prestasi') || str_contains($jalurName, 'akademik')) {
+                                $jalurIcon = 'award';
+                            } elseif (str_contains($jalurName, 'afirmasi') || str_contains($jalurName, 'inklusif')) {
+                                $jalurIcon = 'heart-handshake';
+                            } elseif (str_contains($jalurName, 'mutasi') || str_contains($jalurName, 'pindah')) {
+                                $jalurIcon = 'move-right';
+                            } else {
+                                $jalurIcon = 'graduation-cap';
+                            }
+                            ?>
+                            <i data-lucide="<?= esc($jalurIcon) ?>"></i>
                         </div>
                         
                         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -267,8 +288,10 @@
                                 <span>Kapasitas Terisi</span>
                                 <span class="text-primary"><?= $jalur['percentage_filled'] ?? 0 ?>%</span>
                             </div>
-                            <div class="progress mb-4" style="height:10px; border-radius:20px; background-color: #F1F5F9; overflow: visible;">
+                            <div class="progress mb-4" style="height:10px; border-radius:20px; overflow: visible;">
                                 <div class="progress-bar" role="progressbar" 
+                                     aria-valuenow="<?= $jalur['percentage_filled'] ?? 0 ?>"
+                                     aria-valuemin="0" aria-valuemax="100"
                                      style="width:<?= $jalur['percentage_filled'] ?? 0 ?>%; background: var(--sp-gradient-brand-horizontal); border-radius:20px; position: relative;">
                                     <div class="progress-pulse"></div>
                                 </div>
@@ -299,7 +322,7 @@
         <div class="sp-stats-row">
             <?php foreach ($stats as $index => $stat): ?>
             <div class="stat-item animate-up" style="animation-delay: <?= $index * 0.1 ?>s;">
-                <div class="stat-icon"><i data-lucide="<?= $stat['icon'] ?: 'activity' ?>"></i></div>
+                <div class="stat-icon"><i data-lucide="<?= esc($stat['icon'] ?: 'activity') ?>"></i></div>
                 <div class="stat-info">
                     <span class="stat-number"><?= esc($stat['value']) ?></span>
                     <span class="stat-label"><?= esc($stat['label']) ?></span>
@@ -394,12 +417,12 @@
 <!-- Section 8: Latest News -->
 <section class="sp-news-section bg-white" style="padding: var(--sp-section-gap) 0;">
     <div class="container">
-        <div class="sp-section-header d-flex justify-content-between align-items-end">
+        <div class="sp-section-header d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
-                <h2 class="sp-section-title-sm">Kegiatan & Berita</h2>
+                <h2 class="sp-section-title-sm mb-1">Kegiatan &amp; Berita</h2>
                 <p class="text-muted small mb-0">Informasi terbaru seputar kegiatan di <?= esc($schoolName) ?>.</p>
             </div>
-            <a href="<?= base_url('/pengumuman') ?>" class="sp-view-all">Lihat Semua →</a>
+            <a href="<?= base_url('/pengumuman') ?>" class="sp-view-all flex-shrink-0">Lihat Semua &#8594;</a>
         </div>
         <div class="sp-news-container mt-4">
             <?php if (isset($announcements) && !empty($announcements)): ?>
@@ -407,14 +430,14 @@
                 <div class="sp-news-card animate-up">
                     <div class="sp-news-image">
                         <?php $newsImg = !empty($news['image']) ? ((strpos($news['image'], 'http') === 0) ? $news['image'] : base_url($news['image'])) : base_url('assets/img/gallery-placeholder.svg'); ?>
-                        <img src="<?= esc($newsImg) ?>" alt="News" onerror="this.src='<?= base_url('assets/img/gallery-placeholder.svg') ?>'">
+                        <img src="<?= esc($newsImg) ?>" alt="<?= esc($news['title']) ?>" onerror="this.src='<?= base_url('assets/img/gallery-placeholder.svg') ?>'">
                         <span class="sp-news-tag"><?= esc($news['tag'] ?? 'INFO') ?></span>
                     </div>
                     <div class="sp-news-body">
                         <h3 class="sp-news-title"><?= esc($news['title']) ?></h3>
                         <div class="sp-news-date">
                             <i data-lucide="calendar" style="width:12px;height:12px;"></i>
-                            <span><?= date('d M Y', strtotime($news['published_at'])) ?></span>
+                            <span><?= !empty($news['published_at']) ? date('d M Y', strtotime($news['published_at'])) : date('d M Y', strtotime($news['created_at'])) ?></span>
                         </div>
                     </div>
                 </div>
@@ -442,7 +465,7 @@
                                 <i data-lucide="chevron-down" class="sp-faq-icon" style="width:20px;height:20px;"></i>
                             </button>
                             <div class="sp-faq-content">
-                                <?= esc($faq['answer']) ?>
+                                <?= nl2br(esc($faq['answer'])) ?>
                             </div>
                         </div>
                         <?php endforeach; ?>
@@ -535,8 +558,11 @@
                 
                 const targetElement = document.querySelector(targetId);
                 if (targetElement) {
-                    const navbarHeight = 80;
-                    const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - navbarHeight;
+                    // Hitung offset: navbar height + extra padding
+                    const navbar = document.getElementById('main-navbar');
+                    const navbarHeight = navbar ? navbar.offsetHeight : 80;
+                    const extraPadding = 16;
+                    const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - navbarHeight - extraPadding;
                     
                     window.scrollTo({
                         top: targetPosition,
@@ -549,11 +575,20 @@
         // 4. CTA Loading State (UX)
         document.querySelectorAll('.btn-pulse').forEach(btn => {
             btn.addEventListener('click', function(e) {
-                if (this.getAttribute('href').startsWith('http') || this.getAttribute('href').startsWith('/')) {
-                    const originalText = this.innerHTML;
-                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memuat...';
+                const href = this.getAttribute('href');
+                // Hanya tampilkan loading untuk navigasi nyata (bukan anchor #)
+                if (href && href !== '#' && !href.startsWith('#')) {
+                    const originalHTML = this.innerHTML;
+                    const originalStyle = this.getAttribute('style') || '';
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memuat...';
                     this.style.pointerEvents = 'none';
                     this.style.opacity = '0.8';
+                    // Restore jika navigasi tidak terjadi dalam 5 detik (misal: buka tab baru)
+                    setTimeout(() => {
+                        this.innerHTML = originalHTML;
+                        this.setAttribute('style', originalStyle);
+                        this.style.pointerEvents = '';
+                    }, 5000);
                 }
             });
         });

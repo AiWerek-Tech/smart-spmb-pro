@@ -7,6 +7,9 @@ $footerPhone = $settingModel->getValue('phone', 'Kontak belum dikonfigurasi');
 $footerEmail = $settingModel->getValue('email', 'Email belum dikonfigurasi');
 $footerAddress = $settingModel->getValue('address', 'Alamat sekolah belum dikonfigurasi');
 $footerWhatsapp = preg_replace('/[^0-9]/', '', (string) $settingModel->getValue('whatsapp', '6282190822641'));
+$footerAccreditation = $settingModel->getValue('accreditation', 'A');
+$footerNpsn = $settingModel->getValue('npsn', '-');
+$footerDesc = $settingModel->getValue('school_description', 'Membentuk generasi cerdas, berkarakter, dan siap menghadapi tantangan global dengan sistem pendidikan inovatif.');
 $appInfo = config('AppInfo');
 ?>
 <!DOCTYPE html>
@@ -204,7 +207,7 @@ $appInfo = config('AppInfo');
 
     <!-- Flash Messages -->
     <?php if (session()->getFlashdata('error')): ?>
-        <div class="container mt-3">
+        <div class="sp-flash-container">
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <i data-lucide="alert-circle" style="width:16px;height:16px;" class="me-1"></i>
                 <?= esc(session()->getFlashdata('error')) ?>
@@ -214,7 +217,7 @@ $appInfo = config('AppInfo');
     <?php endif; ?>
 
     <?php if (session()->getFlashdata('success')): ?>
-        <div class="container mt-3">
+        <div class="sp-flash-container">
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i data-lucide="check-circle-2" style="width:16px;height:16px;" class="me-1"></i>
                 <?= esc(session()->getFlashdata('success')) ?>
@@ -279,7 +282,7 @@ $appInfo = config('AppInfo');
                             <span class="sp-footer-brand-tagline"><?= esc($schoolTagline) ?></span>
                         </div>
                     </a>
-                    <p class="sp-footer-desc">Membentuk generasi cerdas, berkarakter, dan siap menghadapi tantangan global dengan sistem pendidikan inovatif.</p>
+                    <p class="sp-footer-desc"><?= esc($footerDesc) ?></p>
                     <div class="sp-footer-social">
                         <a href="#" class="footer-social-link" aria-label="Facebook"><i data-lucide="facebook"></i></a>
                         <a href="#" class="footer-social-link" aria-label="Instagram"><i data-lucide="instagram"></i></a>
@@ -331,8 +334,10 @@ $appInfo = config('AppInfo');
                         <div class="sp-footer-cta-badge">
                             <i data-lucide="award" class="text-primary"></i>
                             <div>
-                                <strong>Akreditasi A</strong>
-                                <small>NPSN: 12345678</small>
+                                <strong>Akreditasi <?= esc($footerAccreditation) ?></strong>
+                                <?php if ($footerNpsn && $footerNpsn !== '-'): ?>
+                                <small>NPSN: <?= esc($footerNpsn) ?></small>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <p class="sp-footer-cta-text">Unduh brosur resmi sekolah untuk informasi lengkap program unggulan.</p>
@@ -344,7 +349,7 @@ $appInfo = config('AppInfo');
             </div>
 
             <div class="sp-footer-bottom">
-                <p class="sp-footer-copy mb-0">&copy; 2026 <?= esc($schoolName) ?>. Smart SPMB Pro v<?= esc($appInfo->version) ?> by <?= esc($appInfo->developer) ?></p>
+                <p class="sp-footer-copy mb-0">&copy; <?= date('Y') ?> <?= esc($schoolName) ?>. Smart SPMB Pro v<?= esc($appInfo->version) ?> by <?= esc($appInfo->developer) ?></p>
                 <div class="sp-footer-legal">
                     <a href="#">Kebijakan Privasi</a>
                     <a href="#">Syarat & Ketentuan</a>
