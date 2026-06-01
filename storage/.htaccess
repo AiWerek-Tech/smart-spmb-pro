@@ -1,0 +1,4 @@
+# Deny all direct web access to the storage directory.
+# Files in this directory should only be served through the application controller.
+Order deny,allow
+Deny from all

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.0/phpunit.xsd"
+    bootstrap="tests/bootstrap.php"
+    backupGlobals="false"
+    colors="true"
+    stopOnError="false"
+    stopOnFailure="false"
+>
+    <coverage>
+        <report>
+            <html outputDirectory="build/coverage"/>
+            <text outputFile="build/coverage.txt"/>
+        </report>
+    </coverage>
+
+    <testsuites>
+        <testsuite name="Unit Tests">
+            <directory>tests/unit</directory>
+        </testsuite>
+        <testsuite name="Property Tests">
+            <directory>tests/property</directory>
+        </testsuite>
+    </testsuites>
+
+    <php>
+        <env name="CI_ENVIRONMENT" value="testing"/>
+        <env name="app.baseURL" value="http://localhost/"/>
+        <env name="database.tests.hostname" value="localhost"/>
+        <env name="database.tests.database" value="smart_spmb_pro_test"/>
+        <env name="database.tests.username" value="root"/>
+        <env name="database.tests.password" value=""/>
+        <env name="database.tests.DBDriver" value="MySQLi"/>
+        <env name="database.tests.DBPrefix" value=""/>
+        <env name="database.tests.port" value="3306"/>
+    </php>
+
+    <source>
+        <include>
+            <directory suffix=".php">app</directory>
+        </include>
+        <exclude>
+            <directory suffix=".php">app/Views</directory>
+            <directory suffix=".php">app/Database</directory>
+            <directory suffix=".php">app/Config</directory>
+        </exclude>
+    </source>
+</phpunit>

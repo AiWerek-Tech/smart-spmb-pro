@@ -1,0 +1,38 @@
+# Composer dependencies
+/vendor/
+
+# Environment configuration (contains secrets)
+.env
+
+# Writable directory (logs, cache, sessions)
+/writable/logs/
+/writable/cache/
+/writable/session/
+/writable/uploads/
+
+# Storage (user uploads, exports, backups)
+/storage/uploads/documents/*/
+/storage/exports/
+/storage/backups/
+
+# Build artifacts
+/build/
+/public/rendered_*.html
+/public/test_*.php
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# PHP
+*.log
+
+# Node modules (if any frontend tooling)
+/node_modules/
+/tests/browser/node_modules/

@@ -1,0 +1,618 @@
+/* ============================================================
+ * Smart SPMB Pro — Dashboard Layout Styles
+ * Version: 4.0 | Layout-only — Tokens live in foundation.css
+ * ============================================================
+ * Depends on: foundation.css (must be loaded first)
+ * Contains ONLY dashboard-specific layout rules:
+ *   - Layout wrapper & content area
+ *   - Sidebar (dynamic, collapsed, responsive)
+ *   - Top navbar (glassmorphism, user dropdown)
+ *   - Stat cards (glowing icons)
+ *   - Onboarding wizard steps
+ *   - Dashboard footer
+ *   - Sidebar overlay (mobile)
+ *   - Dark mode sidebar overrides
+ * ============================================================ */
+
+/* ─────────────────────────────────────────────
+   1. LAYOUT STRUCTURE & COLLAPSED SIDEBAR
+   ───────────────────────────────────────────── */
+:root {
+    --sp-sidebar-width:   260px;
+    --sp-navbar-height:   72px;
+
+    /* Premium Sidebar (Light Mode) */
+    --sp-sidebar-bg-start:  #ffffff;
+    --sp-sidebar-bg-end:    #f8fafc;
+    --sp-sidebar-text:      #475569;
+    --sp-sidebar-text-active: var(--sp-primary);
+    --sp-sidebar-text-muted:#94a3b8;
+    --sp-sidebar-active-bg: rgba(var(--sp-primary-rgb), 0.06);
+    --sp-sidebar-hover-bg:  rgba(var(--sp-primary-rgb), 0.03);
+    --sp-sidebar-border:    rgba(15, 23, 42, 0.06);
+}
+
+.layout-wrapper {
+    display: flex;
+    min-height: 100vh;
+    width: 100vw;
+}
+
+.main-container {
+    flex: 1;
+    margin-left: var(--sp-sidebar-width);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: all var(--sp-transition-slow);
+    position: relative;
+    background-color: var(--sp-body-bg);
+}
+
+.content-body {
+    flex: 1;
+    padding: var(--sp-space-lg) var(--sp-space-xl);
+}
+
+@media (min-width: 992px) {
+    /* Collapsed Sidebar Layout Style */
+    .layout-wrapper.sidebar-collapsed .sidebar {
+        width: 72px;
+    }
+    .layout-wrapper.sidebar-collapsed .sidebar .brand-text {
+        display: none;
+    }
+    .layout-wrapper.sidebar-collapsed .sidebar .sidebar-brand {
+        justify-content: center;
+        padding: 0;
+    }
+    .layout-wrapper.sidebar-collapsed .sidebar .brand-logo {
+        margin-right: 0;
+    }
+    .layout-wrapper.sidebar-collapsed .sidebar .menu-header {
+        display: none;
+    }
+    .layout-wrapper.sidebar-collapsed .sidebar .menu-link span {
+        display: none;
+    }
+    .layout-wrapper.sidebar-collapsed .sidebar .menu-link {
+        justify-content: center;
+        padding: 12px 0;
+    }
+    .layout-wrapper.sidebar-collapsed .sidebar .menu-link svg,
+    .layout-wrapper.sidebar-collapsed .sidebar .menu-link i {
+        margin-right: 0;
+    }
+    .layout-wrapper.sidebar-collapsed .main-container {
+        margin-left: 72px;
+    }
+}
+
+/* ─────────────────────────────────────────────
+   2. SIDEBAR — Premium Dynamic Sidebar
+   ───────────────────────────────────────────── */
+.sidebar {
+    width: var(--sp-sidebar-width);
+    background: linear-gradient(180deg, var(--sp-sidebar-bg-start) 0%, var(--sp-sidebar-bg-end) 100%);
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1030;
+    transition: all var(--sp-transition-slow);
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--sp-sidebar-border);
+}
+
+.sidebar-brand {
+    height: var(--sp-navbar-height);
+    display: flex;
+    align-items: center;
+    padding: 0 var(--sp-space-lg);
+    border-bottom: 1px solid var(--sp-sidebar-border);
+}
+
+.brand-logo {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--sp-primary) 0%, var(--sp-accent) 100%);
+    border-radius: var(--sp-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    margin-right: 10px;
+    box-shadow: 0 4px 10px rgba(var(--sp-primary-rgb), 0.3);
+}
+
+.brand-logo svg, .brand-logo i {
+    width: 18px;
+    height: 18px;
+}
+
+.brand-text {
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin: 0;
+    color: var(--sp-heading-color) !important;
+}
+
+.brand-text span {
+    color: var(--sp-primary) !important;
+}
+
+.sidebar-menu {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--sp-space-md) var(--sp-space-sm);
+    list-style: none;
+    margin: 0;
+    scrollbar-width: none;
+}
+
+.sidebar-menu::-webkit-scrollbar {
+    display: none;
+}
+
+.menu-header {
+    padding: var(--sp-space-md) var(--sp-space-md) var(--sp-space-xxs) var(--sp-space-md);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--sp-sidebar-text-muted);
+    letter-spacing: 1.5px;
+}
+
+.menu-item {
+    margin-bottom: 4px;
+}
+
+.menu-link {
+    display: flex;
+    align-items: center;
+    padding: 10px var(--sp-space-md);
+    color: var(--sp-sidebar-text);
+    text-decoration: none;
+    border-radius: var(--sp-radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all var(--sp-transition-fast);
+}
+
+.menu-link svg, .menu-link i {
+    margin-right: 12px;
+    width: 18px;
+    height: 18px;
+    opacity: 0.7;
+    transition: transform var(--sp-transition-fast), opacity var(--sp-transition-fast);
+}
+
+.menu-link:hover {
+    color: var(--sp-sidebar-text-active);
+    background-color: var(--sp-sidebar-hover-bg);
+}
+
+.menu-link:hover svg, .menu-link:hover i {
+    opacity: 1;
+    transform: translateX(2px);
+}
+
+.menu-item.active .menu-link {
+    color: var(--sp-sidebar-text-active) !important;
+    background-color: var(--sp-sidebar-active-bg) !important;
+    font-weight: 600;
+}
+
+.menu-item.active .menu-link svg, .menu-item.active .menu-link i {
+    color: var(--sp-primary);
+    opacity: 1;
+}
+
+.menu-link.text-danger {
+    color: #f43f5e !important;
+}
+
+.menu-link.text-danger:hover {
+    background-color: rgba(244, 63, 94, 0.1) !important;
+}
+
+/* ─────────────────────────────────────────────
+   3. TOP NAVBAR — Premium Glassmorphism
+   ───────────────────────────────────────────── */
+.top-navbar {
+    height: var(--sp-navbar-height);
+    background-color: rgba(var(--sp-body-bg-rgb, 248, 250, 252), 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    padding: 0 var(--sp-space-xl);
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+
+.navbar-content {
+    background-color: var(--sp-card-bg);
+    width: 100%;
+    height: 52px;
+    border-radius: var(--sp-radius-md);
+    box-shadow: var(--sp-shadow-xs);
+    border: 1px solid var(--sp-card-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--sp-space-md);
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    color: var(--sp-text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: var(--sp-space-xxs) var(--sp-space-sm);
+    border-radius: var(--sp-radius-sm);
+    border: 1px solid transparent;
+    transition: all var(--sp-transition-fast);
+}
+
+.search-box:hover {
+    background: rgba(var(--sp-primary-rgb), 0.04);
+    border-color: rgba(var(--sp-primary-rgb), 0.1);
+    color: var(--sp-primary);
+}
+
+.theme-toggle-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--sp-text-color);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--sp-radius-sm);
+    transition: all var(--sp-transition-fast);
+}
+
+.theme-toggle-btn:hover {
+    background: rgba(var(--sp-primary-rgb), 0.05);
+    color: var(--sp-primary);
+}
+
+.menu-toggle-btn {
+    background: none;
+    border: none;
+    color: var(--sp-heading-color);
+    font-size: 1.25rem;
+    margin-right: 1rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--sp-radius-sm);
+    transition: all var(--sp-transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-toggle-btn:hover {
+    background: rgba(var(--sp-primary-rgb), 0.06);
+    color: var(--sp-primary);
+}
+
+/* User Dropdown */
+.avatar-container {
+    position: relative;
+    margin-left: var(--sp-space-xs);
+}
+
+.avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--sp-radius-full);
+    object-fit: cover;
+    border: 2px solid rgba(var(--sp-primary-rgb), 0.1);
+    transition: all var(--sp-transition-fast);
+}
+
+.avatar:hover {
+    transform: scale(1.05);
+    border-color: var(--sp-primary);
+}
+
+.status-badge {
+    width: 8px;
+    height: 8px;
+    background-color: var(--sp-success);
+    border: 1.5px solid var(--sp-card-bg);
+    border-radius: var(--sp-radius-full);
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    box-shadow: 0 0 0 2px rgba(var(--sp-success-rgb), 0.2);
+}
+
+/* ─────────────────────────────────────────────
+   4. STAT CARDS — Glowing & Vibrant Icons
+   ───────────────────────────────────────────── */
+.stat-card {
+    position: relative;
+    border-top: none !important;
+}
+
+.stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--sp-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-icon svg, .stat-icon i {
+    width: 20px;
+    height: 20px;
+}
+
+.stat-card-primary .stat-icon {
+    background-color: rgba(var(--sp-primary-rgb), 0.1);
+    color: var(--sp-primary);
+}
+
+.stat-card-success .stat-icon {
+    background-color: rgba(var(--sp-success-rgb), 0.1);
+    color: var(--sp-success);
+}
+
+.stat-card-info .stat-icon {
+    background-color: rgba(var(--sp-info-rgb), 0.1);
+    color: var(--sp-info);
+}
+
+.stat-card-warning .stat-icon {
+    background-color: rgba(var(--sp-warning-rgb), 0.1);
+    color: var(--sp-warning);
+}
+
+.stat-card-danger .stat-icon {
+    background-color: rgba(var(--sp-danger-rgb), 0.1);
+    color: var(--sp-danger);
+}
+
+.stat-value {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.85rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--sp-heading-color);
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--sp-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ─────────────────────────────────────────────
+   5. ONBOARDING WIZARD STEPS
+   ───────────────────────────────────────────── */
+.step-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    padding: 0 var(--sp-space-md);
+    margin-bottom: var(--sp-space-xl);
+}
+
+.step-container::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 40px;
+    right: 40px;
+    height: 2px;
+    background-color: var(--sp-border-color);
+    z-index: 1;
+}
+
+.step-item {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+}
+
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--sp-radius-full);
+    background-color: var(--sp-card-bg);
+    border: 2px solid var(--sp-border-color);
+    color: var(--sp-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin: 0 auto 8px;
+    transition: all var(--sp-transition);
+}
+
+.step-item.active .step-circle {
+    border-color: var(--sp-primary);
+    background-color: var(--sp-primary);
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(var(--sp-primary-rgb), 0.15);
+}
+
+.step-item.done .step-circle {
+    border-color: var(--sp-success);
+    background-color: var(--sp-success);
+    color: #fff;
+}
+
+.step-label {
+    font-size: 0.725rem;
+    font-weight: 600;
+    color: var(--sp-text-muted);
+    transition: color var(--sp-transition-fast);
+}
+
+.step-item.active .step-label {
+    color: var(--sp-primary-hover);
+    font-weight: 700;
+}
+
+.step-item.done .step-label {
+    color: var(--sp-success);
+}
+
+/* ─────────────────────────────────────────────
+   6. DASHBOARD FOOTER
+   ───────────────────────────────────────────── */
+.footer {
+    padding: var(--sp-space-md) var(--sp-space-xl);
+    background-color: var(--sp-card-bg);
+    border-top: 1px solid var(--sp-border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--sp-text-muted);
+    margin-top: auto;
+}
+
+.footer-link {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: var(--sp-text-muted);
+    font-weight: 500;
+    font: inherit;
+}
+
+.footer-link:hover,
+.footer-link:focus-visible {
+    color: var(--sp-primary);
+}
+
+@media (max-width: 575.98px) {
+    .footer {
+        flex-direction: column;
+        gap: var(--sp-space-xs);
+        text-align: center;
+        padding: var(--sp-space-md) var(--sp-space-md);
+    }
+}
+
+/* ─────────────────────────────────────────────
+   7. SIDEBAR OVERLAY (Mobile)
+   ───────────────────────────────────────────── */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1025;
+    transition: opacity var(--sp-transition);
+}
+
+.sidebar-overlay.show {
+    display: block;
+}
+
+/* ─────────────────────────────────────────────
+   8. DARK MODE — Sidebar & Dashboard Specifics
+   ───────────────────────────────────────────── */
+html.dark-mode,
+body.dark-mode {
+    --sp-sidebar-bg-start:  #0f1225;
+    --sp-sidebar-bg-end:    #151530;
+    --sp-sidebar-text:      #cbd5e1;
+    --sp-sidebar-text-active: var(--sp-primary-light);
+    --sp-sidebar-text-muted:#64748b;
+    --sp-sidebar-active-bg: rgba(var(--sp-primary-rgb), 0.15);
+    --sp-sidebar-hover-bg:  rgba(255, 255, 255, 0.04);
+    --sp-sidebar-border:    rgba(255, 255, 255, 0.04);
+}
+
+html.dark-mode .top-navbar,
+body.dark-mode .top-navbar {
+    background-color: rgba(9, 13, 22, 0.75);
+}
+
+body.dark-mode .avatar {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .stat-label {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .stat-value {
+    color: #ffffff !important;
+}
+
+/* ─────────────────────────────────────────────
+   9. RESPONSIVE BREAKPOINTS — Dashboard
+   ───────────────────────────────────────────── */
+@media (max-width: 991.98px) {
+    .sidebar {
+        left: calc(-1 * var(--sp-sidebar-width));
+    }
+
+    .sidebar.show {
+        left: 0;
+    }
+
+    .main-container {
+        margin-left: 0;
+    }
+
+    .menu-toggle-btn {
+        display: block;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .content-body {
+        padding: var(--sp-space-md);
+    }
+
+    .top-navbar {
+        padding: 0 var(--sp-space-md);
+    }
+
+    .navbar-content {
+        height: 48px;
+        padding: 0 var(--sp-space-xs);
+    }
+
+    .search-box {
+        width: 40px;
+        height: 40px;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .search-box span,
+    .search-box kbd {
+        display: none;
+    }
+
+    .theme-toggle-btn,
+    .menu-toggle-btn {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+    }
+}
