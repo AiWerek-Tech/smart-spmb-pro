@@ -84,15 +84,20 @@ body {
     letter-spacing: -0.02em;
 }
 
+/* sp-view-all — inline-flex with gap animation */
 .sp-view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-weight: 700;
     color: var(--sp-primary);
     text-decoration: none;
     font-size: 0.9rem;
-    transition: all 0.2s;
+    transition: gap 0.2s, opacity 0.2s;
 }
 
 .sp-view-all:hover {
+    gap: 8px;
     opacity: 0.8;
 }
 
@@ -849,6 +854,9 @@ body {
 .sp-mockup-ui { padding: 20px; }
 .sp-mockup-header { display: flex; gap: 6px; margin-bottom: 20px; }
 .sp-mockup-dot { width: 8px; height: 8px; border-radius: 50%; }
+.sp-dot-red    { background: #ff5f56; }
+.sp-dot-yellow { background: #ffbd2e; }
+.sp-dot-green  { background: #27c93f; }
 
 .sp-mockup-bg-image {
     height: 160px;
@@ -1079,7 +1087,7 @@ body {
     left: 0;
     width: 100%;
     height: 2px;
-    background: #e2e8f0;
+    background: var(--sp-border-color);
     z-index: 1;
 }
 
@@ -1736,11 +1744,12 @@ body {
     font-size: 2.25rem;
     font-weight: 800;
 }
+/* btn-cta-primary — white bg on gradient section */
 .btn-cta-primary {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.95);
     color: var(--sp-primary) !important;
     font-weight: 800;
     font-size: 1.05rem;
@@ -1793,7 +1802,7 @@ body {
    8. DARK MODE SUPPORT FOR HOMEPAGE
    ───────────────────────────────────────────── */
 body.dark-mode {
-    color: #cbd5e1;
+    color: var(--sp-text-color);
     background-color: var(--sp-body-bg);
 }
 body.dark-mode .sp-public-navbar {
@@ -1804,13 +1813,13 @@ body.dark-mode .sp-public-navbar.scrolled {
     background: rgba(17, 24, 39, 0.9);
 }
 body.dark-mode .brand-name {
-    color: #ffffff;
+    color: var(--sp-heading-color);
 }
 body.dark-mode .brand-tagline {
-    color: #94a3b8;
+    color: var(--sp-text-muted);
 }
 body.dark-mode .sp-menu-link {
-    color: #cbd5e1;
+    color: var(--sp-text-color);
 }
 body.dark-mode .sp-menu-link:hover,
 body.dark-mode .sp-menu-link.active {
@@ -1829,10 +1838,11 @@ body.dark-mode .sp-nav-dropdown-menu {
     background: var(--sp-card-bg);
     border-color: var(--sp-card-border) !important;
 }
+/* Dark mode nav icon btn — use variables */
 body.dark-mode .sp-nav-icon-btn {
-    background: #111827;
-    border-color: #1e293b;
-    color: #cbd5e1;
+    background: var(--sp-card-bg);
+    border-color: var(--sp-card-border);
+    color: var(--sp-text-muted);
 }
 body.dark-mode .sp-mobile-bottom-nav {
     background: rgba(17, 24, 39, 0.92);
@@ -1840,7 +1850,7 @@ body.dark-mode .sp-mobile-bottom-nav {
     box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.25);
 }
 body.dark-mode .mobile-nav-item {
-    color: #64748b;
+    color: var(--sp-text-muted);
 }
 body.dark-mode .mobile-nav-item.active {
     color: var(--sp-primary);
@@ -1853,19 +1863,20 @@ body.dark-mode .sp-secondary-item,
 body.dark-mode .jalur-card, 
 body.dark-mode .sp-news-card, 
 body.dark-mode .sp-faq-item, 
-body.dark-mode .sp-gallery-item,
-body.dark-mode .sp-public-footer {
+body.dark-mode .sp-gallery-item {
     background-color: var(--sp-card-bg) !important;
     border-color: rgba(255, 255, 255, 0.05) !important;
 }
 body.dark-mode .sp-public-footer {
-    border-top: 1px solid #1e293b;
+    background-color: var(--sp-card-bg) !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+    border-top: 1px solid var(--sp-border-color);
 }
 body.dark-mode .sp-public-footer h5 {
-    color: #ffffff;
+    color: var(--sp-heading-color);
 }
 body.dark-mode .footer-links a {
-    color: #94a3b8;
+    color: var(--sp-text-muted);
 }
 body.dark-mode .footer-links a:hover {
     color: var(--sp-primary);
@@ -1909,8 +1920,8 @@ body.dark-mode .sp-section {
     background-color: var(--sp-card-bg) !important;
 }
 body.dark-mode .sp-section-alt {
-    background-color: #0f172a !important;
-    border-color: #1e293b !important;
+    background-color: var(--sp-body-bg) !important;
+    border-color: var(--sp-border-color) !important;
 }
 body.dark-mode .sp-faq-button {
     color: #ffffff;
@@ -2042,12 +2053,8 @@ body.dark-mode .dropdown-item:focus {
     background-color: var(--sp-card-bg);
 }
 
-/* Progress bar track — dark mode aware */
+/* Progress bar track — uses CSS variable, works in both light and dark */
 .progress {
-    background-color: var(--sp-border-color);
-}
-
-body.dark-mode .progress {
     background-color: var(--sp-border-color);
 }
 
@@ -2061,23 +2068,11 @@ body.dark-mode .progress {
     color: var(--sp-primary) !important;
 }
 
-/* sp-section-alt dark mode fix */
-body.dark-mode .sp-section-alt {
-    background-color: var(--sp-body-bg) !important;
-    border-color: var(--sp-border-color) !important;
-}
+/* sp-section-alt dark mode fix — handled in section 8 above */
 
-/* sp-nav-icon-btn dark mode — use variables */
-body.dark-mode .sp-nav-icon-btn {
-    background: var(--sp-card-bg);
-    border-color: var(--sp-card-border);
-    color: var(--sp-text-muted);
-}
+/* sp-nav-icon-btn dark mode — handled in section 8 above */
 
-/* sp-public-footer dark mode border — use variable */
-body.dark-mode .sp-public-footer {
-    border-top-color: var(--sp-border-color);
-}
+/* sp-public-footer dark mode — consolidated in section 8 above */
 
 /* Testimonial card dark mode */
 body.dark-mode .sp-testimonial-section .card {
@@ -2085,17 +2080,7 @@ body.dark-mode .sp-testimonial-section .card {
     border-color: var(--sp-card-border) !important;
 }
 
-/* sp-view-all hover gap fix */
-.sp-view-all {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    transition: gap 0.2s, opacity 0.2s;
-}
-.sp-view-all:hover {
-    gap: 8px;
-    opacity: 0.8;
-}
+/* sp-view-all — defined in section 0 above */
 
 /* sp-section-header responsive */
 @media (max-width: 575.98px) {
@@ -2181,4 +2166,14 @@ body.dark-mode .sp-testimonial-section .card {
 @keyframes sp-slide-down {
     from { opacity: 0; transform: translateX(-50%) translateY(-12px); }
     to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Star rating icons */
+.sp-star {
+    color: var(--sp-border-color);
+    transition: color 0.15s;
+}
+.sp-star--filled {
+    color: var(--sp-warning);
+    fill: var(--sp-warning);
 }

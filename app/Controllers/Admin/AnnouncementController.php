@@ -32,7 +32,7 @@ class AnnouncementController extends BaseController
         $announcements = $this->announcementModel->getAllOrdered();
 
         $data = [
-            'title'         => 'Kelola Pengumenan',
+            'title'         => 'Kelola Pengumuman',
             'announcements' => $announcements,
         ];
 
@@ -58,22 +58,40 @@ class AnnouncementController extends BaseController
             'title'   => 'required|max_length[200]',
             'content' => 'required',
             'status'  => 'required|in_list[draft,published]',
+            'tag'     => 'permit_empty|max_length[50]',
         ];
+
+        // Validasi file gambar jika ada
+        $imageFile = $this->request->getFile('image');
+        if ($imageFile !== null && $imageFile->isValid() && !$imageFile->hasMoved()) {
+            $rules['image'] = 'is_image[image]|max_size[image,2048]';
+        }
 
         if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $status = $this->request->getPost('status');
+        $status      = $this->request->getPost('status');
         $publishedAt = $status === 'published' ? date('Y-m-d H:i:s') : null;
 
-        $announcementId = $this->announcementModel->insert([
+        $insertData = [
             'title'        => $this->request->getPost('title'),
             'content'      => $this->request->getPost('content'),
+            'tag'          => $this->request->getPost('tag') ?: 'INFO',
             'status'       => $status,
             'published_at' => $publishedAt,
-            'created_by'   => (int)session()->get('user_id'),
-        ]);
+            'created_by'   => (int) session()->get('user_id'),
+        ];
+
+        // Proses upload gambar jika ada
+        if ($imageFile !== null && $imageFile->isValid() && !$imageFile->hasMoved()) {
+            $newName = $imageFile->getRandomName();
+            if ($imageFile->move(FCPATH . 'uploads/images/', $newName)) {
+                $insertData['image'] = 'uploads/images/' . $newName;
+            }
+        }
+
+        $announcementId = $this->announcementModel->insert($insertData);
 
         if (!$announcementId) {
             return redirect()->back()->withInput()->with('error', 'Gagal menyimpan pengumuman.');
@@ -114,17 +132,24 @@ class AnnouncementController extends BaseController
             'title'   => 'required|max_length[200]',
             'content' => 'required',
             'status'  => 'required|in_list[draft,published]',
+            'tag'     => 'permit_empty|max_length[50]',
         ];
+
+        $imageFile = $this->request->getFile('image');
+        if ($imageFile !== null && $imageFile->isValid() && !$imageFile->hasMoved()) {
+            $rules['image'] = 'is_image[image]|max_size[image,2048]';
+        }
 
         if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
         $status = $this->request->getPost('status');
-        
+
         $updateData = [
             'title'   => $this->request->getPost('title'),
             'content' => $this->request->getPost('content'),
+            'tag'     => $this->request->getPost('tag') ?: 'INFO',
             'status'  => $status,
         ];
 
@@ -135,6 +160,18 @@ class AnnouncementController extends BaseController
             }
         } else {
             $updateData['published_at'] = null;
+        }
+
+        // Proses upload gambar baru jika ada
+        if ($imageFile !== null && $imageFile->isValid() && !$imageFile->hasMoved()) {
+            $newName = $imageFile->getRandomName();
+            if ($imageFile->move(FCPATH . 'uploads/images/', $newName)) {
+                // Hapus gambar lama jika ada
+                if (!empty($announcement['image']) && file_exists(FCPATH . $announcement['image'])) {
+                    @unlink(FCPATH . $announcement['image']);
+                }
+                $updateData['image'] = 'uploads/images/' . $newName;
+            }
         }
 
         if (!$this->announcementModel->update($id, $updateData)) {

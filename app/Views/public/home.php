@@ -64,8 +64,12 @@
                                 <div class="sp-hero-visual">
                                     <div class="sp-hero-mockup">
                                         <div class="sp-hero-mockup-img">
-                                            <?php $bannerImg = (strpos($banner['image'], 'http') === 0) ? $banner['image'] : base_url($banner['image']); ?>
-                                            <img src="<?= esc($bannerImg) ?>" class="w-100 h-100 object-fit-cover" alt="Banner Image" onerror="this.src='<?= base_url('assets/img/gallery-placeholder.svg') ?>'">
+                                            <?php
+                                            $bannerImgSrc = !empty($banner['image'])
+                                                ? ((strpos($banner['image'], 'http') === 0) ? esc($banner['image'], 'url') : base_url(esc($banner['image'])))
+                                                : base_url('assets/img/gallery-placeholder.svg');
+                                            ?>
+                                            <img src="<?= $bannerImgSrc ?>" class="w-100 h-100 object-fit-cover" alt="<?= esc($banner['title']) ?>" loading="lazy" onerror="this.src='<?= base_url('assets/img/gallery-placeholder.svg') ?>'">
                                         </div>
                                     </div>
                                 </div>
@@ -108,9 +112,9 @@
                         <div class="sp-hero-mockup-img">
                              <div class="sp-mockup-ui">
                                 <div class="sp-mockup-header">
-                                    <div class="sp-mockup-dot" style="background: #ff5f56;"></div>
-                                    <div class="sp-mockup-dot" style="background: #ffbd2e;"></div>
-                                    <div class="sp-mockup-dot" style="background: #27c93f;"></div>
+                                    <div class="sp-mockup-dot sp-dot-red"></div>
+                                    <div class="sp-mockup-dot sp-dot-yellow"></div>
+                                    <div class="sp-mockup-dot sp-dot-green"></div>
                                 </div>
                                 <div class="sp-mockup-bg-image" style="background-image: url('<?= base_url('assets/img/gallery-placeholder.svg') ?>');"></div>
                                 <div class="sp-mockup-body">
@@ -346,7 +350,8 @@
                 <div class="col-6 col-md-4">
                     <div class="sp-gallery-item animate-up" style="animation-delay: <?= $index * 0.1 ?>s;">
                         <div class="sp-gallery-img-wrapper">
-                            <img src="<?= (strpos($item['image'], 'http') === 0) ? esc($item['image']) : base_url($item['image']) ?>" alt="<?= esc($item['title']) ?>" class="w-100 h-100 object-fit-cover" onerror="this.src='<?= base_url('assets/img/gallery-placeholder.svg') ?>'">
+                            <?php $galleryImgSrc = (strpos($item['image'], 'http') === 0) ? esc($item['image'], 'url') : base_url(esc($item['image'])); ?>
+                            <img src="<?= $galleryImgSrc ?>" alt="<?= esc($item['title'] ?? '') ?>" class="w-100 h-100 object-fit-cover" loading="lazy" onerror="this.src='<?= base_url('assets/img/gallery-placeholder.svg') ?>'">
                         </div>
                         <?php if ($item['title']): ?>
                         <div class="sp-gallery-overlay">
@@ -369,7 +374,7 @@
                 <div class="col-6 col-md-4">
                     <div class="sp-gallery-item animate-up" style="<?= $fi > 0 ? 'animation-delay: ' . ($fi * 0.1) . 's;' : '' ?>">
                         <div class="sp-gallery-img-wrapper">
-                            <img src="<?= $fgItem['img'] ?>" alt="<?= esc($fgItem['title']) ?>" class="w-100 h-100 object-fit-cover">
+                            <img src="<?= esc($fgItem['img']) ?>" alt="<?= esc($fgItem['title']) ?>" class="w-100 h-100 object-fit-cover">
                         </div>
                         <div class="sp-gallery-overlay"><span class="sp-gallery-caption"><?= esc($fgItem['title']) ?></span></div>
                     </div>
@@ -393,16 +398,20 @@
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 border-0 shadow-sm rounded-4 p-4 animate-up">
                     <div class="d-flex align-items-center gap-3 mb-3">
-                        <?php $testiPhoto = !empty($testi['photo']) ? ((strpos($testi['photo'], 'http') === 0) ? $testi['photo'] : base_url($testi['photo'])) : 'https://ui-avatars.com/api/?name=' . urlencode($testi['name']); ?>
-                        <img src="<?= esc($testiPhoto) ?>" class="rounded-circle border" style="width: 56px; height: 56px; object-fit: cover;" alt="User" onerror="this.src='https://ui-avatars.com/api/?name=<?= urlencode($testi['name']) ?>'">
+                        <?php
+                        $testiPhotoSrc = !empty($testi['photo'])
+                            ? ((strpos($testi['photo'], 'http') === 0) ? esc($testi['photo'], 'url') : base_url(esc($testi['photo'])))
+                            : 'https://ui-avatars.com/api/?name=' . urlencode($testi['name']) . '&background=random&size=56';
+                        ?>
+                        <img src="<?= $testiPhotoSrc ?>" class="rounded-circle border flex-shrink-0" style="width:56px;height:56px;object-fit:cover;" alt="Foto <?= esc($testi['name']) ?>" loading="lazy" onerror="this.src='https://ui-avatars.com/api/?name=<?= urlencode($testi['name']) ?>'">
                         <div>
                             <h5 class="fw-800 mb-0" style="font-size: 1rem;"><?= esc($testi['name']) ?></h5>
                             <small class="text-muted"><?= esc($testi['role']) ?></small>
                         </div>
                     </div>
-                    <div class="text-warning mb-3">
-                        <?php for($i=1; $i<=5; $i++): ?>
-                            <i data-lucide="star" class="<?= $i <= $testi['rating'] ? 'fill-warning' : '' ?>" style="width: 14px; height: 14px; <?= $i <= $testi['rating'] ? 'fill: #F59E0B;' : '' ?>"></i>
+                    <div class="text-warning mb-3" aria-label="Rating <?= (int)$testi['rating'] ?> dari 5 bintang">
+                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                            <i data-lucide="star" class="sp-star<?= $i <= (int)$testi['rating'] ? ' sp-star--filled' : '' ?>" style="width:14px;height:14px;"></i>
                         <?php endfor; ?>
                     </div>
                     <p class="text-muted mb-0" style="font-size: 0.9rem; font-style: italic; line-height: 1.6;">"<?= esc($testi['content']) ?>"</p>
@@ -429,8 +438,10 @@
                 <?php foreach ($announcements as $news): ?>
                 <div class="sp-news-card animate-up">
                     <div class="sp-news-image">
-                        <?php $newsImg = !empty($news['image']) ? ((strpos($news['image'], 'http') === 0) ? $news['image'] : base_url($news['image'])) : base_url('assets/img/gallery-placeholder.svg'); ?>
-                        <img src="<?= esc($newsImg) ?>" alt="<?= esc($news['title']) ?>" onerror="this.src='<?= base_url('assets/img/gallery-placeholder.svg') ?>'">
+                        <?php $newsImgSrc = !empty($news['image'])
+                            ? ((strpos($news['image'], 'http') === 0) ? esc($news['image'], 'url') : base_url(esc($news['image'])))
+                            : base_url('assets/img/gallery-placeholder.svg'); ?>
+                        <img src="<?= $newsImgSrc ?>" alt="<?= esc($news['title']) ?>" loading="lazy" onerror="this.src='<?= base_url('assets/img/gallery-placeholder.svg') ?>'">
                         <span class="sp-news-tag"><?= esc($news['tag'] ?? 'INFO') ?></span>
                     </div>
                     <div class="sp-news-body">

@@ -28,13 +28,33 @@
                     </div>
                 <?php endif; ?>
 
-                <form method="POST" action="<?= base_url('admin/announcements/'.$announcement['id'].'/update') ?>">
+                <form method="POST" action="<?= base_url('admin/announcements/'.$announcement['id'].'/update') ?>" enctype="multipart/form-data">
                     <?= csrf_field() ?>
 
                     <!-- Title -->
                     <div class="mb-3">
                         <label for="title" class="form-label fw-bold small">Judul Pengumuman <span class="text-danger">*</span></label>
                         <input type="text" class="form-control form-control-lg" id="title" name="title" value="<?= old('title', $announcement['title']) ?>" placeholder="Masukkan judul pengumuman..." required>
+                    </div>
+
+                    <!-- Tag & Image row -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label for="tag" class="form-label fw-bold small">Tag / Kategori</label>
+                            <input type="text" class="form-control" id="tag" name="tag" value="<?= old('tag', $announcement['tag'] ?? 'INFO') ?>" placeholder="INFO, PENTING, PENGUMUMAN..." maxlength="50">
+                            <div class="form-text">Label singkat yang tampil di kartu berita.</div>
+                        </div>
+                        <div class="col-md-8">
+                            <label for="image" class="form-label fw-bold small">Gambar Thumbnail <span class="text-muted fw-normal">(opsional)</span></label>
+                            <?php if (!empty($announcement['image'])): ?>
+                                <div class="mb-2">
+                                    <img src="<?= base_url($announcement['image']) ?>" alt="Thumbnail saat ini" class="rounded" style="height:60px;object-fit:cover;" onerror="this.style.display='none'">
+                                    <small class="text-muted ms-2">Gambar saat ini</small>
+                                </div>
+                            <?php endif; ?>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                            <div class="form-text">Upload gambar baru untuk mengganti. Format JPG/PNG/WebP, maks. 2MB.</div>
+                        </div>
                     </div>
 
                     <!-- Content -->

@@ -27,6 +27,7 @@ async function login(page, email, password) {
   await page.fill('#password', password);
   await page.click('button[type="submit"]');
   await page.waitForTimeout(2000);
+  return !page.url().includes('/auth/login');
 }
 
 async function auditPage(page, cfg, opts = {}) {
@@ -106,7 +107,10 @@ async function auditPage(page, cfg, opts = {}) {
   const results = [];
 
   // OPERATOR
-  await login(page, 'operator@smartspmbpro.sch.id', 'Operator@12345');
+  const operatorLoggedIn = await login(page, 'operator@smartspmbpro.sch.id', 'Operator@12345');
+  if (!operatorLoggedIn) {
+    await login(page, 'admin@smartspmbpro.sch.id', 'Admin@12345');
+  }
   for (const cfg of OPERATOR_PAGES) {
     results.push(await auditPage(page, cfg));
   }

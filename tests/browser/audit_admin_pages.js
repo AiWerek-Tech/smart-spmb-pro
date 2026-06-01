@@ -39,14 +39,14 @@ async function runInteract(page, type) {
       }
     }
     if (type === 'settings') {
-      for (const id of ['nav-contact-tab', 'nav-accreditation-tab', 'nav-theme-tab']) {
+      for (const id of ['nav-contact-tab', 'nav-accreditation-tab', 'nav-theme-tab', 'nav-app-tab']) {
         await page.click(`#${id}`);
         await page.waitForTimeout(250);
       }
       const panels = await page.evaluate(() =>
-        ['nav-general', 'nav-contact', 'nav-accreditation', 'nav-theme'].filter((id) => !!document.getElementById(id)).length
+        ['nav-general', 'nav-contact', 'nav-accreditation', 'nav-theme', 'nav-app'].filter((id) => !!document.getElementById(id)).length
       );
-      if (panels !== 4) notes.push(`Settings panels ${panels}/4`);
+      if (panels !== 5) notes.push(`Settings panels ${panels}/5`);
     }
     if (type === 'jalur') {
       const btn = page.locator('.edit-jalur-btn').first();
@@ -143,7 +143,7 @@ async function auditPage(page, cfg) {
     mainContent: !!document.getElementById('main-content'),
     hasForm: !!document.querySelector('form'),
     hasDataTable: !!document.querySelector('#usersTable'),
-    settingsPanels: ['nav-general', 'nav-contact', 'nav-accreditation', 'nav-theme'].filter((id) => !!document.getElementById(id)).length,
+    settingsPanels: ['nav-general', 'nav-contact', 'nav-accreditation', 'nav-theme', 'nav-app'].filter((id) => !!document.getElementById(id)).length,
   }));
 
   const interactIssues = cfg.interact ? await runInteract(page, cfg.interact) : [];
@@ -161,7 +161,7 @@ async function auditPage(page, cfg) {
   if (!data.mainContent) issues.push('Missing #main-content');
   if (cfg.checks.includes('form') && !data.hasForm) issues.push('Missing form');
   if (cfg.checks.includes('datatable') && !data.hasDataTable) issues.push('Missing datatable');
-  if (cfg.checks.includes('tabs') && data.settingsPanels !== 4) issues.push(`Settings panels ${data.settingsPanels}/4`);
+  if (cfg.checks.includes('tabs') && data.settingsPanels !== 5) issues.push(`Settings panels ${data.settingsPanels}/5`);
 
   const jsErrors = [...errors, ...consoleErrors.filter((e) => !e.includes('favicon') && !e.includes('id.json'))];
 

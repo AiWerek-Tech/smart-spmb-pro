@@ -15,8 +15,12 @@ class GalleryModel extends Model
 
     protected $allowedFields = [
         'title',
+        'description',
         'image',
         'category',
+        'media_type',
+        'video_url',
+        'video_provider',
         'is_active',
         'sort_order',
     ];

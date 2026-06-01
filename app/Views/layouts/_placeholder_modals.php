@@ -1,3 +1,10 @@
+<?php
+$settingModel = $settingModel ?? new \App\Models\SettingModel();
+$appInfo = $appInfo ?? config('AppInfo');
+$supportPhone = $supportPhone ?? preg_replace('/[^0-9]/', '', (string) $settingModel->getValue('whatsapp', $appInfo->developerWhatsapp ?? '6282190822641'));
+$supportEmail = $supportEmail ?? (string) $settingModel->getValue('email', $appInfo->developerEmail ?? 'aiwerek.tech@gmail.com');
+?>
+
 <!-- Profile Detail Modal -->
 <div class="modal fade" id="profileDetailModal" tabindex="-1" aria-labelledby="profileDetailModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -25,7 +32,7 @@
                     </tr>
                     <tr>
                         <td class="fw-semibold text-muted">Dibuat Tanggal</td>
-                        <td>: 29 May 2026</td>
+                        <td>: <?= esc(session()->get('user_created_at') ? date('d M Y', strtotime(session()->get('user_created_at'))) : '-') ?></td>
                     </tr>
                 </table>
             </div>

@@ -128,6 +128,36 @@ class SettingsSeeder extends Seeder
                 'updated_at' => date('Y-m-d H:i:s'),
             ],
             [
+                'key'        => 'school_facilities',
+                'value'      => "Ruang kelas nyaman\nPerpustakaan\nLaboratorium komputer\nLaboratorium sains\nLapangan olahraga\nRuang ibadah",
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ],
+            [
+                'key'        => 'campus_title',
+                'value'      => 'Lingkungan Belajar yang Aman dan Nyaman',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ],
+            [
+                'key'        => 'campus_description',
+                'value'      => 'Lingkungan sekolah dirancang untuk mendukung proses belajar yang tertib, ramah anak, dan kondusif. Setiap ruang belajar, area kegiatan, serta fasilitas pendukung dikelola agar peserta didik dapat bertumbuh secara akademik, sosial, dan spiritual.',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ],
+            [
+                'key'        => 'privacy_policy',
+                'value'      => 'Smart SPMB Pro mengumpulkan dan memproses data calon murid hanya untuk kebutuhan administrasi penerimaan murid baru, verifikasi dokumen, seleksi, dan pelaporan sekolah. Data tidak dibagikan kepada pihak lain di luar kepentingan resmi sekolah kecuali diwajibkan oleh peraturan yang berlaku.',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ],
+            [
+                'key'        => 'terms_conditions',
+                'value'      => 'Pengguna wajib mengisi data secara benar, lengkap, dan dapat dipertanggungjawabkan. Sekolah berhak memverifikasi, meminta perbaikan, menolak, atau membatalkan pendaftaran apabila ditemukan data atau dokumen yang tidak sesuai dengan ketentuan penerimaan murid baru.',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ],
+            [
                 'key'        => 'app_version',
                 'value'      => config('AppInfo')->version,
                 'created_at' => date('Y-m-d H:i:s'),

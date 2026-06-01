@@ -218,7 +218,7 @@
                                         <label for="whatsapp" class="form-label fw-bold small">Nomor WhatsApp Sekolah</label>
                                         <div class="input-group">
                                             <span class="input-group-text"><i data-lucide="message-square" style="width: 16px; height: 16px;"></i></span>
-                                            <input type="text" class="form-control" id="whatsapp" name="whatsapp" value="<?= esc(old('whatsapp', $settings['whatsapp'] ?? '')) ?>" placeholder="Contoh: 6281234567890">
+                                            <input type="text" class="form-control" id="whatsapp" name="whatsapp" value="<?= esc(old('whatsapp', $settings['whatsapp'] ?? '')) ?>" placeholder="Contoh: 6282190822641">
                                         </div>
                                     </div>
 
@@ -258,6 +258,20 @@
                                             <label for="accreditation_year" class="form-label fw-bold small">Tahun Akreditasi</label>
                                             <input type="number" class="form-control" name="accreditation_year" id="accreditation_year" value="<?= esc(old('accreditation_year', $settings['accreditation_year'] ?? '')) ?>" min="2000" max="2030" placeholder="Contoh: 2025">
                                         </div>
+                                    </div>
+
+                                    <!-- NPSN -->
+                                    <div class="mb-3">
+                                        <label for="npsn" class="form-label fw-bold small">NPSN (Nomor Pokok Sekolah Nasional)</label>
+                                        <input type="text" class="form-control" name="npsn" id="npsn" value="<?= esc(old('npsn', $settings['npsn'] ?? '')) ?>" placeholder="Contoh: 20123456" maxlength="20">
+                                        <div class="form-text">Ditampilkan di footer halaman publik.</div>
+                                    </div>
+
+                                    <!-- School Description -->
+                                    <div class="mb-3">
+                                        <label for="school_description" class="form-label fw-bold small">Deskripsi Singkat Sekolah</label>
+                                        <textarea class="form-control" name="school_description" id="school_description" rows="3" placeholder="Deskripsi singkat yang tampil di footer halaman publik..."><?= esc(old('school_description', $settings['school_description'] ?? '')) ?></textarea>
+                                        <div class="form-text">Maks. 200 karakter. Tampil di footer website publik.</div>
                                     </div>
                                 </div>
 

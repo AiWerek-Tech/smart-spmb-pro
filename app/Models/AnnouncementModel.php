@@ -16,6 +16,8 @@ class AnnouncementModel extends Model
     protected $allowedFields = [
         'title',
         'content',
+        'image',
+        'tag',
         'published_at',
         'status',
         'created_by',
