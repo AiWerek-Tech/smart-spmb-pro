@@ -157,7 +157,9 @@ async function auditPage(page, cfg) {
   if (!data.bootstrap) issues.push('Bootstrap missing');
   if (data.scriptSrcCount < 8) issues.push(`Only ${data.scriptSrcCount} script tags`);
   if (data.sidebarSvg < 10) issues.push(`Sidebar SVG ${data.sidebarSvg}`);
-  if (data.iframeCount > 0) issues.push(`Unexpected iframe count ${data.iframeCount}`);
+  if (data.iframeCount > 0 && !(cfg.path === '/admin/settings' && data.iframeCount === 1)) {
+    issues.push(`Unexpected iframe count ${data.iframeCount}`);
+  }
   if (!data.mainContent) issues.push('Missing #main-content');
   if (cfg.checks.includes('form') && !data.hasForm) issues.push('Missing form');
   if (cfg.checks.includes('datatable') && !data.hasDataTable) issues.push('Missing datatable');

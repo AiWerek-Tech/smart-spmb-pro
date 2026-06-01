@@ -1,6 +1,9 @@
 <?php
 $settingModel = new \App\Models\SettingModel();
 $globalThemeColor = $settingModel->getValue('theme_color', 'purple');
+$schoolName = $settingModel->getValue('school_name', 'Smart SPMB Pro');
+$schoolLogo = $settingModel->getValue('school_logo', '');
+$schoolLogoUrl = !empty($schoolLogo) ? base_url($schoolLogo) : '';
 $appInfo = config('AppInfo');
 $supportPhone = preg_replace('/[^0-9]/', '', (string) $settingModel->getValue('whatsapp', $appInfo->developerWhatsapp));
 $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEmail);
@@ -15,6 +18,14 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
     <meta name="application-name" content="<?= esc($appInfo->name) ?>">
     <meta name="version" content="<?= esc($appInfo->version) ?>">
     <title><?= $title ?? 'Dashboard' ?> - Smart SPMB Pro</title>
+
+    <!-- Favicon — gunakan logo sekolah jika tersedia -->
+    <?php if ($schoolLogoUrl): ?>
+        <link rel="icon" type="image/x-icon" href="<?= esc($schoolLogoUrl) ?>">
+        <link rel="apple-touch-icon" href="<?= esc($schoolLogoUrl) ?>">
+    <?php else: ?>
+        <link rel="icon" type="image/svg+xml" href="<?= base_url('assets/img/favicon.svg') ?>">
+    <?php endif; ?>
     
     <script src="<?= base_url('assets/js/theme-sync.js') ?>"></script>
     <script>
@@ -65,8 +76,14 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
         <!-- Sidebar Navigation -->
         <aside class="sidebar" id="sidebar" role="navigation" aria-label="Menu navigasi utama">
             <div class="sidebar-brand">
-                <div class="brand-logo"><i data-lucide="graduation-cap"></i></div>
-                <h5 class="brand-text">Smart SPMB <span class="text-primary">Pro</span></h5>
+                <div class="brand-logo<?= $schoolLogoUrl ? ' brand-logo--logo' : '' ?>">
+                    <?php if ($schoolLogoUrl): ?>
+                        <img src="<?= esc($schoolLogoUrl) ?>" alt="Logo <?= esc($schoolName) ?>" class="sp-brand-logo-img">
+                    <?php else: ?>
+                        <i data-lucide="graduation-cap"></i>
+                    <?php endif; ?>
+                </div>
+                <h5 class="brand-text"><?= esc($schoolName) ?></h5>
             </div>
             
             <ul class="sidebar-menu">
@@ -338,6 +355,45 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
                     <button type="button" class="footer-link" data-bs-toggle="modal" data-bs-target="#bantuanModal">Bantuan</button>
                 </div>
             </footer>
+
+            <?php
+                $bottomNavItems = [];
+
+                if ($role === 'admin') {
+                    $bottomNavItems = [
+                        ['label' => 'Beranda', 'icon' => 'layout-dashboard', 'url' => base_url('admin/dashboard'), 'active' => $segment1 === 'admin' && ($segment2 === '' || $segment2 === 'dashboard')],
+                        ['label' => 'Pengguna', 'icon' => 'users', 'url' => base_url('admin/users'), 'active' => $segment1 === 'admin' && $segment2 === 'users'],
+                        ['label' => 'Seleksi', 'icon' => 'award', 'url' => base_url('admin/seleksi'), 'active' => $segment1 === 'admin' && $segment2 === 'seleksi'],
+                        ['label' => 'Konten', 'icon' => 'school', 'url' => base_url('admin/content'), 'active' => $segment1 === 'admin' && in_array($segment2, ['content', 'banners', 'announcements', 'testimonials', 'statistics', 'faq'], true)],
+                    ];
+                } elseif ($role === 'operator') {
+                    $bottomNavItems = [
+                        ['label' => 'Beranda', 'icon' => 'layout-dashboard', 'url' => base_url('operator/dashboard'), 'active' => $segment1 === 'operator' && ($segment2 === '' || $segment2 === 'dashboard')],
+                        ['label' => 'Pendaftar', 'icon' => 'graduation-cap', 'url' => base_url('operator/registrants'), 'active' => $segment1 === 'operator' && $segment2 === 'registrants'],
+                        ['label' => 'Dapodik', 'icon' => 'check-square', 'url' => base_url('operator/dapodik'), 'active' => $segment1 === 'operator' && $segment2 === 'dapodik'],
+                        ['label' => 'Ekspor', 'icon' => 'download', 'url' => base_url('operator/export/excel'), 'active' => false],
+                    ];
+                } else {
+                    $bottomNavItems = [
+                        ['label' => 'Beranda', 'icon' => 'layout-dashboard', 'url' => base_url('pendaftar/dashboard'), 'active' => $segment1 === 'pendaftar' && ($segment2 === '' || $segment2 === 'dashboard')],
+                        ['label' => 'Formulir', 'icon' => 'file-text', 'url' => base_url('pendaftar/daftar'), 'active' => $segment1 === 'pendaftar' && $segment2 === 'daftar'],
+                        ['label' => 'Dokumen', 'icon' => 'folder-open', 'url' => base_url('pendaftar/dokumen'), 'active' => $segment1 === 'pendaftar' && $segment2 === 'dokumen'],
+                        ['label' => 'Status', 'icon' => 'clipboard-check', 'url' => base_url('hasil-seleksi'), 'active' => false],
+                    ];
+                }
+            ?>
+            <nav class="dashboard-mobile-bottom-nav" aria-label="Navigasi dashboard mobile">
+                <?php foreach ($bottomNavItems as $item): ?>
+                    <a href="<?= esc($item['url']) ?>" class="dashboard-bottom-item <?= $item['active'] ? 'active' : '' ?>" <?= $item['active'] ? 'aria-current="page"' : '' ?>>
+                        <span class="dashboard-bottom-icon"><i data-lucide="<?= esc($item['icon']) ?>"></i></span>
+                        <span class="dashboard-bottom-label"><?= esc($item['label']) ?></span>
+                    </a>
+                <?php endforeach; ?>
+                <button type="button" class="dashboard-bottom-item dashboard-bottom-more" id="dashboard-more-toggle" aria-controls="sidebar" aria-expanded="false">
+                    <span class="dashboard-bottom-icon"><i data-lucide="more-horizontal"></i></span>
+                    <span class="dashboard-bottom-label">Lainnya</span>
+                </button>
+            </nav>
         </div>
     </div>
 
@@ -389,6 +445,21 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
             $('#sidebar-overlay').on('click', function() {
                 $('#sidebar').removeClass('show');
                 $(this).removeClass('show');
+                $('#dashboard-more-toggle').attr('aria-expanded', 'false');
+            });
+
+            $('#dashboard-more-toggle').on('click', function() {
+                $('#sidebar').toggleClass('show');
+                $('#sidebar-overlay').toggleClass('show');
+                $(this).attr('aria-expanded', $('#sidebar').hasClass('show') ? 'true' : 'false');
+            });
+
+            $('#sidebar a.menu-link').on('click', function() {
+                if ($(window).width() < 992) {
+                    $('#sidebar').removeClass('show');
+                    $('#sidebar-overlay').removeClass('show');
+                    $('#dashboard-more-toggle').attr('aria-expanded', 'false');
+                }
             });
 
             // Premium Color Theme Switcher Logic

@@ -42,7 +42,7 @@
                     <!-- Decorative floating element -->
                     <div class="position-absolute bottom-0 start-0 glass-panel p-3 m-n3 rounded-3 shadow-sm animate-fade-up delay-2 d-none d-md-block" style="width: 180px;">
                         <div class="small fw-bold text-primary">Berdiri Sejak</div>
-                        <div class="h5 fw-bold mb-0">2010</div>
+                        <div class="h5 fw-bold mb-0"><?= esc($schoolFoundedYear ?: '-') ?></div>
                     </div>
                 </div>
             </div>
@@ -121,6 +121,14 @@
                         </div>
                     </div>
                 <?php endforeach; ?>
+            <?php else: ?>
+                <div class="col-12">
+                    <?= view('layouts/_empty_state', [
+                        'emptyIcon' => 'building-2',
+                        'emptyTitle' => 'Fasilitas Belum Diisi',
+                        'emptyMessage' => 'Daftar fasilitas akan tampil setelah diisi dari dashboard admin.'
+                    ]) ?>
+                </div>
             <?php endif; ?>
         </div>
     </div>
@@ -133,16 +141,29 @@
         <div class="row g-4 justify-content-center">
             <?php if (!empty($teachers)): ?>
                 <?php foreach ($teachers as $index => $teacher): ?>
+                    <?php
+                        $teacherPhoto = !empty($teacher['photo'])
+                            ? ((strpos($teacher['photo'], 'http') === 0) ? esc($teacher['photo']) : base_url(esc($teacher['photo'])))
+                            : 'https://ui-avatars.com/api/?name=' . urlencode($teacher['name'] ?? 'Guru') . '&background=6366f1&color=fff&size=160';
+                    ?>
                     <div class="col-lg-3 col-md-6 col-sm-6 animate-fade-up delay-<?= ($index % 4) + 1 ?>">
                         <div class="glass-panel p-4 text-center rounded-4 hover-lift border-0 shadow-sm h-100">
                             <div class="mb-4 mx-auto rounded-circle overflow-hidden shadow-sm" style="width: 120px; height: 120px; border: 3px solid var(--sp-primary-light);">
-                                <img src="<?= $teacher['photo'] ?>" alt="<?= esc($teacher['name']) ?>" class="w-100 h-100 object-fit-cover">
+                                <img src="<?= $teacherPhoto ?>" alt="<?= esc($teacher['name']) ?>" class="w-100 h-100 object-fit-cover" onerror="this.src='https://ui-avatars.com/api/?name=<?= urlencode($teacher['name'] ?? 'Guru') ?>&background=6366f1&color=fff&size=160'">
                             </div>
                             <h5 class="fw-bold mb-1" style="font-size: 1.05rem;"><?= esc($teacher['name']) ?></h5>
                             <p class="text-primary fw-semibold small mb-0"><?= esc($teacher['role']) ?></p>
                         </div>
                     </div>
                 <?php endforeach; ?>
+            <?php else: ?>
+                <div class="col-12">
+                    <?= view('layouts/_empty_state', [
+                        'emptyIcon' => 'users',
+                        'emptyTitle' => 'Data Guru Belum Tersedia',
+                        'emptyMessage' => 'Data tenaga pendidik akan tampil setelah ditambahkan dari dashboard admin.'
+                    ]) ?>
+                </div>
             <?php endif; ?>
         </div>
     </div>

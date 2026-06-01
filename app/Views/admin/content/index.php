@@ -32,7 +32,7 @@
             </div>
             
             <div class="card-body">
-                <form method="POST" action="<?= base_url('admin/content/save') ?>">
+                <form method="POST" action="<?= base_url('admin/content/save') ?>" enctype="multipart/form-data">
                     <?= csrf_field() ?>
 
                     <!-- Tagline -->
@@ -60,6 +60,11 @@
                         <textarea class="form-control" id="history" name="history" rows="6" required placeholder="Tuliskan sejarah singkat berdirinya sekolah..."><?= esc(old('history', $settings['history'] ?? '')) ?></textarea>
                     </div>
 
+                    <div class="mb-3">
+                        <label for="school_founded_year" class="form-label fw-bold small">Tahun Berdiri</label>
+                        <input type="number" class="form-control" id="school_founded_year" name="school_founded_year" value="<?= esc(old('school_founded_year', $settings['school_founded_year'] ?? '')) ?>" min="1900" max="<?= date('Y') + 1 ?>" placeholder="Contoh: 2010">
+                    </div>
+
                     <hr class="my-4">
 
                     <div class="mb-3">
@@ -76,6 +81,40 @@
                     <div class="mb-3">
                         <label for="campus_description" class="form-label fw-bold small">Deskripsi Lingkungan & Kampus</label>
                         <textarea class="form-control" id="campus_description" name="campus_description" rows="5"><?= esc(old('campus_description', $settings['campus_description'] ?? '')) ?></textarea>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Brosur SPMB Resmi</label>
+                        <input type="file" class="form-control" name="brochure_file" accept="application/pdf">
+                        <small class="text-muted">
+                            Unggah PDF maksimal 5 MB. 
+                            <?php if (!empty($settings['brochure_file'])): ?>
+                                File aktif: <a href="<?= base_url('/brosur') ?>" target="_blank" rel="noopener">lihat/unduh brosur</a>.
+                            <?php else: ?>
+                                Belum ada brosur aktif.
+                            <?php endif; ?>
+                        </small>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="spmb_re_registration_start" class="form-label fw-bold small">Mulai Daftar Ulang</label>
+                            <input type="date" class="form-control" id="spmb_re_registration_start" name="spmb_re_registration_start" value="<?= esc(old('spmb_re_registration_start', $settings['spmb_re_registration_start'] ?? '')) ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="spmb_re_registration_end" class="form-label fw-bold small">Akhir Daftar Ulang</label>
+                            <input type="date" class="form-control" id="spmb_re_registration_end" name="spmb_re_registration_end" value="<?= esc(old('spmb_re_registration_end', $settings['spmb_re_registration_end'] ?? '')) ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="spmb_mpls_start" class="form-label fw-bold small">Mulai MPLS</label>
+                            <input type="date" class="form-control" id="spmb_mpls_start" name="spmb_mpls_start" value="<?= esc(old('spmb_mpls_start', $settings['spmb_mpls_start'] ?? '')) ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="spmb_mpls_end" class="form-label fw-bold small">Akhir MPLS</label>
+                            <input type="date" class="form-control" id="spmb_mpls_end" name="spmb_mpls_end" value="<?= esc(old('spmb_mpls_end', $settings['spmb_mpls_end'] ?? '')) ?>">
+                        </div>
                     </div>
 
                     <hr class="my-4">
@@ -100,9 +139,128 @@
         </div>
     </div>
 
-    <!-- RIGHT SIDE: Gallery Management -->
+    <!-- RIGHT SIDE: Teacher + Gallery Management -->
     <div class="col-lg-5 mb-4">
-        <div class="card shadow-sm border h-100">
+        <div class="card shadow-sm border mb-4">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title text-primary"><i class="me-2" data-lucide="users"></i> Tenaga Pendidik</h5>
+                    <small class="text-muted">Data guru tampil pada halaman Profil Sekolah.</small>
+                </div>
+                <span class="badge bg-label-primary rounded"><?= count($teachers ?? []) ?> Guru</span>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="<?= base_url('admin/content/teachers/store') ?>" enctype="multipart/form-data" class="mb-4 p-3 bg-light rounded border">
+                    <?= csrf_field() ?>
+                    <label class="form-label fw-bold small mb-2"><i class="me-1 text-primary" data-lucide="user-plus"></i> Tambah Guru</label>
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <input type="text" class="form-control form-control-sm" name="name" placeholder="Nama lengkap guru" required>
+                        </div>
+                        <div class="col-12">
+                            <input type="text" class="form-control form-control-sm" name="role" placeholder="Jabatan / mata pelajaran" required>
+                        </div>
+                        <div class="col-12">
+                            <input type="file" class="form-control form-control-sm" name="teacher_photo" accept="image/*">
+                        </div>
+                        <div class="col-6">
+                            <input type="number" class="form-control form-control-sm" name="sort_order" value="0" min="0" placeholder="Urutan">
+                        </div>
+                        <div class="col-6 d-flex align-items-center">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="new_teacher_active" checked>
+                                <label class="form-check-label small" for="new_teacher_active">Aktif</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <button class="btn btn-primary btn-sm px-3 w-100" type="submit">
+                                <i data-lucide="plus"></i> Tambahkan Guru
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="d-flex flex-column gap-2 overflow-auto" style="max-height: 380px;">
+                    <?php if (empty($teachers)): ?>
+                        <div class="text-center py-4 text-muted">
+                            <i class="fs-1 mb-2" data-lucide="users"></i>
+                            <p class="mb-0">Belum ada data guru.</p>
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($teachers as $teacher): ?>
+                            <?php
+                                $teacherPhoto = !empty($teacher['photo'])
+                                    ? ((strpos($teacher['photo'], 'http') === 0) ? esc($teacher['photo']) : base_url(esc($teacher['photo'])))
+                                    : 'https://ui-avatars.com/api/?name=' . urlencode($teacher['name'] ?? 'Guru') . '&background=6366f1&color=fff&size=96';
+                            ?>
+                            <div class="p-2 rounded border bg-white d-flex align-items-center gap-3">
+                                <img src="<?= $teacherPhoto ?>" alt="<?= esc($teacher['name']) ?>" class="rounded-circle object-fit-cover border" style="width:48px;height:48px;" onerror="this.src='https://ui-avatars.com/api/?name=<?= urlencode($teacher['name'] ?? 'Guru') ?>&background=6366f1&color=fff&size=96'">
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="fw-bold text-dark text-truncate"><?= esc($teacher['name']) ?></div>
+                                    <div class="small text-muted text-truncate"><?= esc($teacher['role']) ?></div>
+                                </div>
+                                <span class="badge <?= ($teacher['is_active'] ?? 0) ? 'bg-success' : 'bg-secondary' ?> bg-opacity-10 <?= ($teacher['is_active'] ?? 0) ? 'text-success' : 'text-secondary' ?>"><?= ($teacher['is_active'] ?? 0) ? 'Aktif' : 'Nonaktif' ?></span>
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editTeacherModal<?= $teacher['id'] ?>" title="Edit Guru">
+                                    <i data-lucide="pencil" style="width:14px;height:14px;"></i>
+                                </button>
+                                <form action="<?= base_url('admin/content/teachers/'.$teacher['id'].'/delete') ?>" method="POST" onsubmit="return confirm('Hapus data guru ini?')">
+                                    <?= csrf_field() ?>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Guru">
+                                        <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+                                    </button>
+                                </form>
+                            </div>
+
+                            <div class="modal fade" id="editTeacherModal<?= $teacher['id'] ?>" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <form method="POST" action="<?= base_url('admin/content/teachers/'.$teacher['id'].'/update') ?>" enctype="multipart/form-data">
+                                            <?= csrf_field() ?>
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Edit Data Guru</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-bold">Nama Lengkap</label>
+                                                    <input type="text" class="form-control" name="name" value="<?= esc($teacher['name']) ?>" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-bold">Jabatan / Mata Pelajaran</label>
+                                                    <input type="text" class="form-control" name="role" value="<?= esc($teacher['role']) ?>" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-bold">Ganti Foto</label>
+                                                    <input type="file" class="form-control" name="teacher_photo" accept="image/*">
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label small fw-bold">Urutan</label>
+                                                        <input type="number" class="form-control" name="sort_order" value="<?= (int) ($teacher['sort_order'] ?? 0) ?>" min="0">
+                                                    </div>
+                                                    <div class="col-md-6 d-flex align-items-end mb-3">
+                                                        <div class="form-check form-switch">
+                                                            <input class="form-check-input" type="checkbox" name="is_active" id="teacher-active-<?= $teacher['id'] ?>" <?= ($teacher['is_active'] ?? 0) ? 'checked' : '' ?>>
+                                                            <label class="form-check-label" for="teacher-active-<?= $teacher['id'] ?>">Aktif</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                                <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border">
             <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
                 <div>
                     <h5 class="card-title text-primary"><i class="me-2" data-lucide="images"></i> Galeri Sekolah</h5>

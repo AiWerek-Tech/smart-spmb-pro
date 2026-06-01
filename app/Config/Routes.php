@@ -19,8 +19,11 @@ $routes->get('/lingkungan-kampus', 'Public\PageController::campus');
 $routes->get('/galeri', 'Public\GalleryController::index');
 $routes->get('/spmb', 'Public\SpmbController::index');
 $routes->get('/pengumuman', 'Public\AnnouncementController::index');
+$routes->get('/hasil-seleksi', 'Public\AnnouncementController::results');
 $routes->post('/pengumuman/cek-hasil', 'Public\AnnouncementController::checkResult');
+$routes->post('/hasil-seleksi/cek', 'Public\AnnouncementController::checkResult');
 $routes->get('/kontak', 'Public\ContactController::index');
+$routes->get('/brosur', 'Public\PageController::brochure');
 $routes->get('/kebijakan-privasi', 'Public\PageController::privacy');
 $routes->get('/syarat-ketentuan', 'Public\PageController::terms');
 
@@ -77,6 +80,9 @@ $routes->group('admin', ['filter' => ['auth', 'role:admin']], function ($routes)
     $routes->post('content/gallery/upload', 'Admin\ContentController::galleryUpload');
     $routes->post('content/gallery/(:num)/update', 'Admin\ContentController::galleryUpdate/$1');
     $routes->post('content/gallery/(:num)/delete', 'Admin\ContentController::galleryDelete/$1');
+    $routes->post('content/teachers/store', 'Admin\ContentController::teacherStore');
+    $routes->post('content/teachers/(:num)/update', 'Admin\ContentController::teacherUpdate/$1');
+    $routes->post('content/teachers/(:num)/delete', 'Admin\ContentController::teacherDelete/$1');
 
     // Banner Management
     $routes->get('banners', 'Admin\ContentController::banners');

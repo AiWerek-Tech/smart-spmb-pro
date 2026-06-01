@@ -27,7 +27,7 @@
                         </h5>
                     </div>
                     <div class="card-body p-4">
-                        <form method="POST" action="<?= base_url('/pengumuman/cek-hasil') ?>" id="searchForm">
+                        <form method="POST" action="<?= base_url('/hasil-seleksi/cek') ?>" id="searchForm">
                             <?= csrf_field() ?>
                             
                             <p class="text-muted mb-3" style="font-size:0.9rem;">

@@ -12,6 +12,7 @@ use App\Models\BannerModel;
 use App\Models\TestimonialModel;
 use App\Models\GalleryModel;
 use App\Models\StatisticModel;
+use App\Models\GelombangModel;
 
 /**
  * HomeController — Halaman beranda/homepage publik.
@@ -27,6 +28,7 @@ class HomeController extends BaseController
     protected TestimonialModel $testimonialModel;
     protected GalleryModel $galleryModel;
     protected StatisticModel $statisticModel;
+    protected GelombangModel $gelombangModel;
 
     public function __construct()
     {
@@ -39,6 +41,7 @@ class HomeController extends BaseController
         $this->testimonialModel   = new TestimonialModel();
         $this->galleryModel       = new GalleryModel();
         $this->statisticModel     = new StatisticModel();
+        $this->gelombangModel     = new GelombangModel();
     }
 
     public function index()
@@ -63,20 +66,20 @@ class HomeController extends BaseController
         usort($jalurs, fn($a, $b) => ($a['sort_order'] ?? 0) <=> ($b['sort_order'] ?? 0));
         $jalurs = array_values($jalurs);
         
-        // 4. Ambil Statistik (Manual + Auto)
+        // 4. Ambil Statistik. Nilai inti dihitung dari database, metadata tetap bisa diatur admin.
         $manualStats = $this->statisticModel->where('is_active', 1)->orderBy('sort_order', 'ASC')->findAll();
         
         $totalRegistrations = $this->registrationModel->whereNotIn('status', ['draft'])->countAllResults();
         $totalAccepted      = $this->registrationModel->where('status', 'accepted')->countAllResults();
         $totalVerified      = $this->registrationModel->whereIn('status', ['verified', 'accepted'])->countAllResults();
-        
-        // Ambil statistik dari database; jika admin belum mengisi, hitung dari data sistem.
-        $stats = !empty($manualStats) ? $manualStats : [
-            ['label' => 'Pendaftar', 'value' => number_format($totalRegistrations, 0, ',', '.'), 'icon' => 'users'],
-            ['label' => 'Terverifikasi', 'value' => ($totalRegistrations > 0 ? round(($totalVerified / $totalRegistrations) * 100) : 0) . '%', 'icon' => 'check-circle'],
-            ['label' => 'Diterima', 'value' => number_format($totalAccepted, 0, ',', '.'), 'icon' => 'user-check'],
-            ['label' => 'Jalur Aktif', 'value' => (string) $this->jalurModel->where('is_active', 1)->countAllResults(), 'icon' => 'map-pin'],
-        ];
+
+        $stats = $this->buildHomepageStats(
+            $manualStats,
+            $totalRegistrations,
+            $totalVerified,
+            $totalAccepted,
+            (string) ($schoolSettings['accreditation'] ?? 'A')
+        );
 
         // 5. Per-jalur stats calculation (data sudah ada dari JOIN, tidak perlu query tambahan)
         foreach ($jalurs as &$jalur) {
@@ -98,6 +101,8 @@ class HomeController extends BaseController
         $gallery = $this->galleryModel->where('is_active', 1)->orderBy('sort_order', 'ASC')->limit(6)->findAll();
         $campusTitle = $this->settingModel->getValue('campus_title', 'Lingkungan Belajar');
         $campusDescription = $this->settingModel->getValue('campus_description', 'Informasi lingkungan sekolah belum dikonfigurasi.');
+
+        $spmbSchedule = $this->buildSpmbSchedule();
 
         // 9. Ambil Testimonials (limit 6 untuk performa)
         $testimonials = $this->testimonialModel->where('is_active', 1)->orderBy('id', 'DESC')->limit(6)->findAll();
@@ -126,6 +131,7 @@ class HomeController extends BaseController
             'gallery'            => $gallery,
             'campusTitle'        => $campusTitle,
             'campusDescription'  => $campusDescription,
+            'spmbSchedule'       => $spmbSchedule,
             'testimonials'       => $testimonials,
             'ctaUrl'             => $ctaUrl,
             'ctaText'            => $ctaText,
@@ -140,5 +146,140 @@ class HomeController extends BaseController
             'total_registrations' => $totalRegistrations,
             'status'              => 'success'
         ]);
+    }
+
+    private function buildHomepageStats(array $manualStats, int $totalRegistrations, int $totalVerified, int $totalAccepted, string $accreditation): array
+    {
+        $verifiedRate = $totalRegistrations > 0 ? (int) round(($totalVerified / $totalRegistrations) * 100) : 0;
+        $computed = [
+            'pendaftar' => [
+                'label'       => 'Pendaftar',
+                'value'       => number_format($totalRegistrations, 0, ',', '.'),
+                'icon'        => 'users',
+                'description' => 'Total non-draft',
+            ],
+            'terverifikasi' => [
+                'label'       => 'Terverifikasi',
+                'value'       => $verifiedRate . '%',
+                'icon'        => 'check-circle',
+                'description' => number_format($totalVerified, 0, ',', '.') . ' berkas valid',
+            ],
+            'diterima' => [
+                'label'       => 'Diterima',
+                'value'       => number_format($totalAccepted, 0, ',', '.'),
+                'icon'        => 'user-check',
+                'description' => 'Lulus seleksi',
+            ],
+            'akreditasi' => [
+                'label'       => 'Akreditasi',
+                'value'       => $accreditation !== '' ? $accreditation : '-',
+                'icon'        => 'award',
+                'description' => 'Data profil sekolah',
+            ],
+        ];
+
+        $manualByLabel = [];
+        foreach ($manualStats as $stat) {
+            $manualByLabel[strtolower(trim((string) ($stat['label'] ?? '')))] = $stat;
+        }
+
+        $stats = [];
+
+        foreach ($computed as $key => $stat) {
+            $manual = $manualByLabel[$key] ?? [];
+            $stats[] = array_merge($manual, $stat, [
+                'icon' => ($manual['icon'] ?? '') ?: $stat['icon'],
+            ]);
+        }
+
+        foreach ($manualStats as $stat) {
+            $key = strtolower(trim((string) ($stat['label'] ?? '')));
+            if (!isset($computed[$key])) {
+                $stats[] = $stat;
+            }
+        }
+
+        return array_slice($stats, 0, 4);
+    }
+
+    private function buildSpmbSchedule(): array
+    {
+        $schedule = [];
+        $gelombang = $this->gelombangModel->getGelombangWithJalur();
+
+        foreach ($gelombang as $item) {
+            $schedule[] = [
+                'title'       => $item['name'] . ' - ' . ($item['jalur_name'] ?? 'Jalur SPMB'),
+                'date_range'  => $this->dateRange($item['open_date'] ?? null, $item['close_date'] ?? null),
+                'description' => 'Masa pendaftaran calon siswa.',
+                'icon'        => 'calendar-plus',
+                'is_active'   => (int) ($item['is_active'] ?? 0) === 1,
+            ];
+
+            if (!empty($item['announcement_date'])) {
+                $schedule[] = [
+                    'title'       => 'Pengumuman ' . $item['name'],
+                    'date_range'  => $this->formatDate($item['announcement_date']),
+                    'description' => 'Hasil seleksi diumumkan sesuai gelombang.',
+                    'icon'        => 'megaphone',
+                    'is_active'   => (int) ($item['is_active'] ?? 0) === 1,
+                ];
+            }
+        }
+
+        $reRegistration = $this->dateRange(
+            $this->settingModel->getValue('spmb_re_registration_start', ''),
+            $this->settingModel->getValue('spmb_re_registration_end', '')
+        );
+        if ($reRegistration !== '-') {
+            $schedule[] = [
+                'title'       => 'Daftar Ulang',
+                'date_range'  => $reRegistration,
+                'description' => 'Khusus peserta yang dinyatakan lulus.',
+                'icon'        => 'clipboard-check',
+                'is_active'   => true,
+            ];
+        }
+
+        $mpls = $this->dateRange(
+            $this->settingModel->getValue('spmb_mpls_start', ''),
+            $this->settingModel->getValue('spmb_mpls_end', '')
+        );
+        if ($mpls !== '-') {
+            $schedule[] = [
+                'title'       => 'MPLS',
+                'date_range'  => $mpls,
+                'description' => 'Masa Pengenalan Lingkungan Sekolah.',
+                'icon'        => 'school',
+                'is_active'   => true,
+            ];
+        }
+
+        return $schedule;
+    }
+
+    private function dateRange(?string $start, ?string $end): string
+    {
+        $start = trim((string) $start);
+        $end = trim((string) $end);
+
+        if ($start === '' && $end === '') {
+            return '-';
+        }
+
+        if ($start === $end || $end === '') {
+            return $this->formatDate($start);
+        }
+
+        return $this->formatDate($start) . ' - ' . $this->formatDate($end);
+    }
+
+    private function formatDate(?string $date): string
+    {
+        if (!$date || strtotime($date) === false) {
+            return '-';
+        }
+
+        return date('d M Y', strtotime($date));
     }
 }

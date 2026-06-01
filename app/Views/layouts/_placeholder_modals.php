@@ -108,8 +108,8 @@ $supportEmail = $supportEmail ?? (string) $settingModel->getValue('email', $appI
                             <span class="small text-muted d-block">WhatsApp Call Center</span>
                             <span class="fw-bold text-dark"><?= esc($settingModel->getValue('whatsapp', $appInfo->developerPhone ?? '082190822641')) ?></span>
                         </div>
-                        <a href="https://wa.me/<?= esc($supportPhone ?: ($appInfo->developerWhatsapp ?? '6282190822641')) ?>" target="_blank" rel="noopener" class="btn btn-sm btn-success">
-                            <i data-lucide="phone-call" style="width: 14px; height: 14px;"></i> Chat
+                        <a href="<?= base_url('/kontak') ?>" class="btn btn-sm btn-success">
+                            <i data-lucide="phone-call" style="width: 14px; height: 14px;"></i> Kontak
                         </a>
                     </div>
                     <div class="p-3 bg-light rounded d-flex align-items-center justify-content-between">

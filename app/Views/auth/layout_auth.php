@@ -1,6 +1,10 @@
 <?php
 $settingModel = new \App\Models\SettingModel();
 $globalThemeColor = $settingModel->getValue('theme_color', 'purple');
+$schoolName = $settingModel->getValue('school_name', 'Smart SPMB Pro');
+$schoolTagline = $settingModel->getValue('tagline', 'Sekolah Berkarakter & Berprestasi');
+$schoolLogo = $settingModel->getValue('school_logo', '');
+$schoolLogoUrl = !empty($schoolLogo) ? base_url($schoolLogo) : '';
 $appInfo = config('AppInfo');
 ?>
 <!DOCTYPE html>
@@ -14,6 +18,14 @@ $appInfo = config('AppInfo');
     <meta name="version" content="<?= esc($appInfo->version) ?>">
     <meta name="theme-color" content="">
     <title><?= $title ?? 'Autentikasi' ?> - Smart SPMB Pro</title>
+
+    <!-- Favicon — gunakan logo sekolah jika tersedia -->
+    <?php if ($schoolLogoUrl): ?>
+        <link rel="icon" type="image/x-icon" href="<?= esc($schoolLogoUrl) ?>">
+        <link rel="apple-touch-icon" href="<?= esc($schoolLogoUrl) ?>">
+    <?php else: ?>
+        <link rel="icon" type="image/svg+xml" href="<?= base_url('assets/img/favicon.svg') ?>">
+    <?php endif; ?>
 
     <script src="<?= base_url('assets/js/theme-sync.js') ?>"></script>
     <script>
@@ -42,13 +54,15 @@ $appInfo = config('AppInfo');
         <!-- Brand Panel (Left Side — hidden on mobile) -->
         <div class="auth-brand-panel">
             <div class="auth-brand-content">
-                <div class="auth-brand-logo">
-                    <i data-lucide="graduation-cap"></i>
+                <div class="auth-brand-logo<?= $schoolLogoUrl ? ' auth-brand-logo--logo' : '' ?>">
+                    <?php if ($schoolLogoUrl): ?>
+                        <img src="<?= esc($schoolLogoUrl) ?>" alt="Logo <?= esc($schoolName) ?>" class="sp-brand-logo-img" style="width:100%;height:100%;object-fit:contain;">
+                    <?php else: ?>
+                        <i data-lucide="graduation-cap"></i>
+                    <?php endif; ?>
                 </div>
-                <h1 class="auth-brand-title">Smart SPMB Pro</h1>
-                <p class="auth-brand-subtitle">
-                    Platform penerimaan murid baru yang modern, efisien, dan terintegrasi untuk sekolah Anda.
-                </p>
+                <h1 class="auth-brand-title"><?= esc($schoolName) ?></h1>
+                <p class="auth-brand-subtitle"><?= esc($schoolTagline) ?></p>
                 <ul class="auth-brand-features">
                     <li>
                         <i data-lucide="shield-check"></i>
@@ -78,10 +92,14 @@ $appInfo = config('AppInfo');
             <div class="auth-form-container">
                 <!-- Mobile Brand (shown on small screens) -->
                 <div class="auth-mobile-brand">
-                    <div class="auth-mobile-brand-logo">
-                        <i data-lucide="graduation-cap"></i>
+                    <div class="auth-mobile-brand-logo<?= $schoolLogoUrl ? ' auth-mobile-brand-logo--logo' : '' ?>">
+                        <?php if ($schoolLogoUrl): ?>
+                            <img src="<?= esc($schoolLogoUrl) ?>" alt="Logo <?= esc($schoolName) ?>" class="sp-brand-logo-img" style="width:100%;height:100%;object-fit:contain;">
+                        <?php else: ?>
+                            <i data-lucide="graduation-cap"></i>
+                        <?php endif; ?>
                     </div>
-                    <h3>Smart SPMB Pro</h3>
+                    <h3><?= esc($schoolName) ?></h3>
                 </div>
 
                 <!-- Flash Alerts -->

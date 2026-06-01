@@ -3,6 +3,7 @@ $settingModel = new \App\Models\SettingModel();
 $globalThemeColor = $settingModel->getValue('theme_color', 'purple');
 $schoolName = $settingModel->getValue('school_name', 'SMP Nusantara Mandiri');
 $schoolTagline = $settingModel->getValue('tagline', 'Sekolah Berkarakter & Berprestasi');
+$schoolLogo = $settingModel->getValue('school_logo', '');
 $footerPhone = $settingModel->getValue('phone', 'Kontak belum dikonfigurasi');
 $footerEmail = $settingModel->getValue('email', 'Email belum dikonfigurasi');
 $footerAddress = $settingModel->getValue('address', 'Alamat sekolah belum dikonfigurasi');
@@ -11,6 +12,9 @@ $footerAccreditation = $settingModel->getValue('accreditation', 'A');
 $footerNpsn = $settingModel->getValue('npsn', '-');
 $footerDesc = $settingModel->getValue('school_description', 'Membentuk generasi cerdas, berkarakter, dan siap menghadapi tantangan global dengan sistem pendidikan inovatif.');
 $appInfo = config('AppInfo');
+
+// URL logo yang sudah diproses — digunakan di navbar, footer, favicon, og:image
+$schoolLogoUrl = !empty($schoolLogo) ? base_url($schoolLogo) : '';
 ?>
 <!DOCTYPE html>
 <html lang="id" data-theme-color="<?= esc($globalThemeColor) ?>">
@@ -29,6 +33,22 @@ $appInfo = config('AppInfo');
     <meta name="theme-color" content="">
     
     <title><?= $title ?? 'Smart SPMB Pro' ?> - Sistem Penerimaan Siswa Baru</title>
+
+    <!-- Favicon — gunakan logo sekolah jika tersedia -->
+    <?php if ($schoolLogoUrl): ?>
+        <link rel="icon" type="image/x-icon" href="<?= esc($schoolLogoUrl) ?>">
+        <link rel="apple-touch-icon" href="<?= esc($schoolLogoUrl) ?>">
+    <?php else: ?>
+        <link rel="icon" type="image/svg+xml" href="<?= base_url('assets/img/favicon.svg') ?>">
+    <?php endif; ?>
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="<?= esc($schoolName) ?> — Smart SPMB Pro">
+    <meta property="og:description" content="<?= esc($footerDesc) ?>">
+    <?php if ($schoolLogoUrl): ?>
+        <meta property="og:image" content="<?= esc($schoolLogoUrl) ?>">
+    <?php endif; ?>
+    <meta property="og:type" content="website">
     
     <script src="<?= base_url('assets/js/theme-sync.js') ?>"></script>
     <script>
@@ -63,8 +83,12 @@ $appInfo = config('AppInfo');
     <nav class="sp-public-navbar fixed-top" id="main-navbar" aria-label="Navigasi utama">
         <div class="container sp-nav-container">
             <a class="navbar-brand" href="<?= base_url('/') ?>" aria-label="Beranda <?= esc($schoolName) ?>">
-                <div class="sp-brand-icon">
-                    <i data-lucide="graduation-cap"></i>
+                <div class="sp-brand-icon<?= $schoolLogoUrl ? ' sp-brand-icon--logo' : '' ?>">
+                    <?php if ($schoolLogoUrl): ?>
+                        <img src="<?= esc($schoolLogoUrl) ?>" alt="Logo <?= esc($schoolName) ?>" class="sp-brand-logo-img">
+                    <?php else: ?>
+                        <i data-lucide="graduation-cap"></i>
+                    <?php endif; ?>
                 </div>
                 <div class="brand-text-wrapper">
                     <span class="brand-name"><?= esc($schoolName) ?></span>
@@ -96,7 +120,7 @@ $appInfo = config('AppInfo');
                         </a>
                         <ul class="dropdown-menu sp-nav-dropdown-menu shadow-lg border-0" role="menu">
                             <li><a class="dropdown-item" href="<?= base_url('/spmb') ?>"><i data-lucide="file-text"></i> Panduan Pendaftaran</a></li>
-                            <li><a class="dropdown-item" href="<?= base_url('/pengumuman') ?>"><i data-lucide="search"></i> Hasil Seleksi</a></li>
+                            <li><a class="dropdown-item" href="<?= base_url('/hasil-seleksi') ?>"><i data-lucide="search"></i> Hasil Seleksi</a></li>
                             <li><a class="dropdown-item" href="<?= base_url('/biaya') ?>"><i data-lucide="wallet"></i> Informasi Biaya</a></li>
                         </ul>
                     </li>
@@ -135,8 +159,12 @@ $appInfo = config('AppInfo');
     <div class="offcanvas offcanvas-end sp-mobile-offcanvas d-lg-none" tabindex="-1" id="mobileMenuDrawer" aria-labelledby="mobileMenuDrawerLabel">
         <div class="offcanvas-header">
             <div class="sp-mobile-drawer-brand">
-                <div class="sp-brand-icon sp-brand-icon-sm">
-                    <i data-lucide="graduation-cap"></i>
+                <div class="sp-brand-icon sp-brand-icon-sm<?= $schoolLogoUrl ? ' sp-brand-icon--logo' : '' ?>">
+                    <?php if ($schoolLogoUrl): ?>
+                        <img src="<?= esc($schoolLogoUrl) ?>" alt="Logo <?= esc($schoolName) ?>" class="sp-brand-logo-img">
+                    <?php else: ?>
+                        <i data-lucide="graduation-cap"></i>
+                    <?php endif; ?>
                 </div>
                 <div>
                     <h5 class="offcanvas-title mb-0" id="mobileMenuDrawerLabel"><?= esc($schoolName) ?></h5>
@@ -174,7 +202,7 @@ $appInfo = config('AppInfo');
                     </button>
                     <div class="collapse sp-mobile-nav-sub" id="mobileNavInfo">
                         <a href="<?= base_url('/spmb') ?>" class="sp-mobile-nav-sublink">Panduan Pendaftaran</a>
-                        <a href="<?= base_url('/pengumuman') ?>" class="sp-mobile-nav-sublink">Hasil Seleksi</a>
+                        <a href="<?= base_url('/hasil-seleksi') ?>" class="sp-mobile-nav-sublink">Hasil Seleksi</a>
                         <a href="<?= base_url('/biaya') ?>" class="sp-mobile-nav-sublink">Informasi Biaya</a>
                     </div>
                 </div>
@@ -245,7 +273,7 @@ $appInfo = config('AppInfo');
             <span class="mobile-nav-icon"><i data-lucide="info"></i></span>
             <span class="mobile-nav-label">Info</span>
         </a>
-        <a href="<?= base_url('/pengumuman') ?>" class="mobile-nav-item <?= str_contains(current_url(), '/pengumuman') ? 'active' : '' ?>">
+        <a href="<?= base_url('/hasil-seleksi') ?>" class="mobile-nav-item <?= str_contains(current_url(), '/hasil-seleksi') ? 'active' : '' ?>">
             <span class="mobile-nav-icon"><i data-lucide="bar-chart-3"></i></span>
             <span class="mobile-nav-label">Status</span>
         </a>
@@ -263,7 +291,7 @@ $appInfo = config('AppInfo');
     </nav>
 
     <!-- Floating WhatsApp Button -->
-    <a href="https://wa.me/<?= esc($footerWhatsapp ?: $appInfo->developerWhatsapp) ?>" class="sp-floating-wa" target="_blank" rel="noopener" aria-label="Hubungi kami di WhatsApp">
+    <a href="<?= base_url('/kontak') ?>" class="sp-floating-wa" aria-label="Hubungi panitia">
         <i data-lucide="message-circle"></i>
     </a>
 
@@ -274,8 +302,12 @@ $appInfo = config('AppInfo');
                 <!-- Brand Column -->
                 <div class="sp-footer-brand-col">
                     <a class="sp-footer-brand" href="<?= base_url('/') ?>">
-                        <div class="sp-brand-icon">
-                            <i data-lucide="graduation-cap"></i>
+                        <div class="sp-brand-icon<?= $schoolLogoUrl ? ' sp-brand-icon--logo' : '' ?>">
+                            <?php if ($schoolLogoUrl): ?>
+                                <img src="<?= esc($schoolLogoUrl) ?>" alt="Logo <?= esc($schoolName) ?>" class="sp-brand-logo-img">
+                            <?php else: ?>
+                                <i data-lucide="graduation-cap"></i>
+                            <?php endif; ?>
                         </div>
                         <div>
                             <span class="sp-footer-brand-name"><?= esc($schoolName) ?></span>
@@ -297,7 +329,7 @@ $appInfo = config('AppInfo');
                         <li><a href="<?= base_url('/') ?>">Beranda</a></li>
                         <li><a href="<?= base_url('/profil') ?>">Profil Sekolah</a></li>
                         <li><a href="<?= base_url('/spmb') ?>">Info Pendaftaran</a></li>
-                        <li><a href="<?= base_url('/pengumuman') ?>">Hasil Seleksi</a></li>
+                        <li><a href="<?= base_url('/hasil-seleksi') ?>">Hasil Seleksi</a></li>
                         <li><a href="<?= base_url('/kontak') ?>">Hubungi Kami</a></li>
                     </ul>
                 </div>
@@ -341,7 +373,7 @@ $appInfo = config('AppInfo');
                             </div>
                         </div>
                         <p class="sp-footer-cta-text">Unduh brosur resmi sekolah untuk informasi lengkap program unggulan.</p>
-                        <a href="<?= base_url('/kontak') ?>" class="btn btn-primary w-100 sp-footer-cta-btn">
+                        <a href="<?= base_url('/brosur') ?>" class="btn btn-primary w-100 sp-footer-cta-btn">
                             <i data-lucide="download"></i> Download Brosur
                         </a>
                     </div>
@@ -349,7 +381,13 @@ $appInfo = config('AppInfo');
             </div>
 
             <div class="sp-footer-bottom">
-                <p class="sp-footer-copy mb-0">&copy; <?= date('Y') ?> <?= esc($schoolName) ?>. Smart SPMB Pro v<?= esc($appInfo->version) ?> by <?= esc($appInfo->developer) ?></p>
+                <p class="sp-footer-copy mb-0">
+                    <span>&copy; <?= date('Y') ?> <?= esc($schoolName) ?></span>
+                    <span class="sp-footer-copy-separator" aria-hidden="true">|</span>
+                    <span>Smart SPMB Pro v<?= esc($appInfo->version) ?></span>
+                    <span class="sp-footer-copy-separator" aria-hidden="true">|</span>
+                    <span>Developed by <strong><?= esc($appInfo->developer) ?></strong></span>
+                </p>
                 <div class="sp-footer-legal">
                     <a href="<?= base_url('/kebijakan-privasi') ?>">Kebijakan Privasi</a>
                     <a href="<?= base_url('/syarat-ketentuan') ?>">Syarat & Ketentuan</a>

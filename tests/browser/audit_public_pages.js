@@ -5,6 +5,7 @@ const PUBLIC_PAGES = [
   { name: 'Profil', path: '/profil', interact: 'gallery' },
   { name: 'SPMB', path: '/spmb' },
   { name: 'Pengumuman', path: '/pengumuman', interact: 'modal' },
+  { name: 'Hasil Seleksi', path: '/hasil-seleksi', interact: 'resultForm' },
   { name: 'Kontak', path: '/kontak', interact: 'form' },
   { name: 'Galeri', path: '/galeri', interact: 'galleryModal' },
   { name: 'Lingkungan Kampus', path: '/lingkungan-kampus', interact: 'galleryModal' },
@@ -35,6 +36,36 @@ async function runInteract(page, type) {
         }).length;
       });
       if (broken > 0) notes.push(`${broken} hero/gallery/news image(s) failed to load`);
+      const homeUi = await page.evaluate(() => {
+        const dropdown = document.querySelector('.sp-nav-dropdown-menu');
+        const heroFrame = document.querySelector('.sp-hero-mockup');
+        const brochure = document.querySelector('.sp-footer-cta-btn');
+        const indicators = [...document.querySelectorAll('#heroCarousel .carousel-indicators [data-bs-target]')].map((el) => {
+          const rect = el.getBoundingClientRect();
+          const dot = getComputedStyle(el, '::after');
+          return {
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+            bg: getComputedStyle(el).backgroundColor,
+            dotWidth: parseFloat(dot.width || '0'),
+            dotHeight: parseFloat(dot.height || '0'),
+          };
+        });
+
+        return {
+          dropdownBg: dropdown ? getComputedStyle(dropdown).backgroundColor : '',
+          heroFrameBg: heroFrame ? getComputedStyle(heroFrame).backgroundColor : '',
+          brochureHref: brochure ? brochure.getAttribute('href') : '',
+          scheduleCards: document.querySelectorAll('.sp-schedule-card').length,
+          indicators,
+        };
+      });
+      if (!homeUi.dropdownBg.includes('255, 255, 255')) notes.push(`Navbar dropdown is not solid white in light mode (${homeUi.dropdownBg})`);
+      if (!homeUi.heroFrameBg.includes('255, 255, 255')) notes.push(`Hero image frame is not white (${homeUi.heroFrameBg})`);
+      if (!homeUi.brochureHref || !homeUi.brochureHref.includes('/brosur')) notes.push('Footer brochure button does not target /brosur');
+      if (!homeUi.scheduleCards) notes.push('SPMB schedule cards are missing from homepage');
+      const badIndicators = homeUi.indicators.filter((item) => item.width < 44 || item.height < 44 || item.dotWidth > 24 || item.dotHeight > 12);
+      if (badIndicators.length) notes.push(`Carousel indicators are not modern touch dots: ${JSON.stringify(badIndicators)}`);
       const carousel = page.locator('#heroCarousel');
       if (await carousel.count()) {
         const nextBtn = page.locator('#heroCarousel .carousel-control-next, #heroCarousel [data-bs-slide="next"]').first();
@@ -89,6 +120,10 @@ async function runInteract(page, type) {
     if (type === 'form') {
       const form = page.locator('form').first();
       if (!(await form.count())) notes.push('Contact form missing');
+    }
+    if (type === 'resultForm') {
+      const form = page.locator('form[action*="hasil-seleksi"]');
+      if (!(await form.count())) notes.push('Result check form missing');
     }
     if (type === 'authForm') {
       const hasEmail = await page.locator('input[type="email"], input[name="email"]').count();
@@ -189,16 +224,16 @@ async function auditCheckResult(page) {
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
 
-  await page.goto('http://localhost:8080/pengumuman', { waitUntil: 'load' });
+  await page.goto('http://localhost:8080/hasil-seleksi', { waitUntil: 'load' });
   await page.waitForTimeout(1000);
 
   const issues = [];
-  const searchForm = page.locator('form[action*="cek-hasil"]');
+  const searchForm = page.locator('form[action*="hasil-seleksi"]');
   if (!(await searchForm.count())) {
     issues.push('Cek hasil form not found on pengumuman page');
   } else {
     await page.fill('#search', 'NONEXISTENT_TEST_QUERY_XYZ');
-    await page.click('form[action*="cek-hasil"] button[type="submit"]');
+    await page.click('form[action*="hasil-seleksi"] button[type="submit"]');
     await page.waitForTimeout(2000);
 
     const body = await page.content();
@@ -213,7 +248,7 @@ async function auditCheckResult(page) {
 
   return {
     name: 'Cek Hasil POST',
-    path: 'POST /pengumuman/cek-hasil',
+    path: 'POST /hasil-seleksi/cek',
     pass: issues.length === 0 && jsErrors.length === 0,
     issues,
     jsErrors,

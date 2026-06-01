@@ -1320,3 +1320,57 @@ body.dark-mode .sp-command-input-wrapper input {
 body.dark-mode .sp-breadcrumb .breadcrumb-item.active {
     color: #ffffff;
 }
+
+/* ─────────────────────────────────────────────
+   17. SCHOOL LOGO — Replaces Lucide icon in brand areas
+   ───────────────────────────────────────────── */
+
+/* Logo di dalam .sp-brand-icon (navbar publik, footer, mobile drawer) */
+.sp-brand-icon .sp-brand-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    display: block;
+}
+
+/* Saat logo ada, hilangkan background warna primer agar logo tampil bersih */
+.sp-brand-icon:has(.sp-brand-logo-img) {
+    background: transparent;
+    box-shadow: none;
+    padding: 2px;
+}
+
+/* Fallback untuk browser yang tidak support :has() */
+.sp-brand-icon--logo {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 2px;
+}
+
+/* Logo di sidebar dashboard */
+.brand-logo .sp-brand-logo-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border-radius: 6px;
+    display: block;
+}
+
+/* Logo di auth brand panel (desktop) */
+.auth-brand-logo .sp-brand-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 12px;
+    display: block;
+}
+
+/* Logo di auth mobile brand */
+.auth-mobile-brand-logo .sp-brand-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    display: block;
+}

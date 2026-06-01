@@ -94,6 +94,10 @@ class SettingModel extends Model
             'address',
             'whatsapp',
             'maps_embed',
+            'maps_query',
+            'maps_lat',
+            'maps_lng',
+            'maps_zoom',
             'accreditation',
             'accreditation_year',
             'npsn',
@@ -106,10 +110,16 @@ class SettingModel extends Model
             'developer_phone',
             'developer_email',
             'school_facilities',
+            'school_founded_year',
             'campus_title',
             'campus_description',
             'privacy_policy',
             'terms_conditions',
+            'brochure_file',
+            'spmb_re_registration_start',
+            'spmb_re_registration_end',
+            'spmb_mpls_start',
+            'spmb_mpls_end',
         ];
 
         $rows   = $this->whereIn('key', $keys)->findAll();

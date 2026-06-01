@@ -128,6 +128,11 @@ $appInfo = config('AppInfo');
             border-top: 1px solid var(--sp-card-border);
         }
 
+        .wizard-nav-btn {
+            display: inline-flex;
+            justify-content: center;
+        }
+
         body.dark-mode .wizard-footer {
             background: rgba(255, 255, 255, 0.02);
         }
@@ -137,12 +142,122 @@ $appInfo = config('AppInfo');
         }
 
         @media (max-width: 768px) {
+            body {
+                min-height: 100dvh;
+                padding: 0;
+                padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+                overflow-x: hidden;
+            }
+
+            .container {
+                max-width: 100%;
+                padding: 0;
+            }
+
             .wizard-container {
                 border-radius: 0;
-                margin: -20px 0;
+                min-height: 100dvh;
+                margin: 0;
+                box-shadow: none;
+                border: 0;
             }
+
+            .wizard-header {
+                position: sticky;
+                top: 0;
+                z-index: 30;
+                padding: calc(18px + env(safe-area-inset-top, 0px)) 20px 18px;
+                text-align: left;
+            }
+
+            .wizard-header h2 {
+                font-size: 1.25rem;
+                line-height: 1.2;
+            }
+
+            .wizard-header p {
+                font-size: 0.82rem;
+            }
+
+            .step-container {
+                justify-content: flex-start;
+                overflow-x: auto;
+                gap: 14px;
+                padding: 18px 18px 6px !important;
+                margin-bottom: 6px;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .step-container::-webkit-scrollbar {
+                display: none;
+            }
+
+            .step-container::before {
+                display: none;
+            }
+
+            .step-item {
+                flex: 0 0 48px;
+                scroll-snap-align: start;
+            }
+
+            .step-circle {
+                width: 44px;
+                height: 44px;
+            }
+
+            .wizard-container > .px-4,
+            .wizard-container > .px-4.pb-2 {
+                padding-left: 18px !important;
+                padding-right: 18px !important;
+            }
+
+            .form-control,
+            .form-select,
+            .btn {
+                min-height: 48px;
+                border-radius: 14px;
+            }
+
+            .form-check-input {
+                width: 1.5rem;
+                height: 1.5rem;
+                margin-top: 0.1rem;
+            }
+
+            .form-check {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .file-upload-area {
+                padding: 24px 16px;
+                border-radius: 18px;
+            }
+
             .wizard-footer {
-                padding: 16px 20px;
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 40;
+                padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+                background: rgba(var(--sp-body-bg-rgb, 248, 250, 252), 0.94);
+                backdrop-filter: blur(22px);
+                -webkit-backdrop-filter: blur(22px);
+                box-shadow: 0 -18px 42px rgba(15, 23, 42, 0.12);
+            }
+
+            .wizard-footer .btn {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .wizard-footer .btn.ms-auto {
+                margin-left: 0 !important;
             }
         }
     </style>
@@ -204,13 +319,13 @@ $appInfo = config('AppInfo');
 
             <!-- Footer Navigation -->
             <div class="wizard-footer">
-                <button type="button" class="btn btn-secondary d-flex align-items-center" id="prevBtn" style="display: none;">
+                <button type="button" class="btn btn-secondary wizard-nav-btn align-items-center" id="prevBtn" style="display: none;">
                     <i data-lucide="arrow-left" class="me-2" style="width: 16px; height: 16px;"></i> Kembali
                 </button>
-                <button type="button" class="btn btn-primary d-flex align-items-center ms-auto" id="nextBtn">
+                <button type="button" class="btn btn-primary wizard-nav-btn align-items-center ms-auto" id="nextBtn">
                     Lanjut <i data-lucide="arrow-right" class="ms-2" style="width: 16px; height: 16px;"></i>
                 </button>
-                <button type="button" class="btn btn-success d-flex align-items-center ms-auto" id="submitBtn" style="display: none;">
+                <button type="button" class="btn btn-success wizard-nav-btn align-items-center ms-auto" id="submitBtn" style="display: none;">
                     <i data-lucide="check" class="me-2" style="width: 16px; height: 16px;"></i> Selesai & Submit
                 </button>
             </div>
@@ -253,14 +368,14 @@ $appInfo = config('AppInfo');
             if (currentStep === 1) {
                 prevBtn.style.display = 'none';
             } else {
-                prevBtn.style.display = 'block';
+                prevBtn.style.display = 'inline-flex';
             }
 
             if (currentStep === 8) {
                 nextBtn.style.display = 'none';
-                submitBtn.style.display = 'block';
+                submitBtn.style.display = 'inline-flex';
             } else {
-                nextBtn.style.display = 'block';
+                nextBtn.style.display = 'inline-flex';
                 submitBtn.style.display = 'none';
             }
         }

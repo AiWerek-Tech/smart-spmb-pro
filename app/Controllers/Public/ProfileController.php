@@ -5,6 +5,7 @@ namespace App\Controllers\Public;
 use App\Controllers\BaseController;
 use App\Models\SettingModel;
 use App\Models\GalleryModel;
+use App\Models\TeacherModel;
 
 /**
  * ProfileController — Halaman profil sekolah.
@@ -18,11 +19,13 @@ class ProfileController extends BaseController
 {
     protected SettingModel $settingModel;
     protected GalleryModel $galleryModel;
+    protected TeacherModel $teacherModel;
 
     public function __construct()
     {
         $this->settingModel = new SettingModel();
         $this->galleryModel = new GalleryModel();
+        $this->teacherModel = new TeacherModel();
     }
 
     /**
@@ -40,6 +43,7 @@ class ProfileController extends BaseController
         $schoolMission  = $this->settingModel->getValue('mission', 'Data belum tersedia');
         $schoolAccred   = $this->settingModel->getValue('accreditation', 'Data belum tersedia');
         $schoolAccredYear = $this->settingModel->getValue('accreditation_year', '2024');
+        $schoolFoundedYear = $this->settingModel->getValue('school_founded_year', '');
         $facilities     = $this->settingModel->getValue('school_facilities', "Perpustakaan\nLab Komputer\nLab Sains\nLapangan Olahraga");
 
         // Parse facilities from newline or comma separated settings.
@@ -48,29 +52,7 @@ class ProfileController extends BaseController
         // Ambil galeri aktif dari database
         $gallery = $this->galleryModel->where('is_active', 1)->orderBy('sort_order', 'ASC')->findAll();
 
-        // Daftar Tenaga Pendidik / Guru (Fallback dinamis terintegrasi)
-        $teachers = [
-            [
-                'name' => 'Budi Santoso, M.Pd.',
-                'role' => 'Kepala Sekolah',
-                'photo' => 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=300&auto=format&fit=crop'
-            ],
-            [
-                'name' => 'Siti Aminah, S.Pd.',
-                'role' => 'Wakil Kepala Sekolah & Kurikulum',
-                'photo' => 'https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=300&auto=format&fit=crop'
-            ],
-            [
-                'name' => 'Dr. Ahmad Fauzi, M.Si.',
-                'role' => 'Guru IPA / Laboran',
-                'photo' => 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop'
-            ],
-            [
-                'name' => 'Rina Wijaya, S.S.',
-                'role' => 'Guru Bahasa Inggris',
-                'photo' => 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?q=80&w=300&auto=format&fit=crop'
-            ],
-        ];
+        $teachers = $this->teacherModel->activeOrdered();
 
         return view('public/profile', [
             'title'          => 'Profil Sekolah',
@@ -80,6 +62,7 @@ class ProfileController extends BaseController
             'schoolMission'  => $schoolMission,
             'schoolAccred'   => $schoolAccred,
             'schoolAccredYear' => $schoolAccredYear,
+            'schoolFoundedYear' => $schoolFoundedYear,
             'facilities'     => $facilitiesArray,
             'gallery'        => $gallery,
             'teachers'       => $teachers,

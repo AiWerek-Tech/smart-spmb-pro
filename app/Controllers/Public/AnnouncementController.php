@@ -50,6 +50,16 @@ class AnnouncementController extends BaseController
         ]);
     }
 
+    public function results()
+    {
+        return view('public/check_result', [
+            'title'   => 'Hasil Seleksi',
+            'result'  => null,
+            'message' => '',
+            'search'  => '',
+        ]);
+    }
+
     /**
      * Cek hasil seleksi berdasarkan nama atau nomor pendaftaran.
      * POST: /pengumuman/cek-hasil

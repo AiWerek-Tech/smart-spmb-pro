@@ -63,9 +63,11 @@ class EnhanceHomepageContent extends Migration
             return;
         }
 
+        $table = $this->db->protectIdentifiers('gallery');
         foreach (['video_provider', 'video_url', 'media_type', 'description'] as $field) {
-            if ($this->db->fieldExists($field, 'gallery')) {
-                $this->forge->dropColumn('gallery', $field);
+            $exists = $this->db->query('SHOW COLUMNS FROM ' . $table . ' LIKE ' . $this->db->escape($field))->getNumRows() > 0;
+            if ($exists) {
+                $this->db->query('ALTER TABLE ' . $table . ' DROP COLUMN ' . $this->db->protectIdentifiers($field));
             }
         }
     }

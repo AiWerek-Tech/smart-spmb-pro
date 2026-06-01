@@ -102,6 +102,8 @@
     <div class="col-12">
         <form method="POST" action="<?= base_url('admin/settings/save') ?>" enctype="multipart/form-data">
             <?= csrf_field() ?>
+            <input type="hidden" name="theme_color_operator" value="<?= esc(old('theme_color_operator', $settings['theme_color_operator'] ?? 'navy')) ?>">
+            <input type="hidden" name="theme_color_pendaftar" value="<?= esc(old('theme_color_pendaftar', $settings['theme_color_pendaftar'] ?? 'lightblue')) ?>">
 
             <!-- Validation Errors Overlay -->
             <?php if (session()->has('errors')): ?>
@@ -227,10 +229,40 @@
                                         <textarea class="form-control" id="address" name="address" rows="3" required placeholder="Masukkan alamat lengkap sekolah..."><?= esc(old('address', $settings['address'] ?? '')) ?></textarea>
                                     </div>
 
-                                    <div class="mb-3">
-                                        <label for="maps_embed" class="form-label fw-bold small">Embed Google Maps</label>
-                                        <textarea class="form-control font-monospace" id="maps_embed" name="maps_embed" rows="3" placeholder="Tempel kode embed iframe dari Google Maps (Bagikan &gt; Sematkan peta)"><?= esc(old('maps_embed', $settings['maps_embed'] ?? '')) ?></textarea>
-                                        <small class="text-muted">Masukkan kode <code>&lt;iframe&gt;</code> sematan lokasi dari Google Maps.</small>
+                                    <div class="p-3 rounded border bg-light">
+                                        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+                                            <div>
+                                                <label for="maps_query" class="form-label fw-bold small mb-1">Lokasi Peta Sekolah</label>
+                                                <p class="text-muted small mb-0">Cari lokasi, isi koordinat, atau deteksi posisi perangkat. Tidak perlu menyalin kode embed.</p>
+                                            </div>
+                                            <button type="button" class="btn btn-outline-primary btn-sm" id="detect-location-btn">
+                                                <i data-lucide="crosshair" class="me-1" style="width:14px;height:14px;"></i> Deteksi Lokasi
+                                            </button>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control" id="maps_query" name="maps_query" value="<?= esc(old('maps_query', $settings['maps_query'] ?? '')) ?>" placeholder="Cari nama sekolah/alamat pada Google Maps">
+                                        </div>
+
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label for="maps_lat" class="form-label small fw-bold">Latitude</label>
+                                                <input type="text" class="form-control" id="maps_lat" name="maps_lat" value="<?= esc(old('maps_lat', $settings['maps_lat'] ?? '')) ?>" placeholder="-2.5337">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="maps_lng" class="form-label small fw-bold">Longitude</label>
+                                                <input type="text" class="form-control" id="maps_lng" name="maps_lng" value="<?= esc(old('maps_lng', $settings['maps_lng'] ?? '')) ?>" placeholder="140.7181">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="maps_zoom" class="form-label small fw-bold">Zoom</label>
+                                                <input type="number" class="form-control" id="maps_zoom" name="maps_zoom" value="<?= esc(old('maps_zoom', $settings['maps_zoom'] ?? '16')) ?>" min="1" max="20">
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-3 rounded overflow-hidden border bg-white" style="height:260px;">
+                                            <iframe id="maps-preview" src="" width="100%" height="100%" style="border:0;" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Preview lokasi sekolah"></iframe>
+                                        </div>
+                                        <div class="form-text mt-2">Jika koordinat diisi, peta memakai koordinat. Jika kosong, peta memakai teks pencarian lokasi.</div>
                                     </div>
                                 </div>
 
@@ -523,6 +555,22 @@ $(document).ready(function() {
         }
     }
 
+    function mapsEmbedUrl() {
+        const lat = $('#maps_lat').val()?.trim();
+        const lng = $('#maps_lng').val()?.trim();
+        const query = $('#maps_query').val()?.trim() || $('#address').val()?.trim();
+        const zoom = Math.min(20, Math.max(1, parseInt($('#maps_zoom').val() || '16', 10)));
+        const target = lat && lng ? `${lat},${lng}` : query;
+        return target ? `https://maps.google.com/maps?q=${encodeURIComponent(target)}&z=${zoom}&output=embed` : '';
+    }
+
+    function refreshMapsPreview() {
+        const url = mapsEmbedUrl();
+        if (url) {
+            $('#maps-preview').attr('src', url);
+        }
+    }
+
     // Re-init Select2 when hidden tab becomes visible; refresh layout on tab change
     $('#settings-tabs button').on('shown.bs.tab', function () {
         const target = $(this).attr('data-bs-target');
@@ -546,8 +594,31 @@ $(document).ready(function() {
         previewThemeColor(this.value);
     });
 
+    $('#maps_query, #maps_lat, #maps_lng, #maps_zoom, #address').on('input change', refreshMapsPreview);
+    $('#detect-location-btn').on('click', function() {
+        const $btn = $(this);
+        if (!navigator.geolocation) {
+            alert('Deteksi lokasi tidak didukung oleh browser ini.');
+            return;
+        }
+
+        $btn.prop('disabled', true).text('Mendeteksi...');
+        navigator.geolocation.getCurrentPosition(function(position) {
+            $('#maps_lat').val(position.coords.latitude.toFixed(7));
+            $('#maps_lng').val(position.coords.longitude.toFixed(7));
+            refreshMapsPreview();
+            $btn.prop('disabled', false).html('<i data-lucide="crosshair" class="me-1" style="width:14px;height:14px;"></i> Deteksi Lokasi');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }, function() {
+            alert('Lokasi tidak bisa dideteksi. Pastikan izin lokasi browser aktif.');
+            $btn.prop('disabled', false).html('<i data-lucide="crosshair" class="me-1" style="width:14px;height:14px;"></i> Deteksi Lokasi');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+    });
+
     // Initial active theme styling load
     window.updateThemeCardStyles();
+    refreshMapsPreview();
 
     // Icons inside tab panels (layout already renders sidebar/topbar icons)
     if (typeof lucide !== 'undefined') {

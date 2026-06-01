@@ -171,7 +171,7 @@
                     <p>Mulai pendaftaran online.</p>
                 </div>
             </a>
-            <a href="<?= base_url('/pengumuman') ?>" class="sp-primary-card">
+            <a href="<?= base_url('/hasil-seleksi') ?>" class="sp-primary-card">
                 <div class="sp-primary-icon sp-icon-success">
                     <i data-lucide="search"></i>
                 </div>
@@ -217,12 +217,45 @@
     </div>
 </section>
 
-<!-- Section 5: Registration Timeline -->
+<!-- Section 5: SPMB Schedule -->
 <section class="sp-timeline-section bg-light" id="timeline" style="padding: var(--sp-section-gap) 0;">
     <div class="container">
         <div class="sp-section-header text-center">
+            <h2 class="sp-section-title-sm">Jadwal SPMB <?= esc($academicYear) ?></h2>
+            <p class="text-muted small">Agenda resmi mulai masa pendaftaran, pengumuman, daftar ulang, hingga MPLS.</p>
+        </div>
+        <?php if (!empty($spmbSchedule)): ?>
+            <div class="sp-schedule-strip" aria-label="Jadwal SPMB">
+                <?php foreach ($spmbSchedule as $index => $item): ?>
+                    <article class="sp-schedule-card <?= !empty($item['is_active']) ? 'is-live' : '' ?>">
+                        <div class="sp-schedule-icon">
+                            <i data-lucide="<?= esc($item['icon'] ?? 'calendar') ?>"></i>
+                        </div>
+                        <div class="sp-schedule-content">
+                            <div class="sp-schedule-kicker"><?= $index === 0 ? 'Mulai' : 'Tahap ' . ($index + 1) ?></div>
+                            <h3><?= esc($item['title']) ?></h3>
+                            <p><?= esc($item['description']) ?></p>
+                            <strong><?= esc($item['date_range']) ?></strong>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <?= view('layouts/_empty_state', [
+                'emptyIcon' => 'calendar-days',
+                'emptyTitle' => 'Jadwal Belum Dipublikasikan',
+                'emptyMessage' => 'Admin dapat mengatur gelombang pendaftaran, jadwal daftar ulang, dan MPLS dari dashboard.'
+            ]) ?>
+        <?php endif; ?>
+    </div>
+</section>
+
+<!-- Section 5.2: Registration Flow -->
+<section class="sp-flow-section bg-white" id="alur" style="padding: var(--sp-section-gap) 0;">
+    <div class="container">
+        <div class="sp-section-header text-center">
             <h2 class="sp-section-title-sm">Alur Pendaftaran</h2>
-            <p class="text-muted small">Ikuti langkah-langkah mudah pendaftaran di bawah ini.</p>
+            <p class="text-muted small">Langkah ringkas untuk menyelesaikan pendaftaran online.</p>
         </div>
         <div class="sp-timeline-container">
             <div class="sp-timeline-item active">
@@ -522,7 +555,7 @@
                 <p class="opacity-90 mb-4 mx-auto" style="max-width: 600px;">Pendaftaran Tahun Ajaran <?= esc($academicYear) ?> telah dibuka. Kuota terbatas untuk setiap jalur penerimaan. Segera amankan kursi Anda.</p>
                 <div class="d-flex justify-content-center gap-3 flex-wrap">
                     <a href="<?= esc($ctaUrl) ?>" class="btn btn-light btn-lg rounded-pill px-5 fw-800 text-primary btn-pulse"><?= esc($ctaText) ?></a>
-                    <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $schoolWhatsapp ?? $schoolPhone ?? '6282190822641') ?>" class="btn btn-outline-light btn-lg rounded-pill px-5 fw-700" target="_blank" rel="noopener">Hubungi Panitia</a>
+                    <a href="<?= base_url('/kontak') ?>" class="btn btn-outline-light btn-lg rounded-pill px-5 fw-700">Hubungi Panitia</a>
                 </div>
             </div>
         </div>

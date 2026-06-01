@@ -74,12 +74,21 @@
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
 }
 
 .auth-brand-logo svg {
     width: 32px;
     height: 32px;
     color: #fff;
+}
+
+/* Saat logo sekolah diupload — hilangkan background blur */
+.auth-brand-logo:has(.sp-brand-logo-img),
+.auth-brand-logo--logo {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }
 
 .auth-brand-title {
@@ -188,12 +197,20 @@
     justify-content: center;
     margin: 0 auto var(--sp-space-sm);
     box-shadow: 0 4px 12px rgba(var(--sp-primary-rgb), 0.2);
+    overflow: hidden;
 }
 
 .auth-mobile-brand-logo svg {
     width: 24px;
     height: 24px;
     color: #fff;
+}
+
+/* Saat logo sekolah diupload — hilangkan background gradient */
+.auth-mobile-brand-logo:has(.sp-brand-logo-img),
+.auth-mobile-brand-logo--logo {
+    background: transparent !important;
+    box-shadow: none !important;
 }
 
 .auth-mobile-brand h3 {

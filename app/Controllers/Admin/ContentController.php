@@ -9,6 +9,7 @@ use App\Models\BannerModel;
 use App\Models\TestimonialModel;
 use App\Models\GalleryModel;
 use App\Models\StatisticModel;
+use App\Models\TeacherModel;
 
 class ContentController extends BaseController
 {
@@ -18,6 +19,7 @@ class ContentController extends BaseController
     protected TestimonialModel $testimonialModel;
     protected GalleryModel $galleryModel;
     protected StatisticModel $statisticModel;
+    protected TeacherModel $teacherModel;
 
     public function __construct()
     {
@@ -27,6 +29,7 @@ class ContentController extends BaseController
         $this->testimonialModel = new TestimonialModel();
         $this->galleryModel     = new GalleryModel();
         $this->statisticModel   = new StatisticModel();
+        $this->teacherModel     = new TeacherModel();
     }
 
     /**
@@ -41,20 +44,28 @@ class ContentController extends BaseController
             'mission'  => '',
             'history'  => '',
             'tagline'  => '',
+            'school_founded_year' => '',
             'school_facilities' => '',
             'campus_title' => 'Lingkungan Belajar yang Aman dan Nyaman',
             'campus_description' => '',
             'privacy_policy' => '',
             'terms_conditions' => '',
+            'brochure_file' => '',
+            'spmb_re_registration_start' => '',
+            'spmb_re_registration_end' => '',
+            'spmb_mpls_start' => '',
+            'spmb_mpls_end' => '',
         ];
 
         $settings = array_merge($defaults, $settings);
         $gallery  = $this->galleryModel->orderBy('sort_order', 'ASC')->findAll();
+        $teachers = $this->teacherModel->orderBy('sort_order', 'ASC')->orderBy('name', 'ASC')->findAll();
 
         $data = [
             'title'    => 'Pengelolaan Profil & Galeri',
             'settings' => $settings,
             'gallery'  => $gallery,
+            'teachers' => $teachers,
         ];
 
         return view('admin/content/index', $data);
@@ -69,6 +80,7 @@ class ContentController extends BaseController
             'vision'  => 'required',
             'mission' => 'required',
             'history' => 'required',
+            'brochure_file' => 'permit_empty|max_size[brochure_file,5120]|ext_in[brochure_file,pdf]',
         ];
 
         if (!$this->validate($rules)) {
@@ -79,12 +91,32 @@ class ContentController extends BaseController
             'vision'             => $this->request->getPost('vision'),
             'mission'            => $this->request->getPost('mission'),
             'history'            => $this->request->getPost('history'),
+            'school_founded_year'=> $this->request->getPost('school_founded_year'),
             'school_facilities'  => $this->request->getPost('school_facilities'),
             'campus_title'       => $this->request->getPost('campus_title'),
             'campus_description' => $this->request->getPost('campus_description'),
             'privacy_policy'     => $this->request->getPost('privacy_policy'),
             'terms_conditions'   => $this->request->getPost('terms_conditions'),
+            'spmb_re_registration_start' => $this->request->getPost('spmb_re_registration_start'),
+            'spmb_re_registration_end'   => $this->request->getPost('spmb_re_registration_end'),
+            'spmb_mpls_start'            => $this->request->getPost('spmb_mpls_start'),
+            'spmb_mpls_end'              => $this->request->getPost('spmb_mpls_end'),
         ];
+
+        $brochureFile = $this->request->getFile('brochure_file');
+        if ($brochureFile && $brochureFile->isValid() && !$brochureFile->hasMoved()) {
+            $oldBrochure = (string) $this->settingModel->getValue('brochure_file', '');
+            $this->deleteLocalPublicFile($oldBrochure);
+
+            $uploadPath = FCPATH . 'uploads/brochures/';
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0775, true);
+            }
+
+            $newName = 'brosur-spmb-' . date('YmdHis') . '.' . $brochureFile->getExtension();
+            $brochureFile->move($uploadPath, $newName);
+            $contentData['brochure_file'] = 'uploads/brochures/' . $newName;
+        }
 
         if ($this->request->getPost('tagline') !== null) {
             $contentData['tagline'] = $this->request->getPost('tagline');
@@ -223,6 +255,97 @@ class ContentController extends BaseController
         }
 
         return redirect()->to('admin/content')->with('error', 'Gagal menghapus data galeri.');
+    }
+
+    public function teacherStore()
+    {
+        $rules = [
+            'name'          => 'required|max_length[150]',
+            'role'          => 'required|max_length[150]',
+            'teacher_photo' => 'permit_empty|is_image[teacher_photo]|max_size[teacher_photo,2048]',
+            'sort_order'    => 'permit_empty|integer',
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->with('error', 'Validasi guru gagal: ' . implode(', ', $this->validator->getErrors()));
+        }
+
+        $photoPath = null;
+        $photo = $this->request->getFile('teacher_photo');
+        if ($photo && $photo->isValid() && !$photo->hasMoved()) {
+            $uploadPath = FCPATH . 'uploads/teachers/';
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0775, true);
+            }
+            $newName = $photo->getRandomName();
+            $photo->move($uploadPath, $newName);
+            $photoPath = 'uploads/teachers/' . $newName;
+        }
+
+        $this->teacherModel->insert([
+            'name'       => $this->request->getPost('name'),
+            'role'       => $this->request->getPost('role'),
+            'photo'      => $photoPath,
+            'is_active'  => $this->request->getPost('is_active') ? 1 : 0,
+            'sort_order' => (int) $this->request->getPost('sort_order'),
+        ]);
+
+        return redirect()->to('admin/content')->with('success', 'Data guru berhasil ditambahkan.');
+    }
+
+    public function teacherUpdate(int $id)
+    {
+        $teacher = $this->teacherModel->find($id);
+        if (!$teacher) {
+            return redirect()->to('admin/content')->with('error', 'Data guru tidak ditemukan.');
+        }
+
+        $rules = [
+            'name'          => 'required|max_length[150]',
+            'role'          => 'required|max_length[150]',
+            'teacher_photo' => 'permit_empty|is_image[teacher_photo]|max_size[teacher_photo,2048]',
+            'sort_order'    => 'permit_empty|integer',
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->with('error', 'Validasi guru gagal: ' . implode(', ', $this->validator->getErrors()));
+        }
+
+        $updateData = [
+            'name'       => $this->request->getPost('name'),
+            'role'       => $this->request->getPost('role'),
+            'is_active'  => $this->request->getPost('is_active') ? 1 : 0,
+            'sort_order' => (int) $this->request->getPost('sort_order'),
+        ];
+
+        $photo = $this->request->getFile('teacher_photo');
+        if ($photo && $photo->isValid() && !$photo->hasMoved()) {
+            $this->deleteLocalPublicFile($teacher['photo'] ?? '');
+            $uploadPath = FCPATH . 'uploads/teachers/';
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0775, true);
+            }
+            $newName = $photo->getRandomName();
+            $photo->move($uploadPath, $newName);
+            $updateData['photo'] = 'uploads/teachers/' . $newName;
+        }
+
+        $this->teacherModel->update($id, $updateData);
+
+        return redirect()->to('admin/content')->with('success', 'Data guru berhasil diperbarui.');
+    }
+
+    public function teacherDelete(int $id)
+    {
+        $teacher = $this->teacherModel->find($id);
+        if (!$teacher) {
+            return redirect()->to('admin/content')->with('error', 'Data guru tidak ditemukan.');
+        }
+
+        $this->deleteLocalPublicFile($teacher['photo'] ?? '');
+        $this->teacherModel->delete($id);
+
+        return redirect()->to('admin/content')->with('success', 'Data guru berhasil dihapus.');
     }
 
     // --- BANNER MANAGEMENT ---

@@ -59,4 +59,26 @@ class PageController extends BaseController
                 ->findAll(),
         ]);
     }
+
+    public function brochure()
+    {
+        $brochure = trim((string) $this->settingModel->getValue('brochure_file', ''));
+
+        if ($brochure === '') {
+            return redirect()->to('/kontak')->with('error', 'Brosur resmi belum tersedia. Silakan hubungi panitia.');
+        }
+
+        if (str_starts_with($brochure, 'http')) {
+            return redirect()->to($brochure);
+        }
+
+        $filePath = realpath(FCPATH . ltrim($brochure, '\\/'));
+        $publicRoot = realpath(FCPATH);
+
+        if (!$filePath || !$publicRoot || !str_starts_with($filePath, $publicRoot . DIRECTORY_SEPARATOR) || !is_file($filePath)) {
+            return redirect()->to('/kontak')->with('error', 'File brosur tidak ditemukan. Silakan hubungi panitia.');
+        }
+
+        return $this->response->download($filePath, null)->setFileName('brosur-spmb.pdf');
+    }
 }

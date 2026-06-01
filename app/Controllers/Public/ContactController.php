@@ -56,7 +56,21 @@ class ContactController extends BaseController
     {
         $default = 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.521260322283!2d106.8195613507864!3d-6.194741395493371!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69f421a106f2d7%3A0x6e87355f3089d8f6!2sGrand%20Indonesia!5e0!3m2!1sen!2sid!4v1647417551065!5m2!1sen!2sid';
 
-        $mapsEmbed = trim($this->settingModel->getValue('maps_embed', ''));
+        $lat = trim((string) $this->settingModel->getValue('maps_lat', ''));
+        $lng = trim((string) $this->settingModel->getValue('maps_lng', ''));
+        $zoom = (int) $this->settingModel->getValue('maps_zoom', '16');
+        $zoom = min(20, max(1, $zoom ?: 16));
+
+        if ($lat !== '' && $lng !== '') {
+            return 'https://maps.google.com/maps?q=' . rawurlencode("{$lat},{$lng}") . '&z=' . $zoom . '&output=embed';
+        }
+
+        $query = trim((string) $this->settingModel->getValue('maps_query', ''));
+        if ($query !== '') {
+            return 'https://maps.google.com/maps?q=' . rawurlencode($query) . '&z=' . $zoom . '&output=embed';
+        }
+
+        $mapsEmbed = trim((string) $this->settingModel->getValue('maps_embed', ''));
         if ($mapsEmbed !== '') {
             if (preg_match('/src=["\']([^"\']+)["\']/i', $mapsEmbed, $matches)) {
                 $url = html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8');
@@ -74,12 +88,6 @@ class ContactController extends BaseController
             if ($url !== '' && str_contains($url, '/maps/embed')) {
                 return $url;
             }
-        }
-
-        $lat = $this->settingModel->getValue('maps_lat', '');
-        $lng = $this->settingModel->getValue('maps_lng', '');
-        if ($lat !== '' && $lng !== '') {
-            return 'https://maps.google.com/maps?q=' . rawurlencode("{$lat},{$lng}") . '&output=embed';
         }
 
         return $default;

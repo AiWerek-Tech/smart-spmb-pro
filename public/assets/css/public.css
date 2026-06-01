@@ -1489,8 +1489,21 @@ body {
 }
 
 .sp-footer-copy {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
     font-size: 0.82rem;
     color: var(--sp-text-muted);
+    line-height: 1.6;
+}
+
+.sp-footer-copy strong {
+    color: var(--sp-heading-color);
+}
+
+.sp-footer-copy-separator {
+    color: var(--sp-border-color);
 }
 
 .sp-footer-legal {
@@ -2104,6 +2117,19 @@ body.dark-mode .sp-testimonial-section .card {
     .sp-bottom-cta h2 {
         font-size: 1.4rem !important;
     }
+
+    .sp-footer-bottom {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .sp-footer-copy {
+        justify-content: center;
+    }
+
+    .sp-footer-copy-separator {
+        display: none;
+    }
 }
 
 /* Carousel hero — ensure full height on mobile */
@@ -2143,6 +2169,378 @@ body.dark-mode .sp-testimonial-section .card {
 .sp-faq-button .sp-faq-icon {
     flex-shrink: 0;
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s;
+}
+
+/* Mobile-native polish pass */
+.sp-nav-icon-btn,
+.sp-nav-menu-btn,
+.sp-nav-cta,
+.sp-hero-actions .btn,
+.sp-view-all,
+.sp-news-card,
+.sp-gallery-card-btn {
+    min-height: 44px;
+}
+
+.sp-nav-icon-btn,
+.sp-nav-menu-btn {
+    min-width: 44px;
+}
+
+#heroCarousel .carousel-indicators button {
+    min-width: 44px;
+    min-height: 44px;
+    background-clip: content-box;
+}
+
+/* Pre-production fixes: readable dropdowns, modern hero frame, native mobile cards */
+body:not(.dark-mode) .sp-nav-dropdown-menu {
+    background: #ffffff !important;
+    border-color: rgba(15, 23, 42, 0.08) !important;
+    box-shadow: 0 22px 60px rgba(15, 23, 42, 0.14) !important;
+}
+
+body:not(.dark-mode) .sp-nav-dropdown-menu .dropdown-item {
+    color: #172033;
+}
+
+body:not(.dark-mode) .sp-nav-dropdown-menu .dropdown-item:hover,
+body:not(.dark-mode) .sp-nav-dropdown-menu .dropdown-item:focus {
+    background: rgba(var(--sp-primary-rgb), 0.09);
+    color: var(--sp-primary);
+}
+
+.sp-hero-mockup {
+    background: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.88);
+    box-shadow: 0 26px 70px rgba(15, 23, 42, 0.22);
+}
+
+.sp-hero-mockup-img {
+    background: #ffffff;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+}
+
+body.dark-mode .sp-hero-mockup {
+    background: #ffffff;
+    border-color: rgba(255, 255, 255, 0.9);
+}
+
+#heroCarousel .carousel-indicators {
+    gap: 6px;
+    align-items: center;
+}
+
+#heroCarousel .carousel-indicators [data-bs-target] {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    opacity: 1;
+}
+
+#heroCarousel .carousel-indicators [data-bs-target]::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.55);
+    transform: translate(-50%, -50%);
+    transition: width 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+#heroCarousel .carousel-indicators [data-bs-target].active::after {
+    width: 22px;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18);
+}
+
+.sp-schedule-strip {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(260px, 1fr);
+    gap: 16px;
+    overflow-x: auto;
+    padding: 4px 2px 14px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+}
+
+.sp-schedule-strip::-webkit-scrollbar {
+    height: 0;
+}
+
+.sp-schedule-card {
+    scroll-snap-align: start;
+    display: flex;
+    gap: 14px;
+    min-height: 154px;
+    padding: 18px;
+    border-radius: 22px;
+    background: var(--sp-card-bg);
+    border: 1px solid var(--sp-card-border);
+    box-shadow: var(--sp-shadow-card);
+}
+
+.sp-schedule-card.is-live {
+    border-color: rgba(var(--sp-primary-rgb), 0.25);
+}
+
+.sp-schedule-icon {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    color: var(--sp-primary);
+    background: rgba(var(--sp-primary-rgb), 0.1);
+}
+
+.sp-schedule-icon svg,
+.sp-schedule-icon i {
+    width: 22px;
+    height: 22px;
+}
+
+.sp-schedule-kicker {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--sp-primary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.sp-schedule-content h3 {
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: var(--sp-heading-color);
+    margin-bottom: 6px;
+}
+
+.sp-schedule-content p {
+    font-size: 0.8rem;
+    color: var(--sp-text-muted);
+    margin-bottom: 10px;
+}
+
+.sp-schedule-content strong {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    color: var(--sp-primary);
+    background: rgba(var(--sp-primary-rgb), 0.08);
+}
+
+@media (max-width: 991.98px) {
+    .sp-nav-icon-btn,
+    .sp-nav-menu-btn,
+    .sp-nav-cta,
+    .sp-mobile-cta,
+    .sp-mobile-nav-link,
+    .mobile-nav-item,
+    .sp-secondary-item,
+    .sp-primary-card,
+    .sp-news-card,
+    .sp-gallery-card-btn {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .sp-nav-icon-btn,
+    .sp-nav-menu-btn {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+        border-radius: 16px;
+    }
+
+    .sp-public-navbar {
+        height: calc(var(--sp-nav-height-mobile, 64px) + env(safe-area-inset-top, 0px));
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    .sp-mobile-offcanvas {
+        border-radius: 0 0 0 28px;
+    }
+
+    .sp-mobile-nav-link {
+        min-height: 52px;
+        border-radius: 16px;
+    }
+
+    .sp-mobile-nav-sublink {
+        min-height: 44px;
+    }
+
+    .sp-mobile-bottom-nav {
+        height: calc(78px + env(safe-area-inset-bottom, 0px));
+        padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .mobile-nav-item {
+        min-height: 58px;
+        border-radius: 18px;
+    }
+
+    .sp-floating-wa {
+        width: 56px;
+        height: 56px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    body {
+        padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .sp-hero-banner {
+        padding-top: 10px;
+    }
+
+    .sp-hero-card {
+        min-height: auto;
+        padding: 24px 18px;
+        border-radius: 28px;
+    }
+
+    .sp-hero-title {
+        font-size: 1.95rem;
+        line-height: 1.15;
+    }
+
+    .sp-hero-subtitle {
+        margin-bottom: 18px;
+    }
+
+    .sp-hero-actions .btn {
+        min-height: 48px;
+        border-radius: 999px;
+        padding-top: 0.7rem !important;
+        padding-bottom: 0.7rem !important;
+    }
+
+    .sp-hero-trust-badges {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin-top: 18px;
+    }
+
+    .sp-hero-trust-item {
+        justify-content: center;
+        min-height: 36px;
+    }
+
+    .sp-hero-visual {
+        margin-top: 18px;
+    }
+
+    .sp-secondary-item {
+        min-height: 52px;
+        border-radius: 16px;
+    }
+
+    .sp-primary-actions,
+    .sp-stats-row,
+    .sp-news-container,
+    .sp-gallery-section .row,
+    .sp-jalur-section .row {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(238px, 82vw);
+        grid-template-columns: none !important;
+        gap: 14px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 2px 4px 12px;
+        margin-left: -4px;
+        margin-right: -4px;
+        flex-wrap: nowrap;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .sp-primary-actions::-webkit-scrollbar,
+    .sp-stats-row::-webkit-scrollbar,
+    .sp-news-container::-webkit-scrollbar,
+    .sp-gallery-section .row::-webkit-scrollbar,
+    .sp-jalur-section .row::-webkit-scrollbar {
+        height: 0;
+    }
+
+    .sp-primary-actions > *,
+    .sp-stats-row > *,
+    .sp-news-container > *,
+    .sp-gallery-section .row > *,
+    .sp-jalur-section .row > * {
+        width: auto !important;
+        max-width: none;
+        scroll-snap-align: start;
+    }
+
+    .sp-primary-card {
+        min-height: 92px;
+        border-radius: 20px;
+        padding: 18px;
+        gap: 14px;
+    }
+
+    .sp-news-card,
+    .jalur-card,
+    .stat-item,
+    .sp-faq-item {
+        border-radius: 20px;
+    }
+
+    .jalur-card {
+        padding: 20px;
+        min-height: 360px;
+    }
+
+    .stat-item {
+        min-height: 88px;
+        flex: none;
+    }
+
+    .sp-news-card {
+        min-height: 280px;
+    }
+
+    #heroCarousel .carousel-indicators button {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        margin: 0;
+        border-radius: 999px;
+        padding: 0;
+    }
+
+    .modal-dialog {
+        margin: 0;
+        min-height: 100dvh;
+        display: flex;
+        align-items: flex-end;
+    }
+
+    .modal-content {
+        border-radius: 26px 26px 0 0 !important;
+        max-height: 92dvh;
+        overflow: hidden;
+    }
 }
 
 /* Flash message container — positioned below fixed navbar */
