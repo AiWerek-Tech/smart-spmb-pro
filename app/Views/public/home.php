@@ -201,6 +201,10 @@
                 <i data-lucide="school" class="sp-secondary-icon" style="width:18px;"></i>
                 <span class="sp-secondary-label">Profil Sekolah</span>
             </a>
+            <a href="<?= base_url('/lingkungan-kampus') ?>" class="sp-secondary-item">
+                <i data-lucide="trees" class="sp-secondary-icon" style="width:18px;"></i>
+                <span class="sp-secondary-label">Lingkungan</span>
+            </a>
             <a href="#faq" class="sp-secondary-item">
                 <i data-lucide="help-circle" class="sp-secondary-icon" style="width:18px;"></i>
                 <span class="sp-secondary-label">Bantuan (FAQ)</span>
@@ -340,46 +344,29 @@
 <!-- Section 7.5: School Gallery -->
 <section class="sp-gallery-section bg-light" style="padding: var(--sp-section-gap) 0;">
     <div class="container">
-        <div class="sp-section-header text-center mb-5">
-            <h2 class="sp-section-title-sm">Lingkungan & Fasilitas</h2>
-            <p class="text-muted small">Suasana belajar yang nyaman dan kondusif untuk tumbuh kembang siswa.</p>
+        <div class="sp-section-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-5">
+            <div>
+                <h2 class="sp-section-title-sm mb-1"><?= esc($campusTitle ?? 'Lingkungan & Fasilitas') ?></h2>
+                <p class="text-muted small mb-0"><?= esc($campusDescription ?? 'Suasana belajar yang nyaman dan kondusif untuk tumbuh kembang siswa.') ?></p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="<?= base_url('/lingkungan-kampus') ?>" class="btn btn-outline-primary rounded-pill px-4 fw-bold">Lihat Lingkungan</a>
+                <a href="<?= base_url('/galeri') ?>" class="btn btn-primary rounded-pill px-4 fw-bold">Lihat Semua Galeri</a>
+            </div>
         </div>
         <div class="row g-4">
             <?php if (!empty($gallery)): ?>
                 <?php foreach ($gallery as $index => $item): ?>
-                <div class="col-6 col-md-4">
-                    <div class="sp-gallery-item animate-up" style="animation-delay: <?= $index * 0.1 ?>s;">
-                        <div class="sp-gallery-img-wrapper">
-                            <?php $galleryImgSrc = (strpos($item['image'], 'http') === 0) ? esc($item['image'], 'url') : base_url(esc($item['image'])); ?>
-                            <img src="<?= $galleryImgSrc ?>" alt="<?= esc($item['title'] ?? '') ?>" class="w-100 h-100 object-fit-cover" loading="lazy" onerror="this.src='<?= base_url('assets/img/gallery-placeholder.svg') ?>'">
-                        </div>
-                        <?php if ($item['title']): ?>
-                        <div class="sp-gallery-overlay">
-                            <span class="sp-gallery-caption"><?= esc($item['title']) ?></span>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
+                    <?= view('public/_gallery_card', ['item' => $item, 'index' => $index]) ?>
                 <?php endforeach; ?>
             <?php else: ?>
-                <!-- Fallback Static Gallery if Empty -->
-                <?php
-                $fallbackGallery = [
-                    ['title' => 'Gedung Utama', 'img' => base_url('assets/img/gallery-placeholder.svg')],
-                    ['title' => 'Perpustakaan Digital', 'img' => base_url('assets/img/gallery-placeholder.svg')],
-                    ['title' => 'Laboratorium Sains Modern', 'img' => base_url('assets/img/gallery-placeholder.svg')],
-                ];
-                foreach ($fallbackGallery as $fi => $fgItem):
-                ?>
-                <div class="col-6 col-md-4">
-                    <div class="sp-gallery-item animate-up" style="<?= $fi > 0 ? 'animation-delay: ' . ($fi * 0.1) . 's;' : '' ?>">
-                        <div class="sp-gallery-img-wrapper">
-                            <img src="<?= esc($fgItem['img']) ?>" alt="<?= esc($fgItem['title']) ?>" class="w-100 h-100 object-fit-cover">
-                        </div>
-                        <div class="sp-gallery-overlay"><span class="sp-gallery-caption"><?= esc($fgItem['title']) ?></span></div>
-                    </div>
+                <div class="col-12">
+                    <?= view('layouts/_empty_state', [
+                        'emptyIcon' => 'images',
+                        'emptyTitle' => 'Galeri Belum Tersedia',
+                        'emptyMessage' => 'Foto dan video lingkungan sekolah akan tampil setelah dipublikasikan dari dashboard admin.'
+                    ]) ?>
                 </div>
-                <?php endforeach; ?>
             <?php endif; ?>
         </div>
     </div>
@@ -436,11 +423,15 @@
         <div class="sp-news-container mt-4">
             <?php if (isset($announcements) && !empty($announcements)): ?>
                 <?php foreach ($announcements as $news): ?>
-                <div class="sp-news-card animate-up">
+                <?php
+                    $newsModalId = 'homeNewsModal' . (int) $news['id'];
+                    $newsDate = !empty($news['published_at']) ? date('d M Y', strtotime($news['published_at'])) : date('d M Y', strtotime($news['created_at']));
+                    $newsImgSrc = !empty($news['image'])
+                        ? ((strpos($news['image'], 'http') === 0) ? esc($news['image'], 'url') : base_url(esc($news['image'])))
+                        : base_url('assets/img/gallery-placeholder.svg');
+                ?>
+                <button type="button" class="sp-news-card animate-up border-0 text-start p-0 w-100" data-bs-toggle="modal" data-bs-target="#<?= esc($newsModalId) ?>">
                     <div class="sp-news-image">
-                        <?php $newsImgSrc = !empty($news['image'])
-                            ? ((strpos($news['image'], 'http') === 0) ? esc($news['image'], 'url') : base_url(esc($news['image'])))
-                            : base_url('assets/img/gallery-placeholder.svg'); ?>
                         <img src="<?= $newsImgSrc ?>" alt="<?= esc($news['title']) ?>" loading="lazy" onerror="this.src='<?= base_url('assets/img/gallery-placeholder.svg') ?>'">
                         <span class="sp-news-tag"><?= esc($news['tag'] ?? 'INFO') ?></span>
                     </div>
@@ -448,11 +439,43 @@
                         <h3 class="sp-news-title"><?= esc($news['title']) ?></h3>
                         <div class="sp-news-date">
                             <i data-lucide="calendar" style="width:12px;height:12px;"></i>
-                            <span><?= !empty($news['published_at']) ? date('d M Y', strtotime($news['published_at'])) : date('d M Y', strtotime($news['created_at'])) ?></span>
+                            <span><?= esc($newsDate) ?></span>
+                        </div>
+                    </div>
+                </button>
+
+                <div class="modal fade" id="<?= esc($newsModalId) ?>" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content border-0 rounded-4 overflow-hidden shadow-lg">
+                            <div class="modal-header bg-primary text-white border-0">
+                                <div>
+                                    <span class="badge bg-white text-primary rounded-pill mb-2"><?= esc($news['tag'] ?? 'INFO') ?></span>
+                                    <h5 class="modal-title fw-bold mb-0"><?= esc($news['title']) ?></h5>
+                                </div>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                            </div>
+                            <div class="modal-body p-0">
+                                <img src="<?= $newsImgSrc ?>" alt="<?= esc($news['title']) ?>" class="w-100" style="max-height:360px;object-fit:cover;" onerror="this.src='<?= base_url('assets/img/gallery-placeholder.svg') ?>'">
+                                <div class="p-4 p-lg-5">
+                                    <div class="sp-news-date mb-3">
+                                        <i data-lucide="calendar" style="width:14px;height:14px;"></i>
+                                        <span><?= esc($newsDate) ?></span>
+                                    </div>
+                                    <div class="text-muted" style="line-height:1.8;"><?= nl2br(esc($news['content'] ?? '')) ?></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <?php endforeach; ?>
+            <?php else: ?>
+                <div class="w-100">
+                    <?= view('layouts/_empty_state', [
+                        'emptyIcon' => 'megaphone',
+                        'emptyTitle' => 'Belum Ada Berita',
+                        'emptyMessage' => 'Berita dan pengumuman terbaru akan tampil setelah dipublikasikan dari dashboard admin.'
+                    ]) ?>
+                </div>
             <?php endif; ?>
         </div>
     </div>

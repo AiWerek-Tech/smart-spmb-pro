@@ -41,6 +41,11 @@ class ContentController extends BaseController
             'mission'  => '',
             'history'  => '',
             'tagline'  => '',
+            'school_facilities' => '',
+            'campus_title' => 'Lingkungan Belajar yang Aman dan Nyaman',
+            'campus_description' => '',
+            'privacy_policy' => '',
+            'terms_conditions' => '',
         ];
 
         $settings = array_merge($defaults, $settings);
@@ -71,9 +76,14 @@ class ContentController extends BaseController
         }
 
         $contentData = [
-            'vision'  => $this->request->getPost('vision'),
-            'mission' => $this->request->getPost('mission'),
-            'history' => $this->request->getPost('history'),
+            'vision'             => $this->request->getPost('vision'),
+            'mission'            => $this->request->getPost('mission'),
+            'history'            => $this->request->getPost('history'),
+            'school_facilities'  => $this->request->getPost('school_facilities'),
+            'campus_title'       => $this->request->getPost('campus_title'),
+            'campus_description' => $this->request->getPost('campus_description'),
+            'privacy_policy'     => $this->request->getPost('privacy_policy'),
+            'terms_conditions'   => $this->request->getPost('terms_conditions'),
         ];
 
         if ($this->request->getPost('tagline') !== null) {
@@ -92,35 +102,108 @@ class ContentController extends BaseController
      */
     public function galleryUpload()
     {
+        $mediaType = $this->request->getPost('media_type') === 'video' ? 'video' : 'photo';
+
         $rules = [
-            'gallery_image' => 'uploaded[gallery_image]|is_image[gallery_image]|max_size[gallery_image,2048]',
-            'title'         => 'permit_empty|max_length[255]',
-            'category'      => 'permit_empty|max_length[100]',
+            'title'       => 'required|max_length[255]',
+            'description' => 'permit_empty',
+            'category'    => 'permit_empty|max_length[100]',
+            'media_type'  => 'required|in_list[photo,video]',
+            'sort_order'  => 'permit_empty|integer',
         ];
+
+        if ($mediaType === 'video') {
+            $rules['video_url'] = 'required|valid_url_strict|max_length[255]';
+            $rules['gallery_image'] = 'permit_empty|is_image[gallery_image]|max_size[gallery_image,2048]';
+        } else {
+            $rules['gallery_image'] = 'uploaded[gallery_image]|is_image[gallery_image]|max_size[gallery_image,2048]';
+        }
 
         if (!$this->validate($rules)) {
             return redirect()->back()->with('error', 'Validasi gagal: ' . implode(', ', $this->validator->getErrors()));
         }
 
         $imageFile = $this->request->getFile('gallery_image');
-        if ($imageFile->isValid() && !$imageFile->hasMoved()) {
+        $filePath = 'assets/img/gallery-placeholder.svg';
+
+        if ($imageFile && $imageFile->isValid() && !$imageFile->hasMoved()) {
             $newName = $imageFile->getRandomName();
             if ($imageFile->move(FCPATH . 'uploads/gallery/', $newName)) {
                 $filePath = 'uploads/gallery/' . $newName;
-
-                $this->galleryModel->insert([
-                    'title'    => $this->request->getPost('title'),
-                    'image'    => $filePath,
-                    'category' => $this->request->getPost('category'),
-                    'is_active'=> 1,
-                    'sort_order'=> 0,
-                ]);
-
-                return redirect()->to('admin/content')->with('success', 'Foto galeri berhasil diunggah.');
+            }
+        } elseif ($mediaType === 'video') {
+            $thumbnail = $this->youtubeThumbnail((string) $this->request->getPost('video_url'));
+            if ($thumbnail !== null) {
+                $filePath = $thumbnail;
             }
         }
 
-        return redirect()->back()->with('error', 'Gagal mengunggah foto galeri.');
+        $this->galleryModel->insert([
+            'title'          => $this->request->getPost('title'),
+            'description'    => $this->request->getPost('description'),
+            'image'          => $filePath,
+            'category'       => $this->request->getPost('category'),
+            'media_type'     => $mediaType,
+            'video_url'      => $mediaType === 'video' ? $this->youtubeEmbedUrl((string) $this->request->getPost('video_url')) : null,
+            'video_provider' => $mediaType === 'video' ? 'youtube' : null,
+            'is_active'      => $this->request->getPost('is_active') ? 1 : 0,
+            'sort_order'     => (int) $this->request->getPost('sort_order'),
+        ]);
+
+        return redirect()->to('admin/content')->with('success', 'Item galeri berhasil ditambahkan.');
+    }
+
+    public function galleryUpdate(int $id)
+    {
+        $item = $this->galleryModel->find($id);
+        if (!$item) {
+            return redirect()->to('admin/content')->with('error', 'Item galeri tidak ditemukan.');
+        }
+
+        $mediaType = $this->request->getPost('media_type') === 'video' ? 'video' : 'photo';
+        $rules = [
+            'title'       => 'required|max_length[255]',
+            'description' => 'permit_empty',
+            'category'    => 'permit_empty|max_length[100]',
+            'media_type'  => 'required|in_list[photo,video]',
+            'sort_order'  => 'permit_empty|integer',
+        ];
+
+        if ($mediaType === 'video') {
+            $rules['video_url'] = 'required|valid_url_strict|max_length[255]';
+            $rules['gallery_image'] = 'permit_empty|is_image[gallery_image]|max_size[gallery_image,2048]';
+        } else {
+            $rules['gallery_image'] = 'permit_empty|is_image[gallery_image]|max_size[gallery_image,2048]';
+        }
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->with('error', 'Validasi gagal: ' . implode(', ', $this->validator->getErrors()));
+        }
+
+        $updateData = [
+            'title'          => $this->request->getPost('title'),
+            'description'    => $this->request->getPost('description'),
+            'category'       => $this->request->getPost('category'),
+            'media_type'     => $mediaType,
+            'video_url'      => $mediaType === 'video' ? $this->youtubeEmbedUrl((string) $this->request->getPost('video_url')) : null,
+            'video_provider' => $mediaType === 'video' ? 'youtube' : null,
+            'is_active'      => $this->request->getPost('is_active') ? 1 : 0,
+            'sort_order'     => (int) $this->request->getPost('sort_order'),
+        ];
+
+        $imageFile = $this->request->getFile('gallery_image');
+        if ($imageFile && $imageFile->isValid() && !$imageFile->hasMoved()) {
+            $this->deleteLocalPublicFile($item['image'] ?? '');
+            $newName = $imageFile->getRandomName();
+            $imageFile->move(FCPATH . 'uploads/gallery/', $newName);
+            $updateData['image'] = 'uploads/gallery/' . $newName;
+        } elseif ($mediaType === 'video' && empty($item['image'])) {
+            $updateData['image'] = $this->youtubeThumbnail((string) $this->request->getPost('video_url')) ?? 'assets/img/gallery-placeholder.svg';
+        }
+
+        $this->galleryModel->update($id, $updateData);
+
+        return redirect()->to('admin/content')->with('success', 'Item galeri berhasil diperbarui.');
     }
 
     /**
@@ -133,10 +216,7 @@ class ContentController extends BaseController
             return redirect()->to('admin/content')->with('error', 'Foto galeri tidak ditemukan.');
         }
 
-        $filePath = FCPATH . $item['image'];
-        if (file_exists($filePath)) {
-            unlink($filePath);
-        }
+        $this->deleteLocalPublicFile($item['image'] ?? '');
 
         if ($this->galleryModel->delete($id)) {
             return redirect()->to('admin/content')->with('success', 'Foto galeri berhasil dihapus.');
@@ -392,5 +472,39 @@ class ContentController extends BaseController
     {
         $this->faqModel->delete($id);
         return redirect()->to('admin/faq')->with('success', 'FAQ berhasil dihapus.');
+    }
+
+    private function youtubeEmbedUrl(string $url): string
+    {
+        $id = $this->youtubeVideoId($url);
+        return $id ? 'https://www.youtube.com/embed/' . $id : $url;
+    }
+
+    private function youtubeThumbnail(string $url): ?string
+    {
+        $id = $this->youtubeVideoId($url);
+        return $id ? 'https://img.youtube.com/vi/' . $id . '/hqdefault.jpg' : null;
+    }
+
+    private function youtubeVideoId(string $url): ?string
+    {
+        if (preg_match('~(?:youtube\.com/(?:watch\?v=|embed/|shorts/)|youtu\.be/)([A-Za-z0-9_-]{6,})~', $url, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
+    }
+
+    private function deleteLocalPublicFile(string $path): void
+    {
+        if ($path === '' || str_starts_with($path, 'http') || $path === 'assets/img/gallery-placeholder.svg') {
+            return;
+        }
+
+        $filePath = realpath(FCPATH . ltrim($path, '\\/'));
+        $publicRoot = realpath(FCPATH);
+        if ($filePath && $publicRoot && str_starts_with($filePath, $publicRoot . DIRECTORY_SEPARATOR) && file_exists($filePath)) {
+            unlink($filePath);
+        }
     }
 }

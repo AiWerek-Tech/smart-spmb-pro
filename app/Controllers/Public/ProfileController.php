@@ -35,15 +35,15 @@ class ProfileController extends BaseController
     {
         // Ambil data profil sekolah dari settings
         $schoolName     = $this->settingModel->getValue('school_name') ?? 'Nama Sekolah';
-        $schoolHistory  = $this->settingModel->getValue('school_history') ?? 'Data belum tersedia';
-        $schoolVision   = $this->settingModel->getValue('school_vision') ?? 'Data belum tersedia';
-        $schoolMission  = $this->settingModel->getValue('school_mission') ?? 'Data belum tersedia';
-        $schoolAccred   = $this->settingModel->getValue('school_accreditation') ?? 'Data belum tersedia';
-        $schoolAccredYear = $this->settingModel->getValue('school_accreditation_year') ?? '2024';
-        $facilities     = $this->settingModel->getValue('school_facilities') ?? 'Perpustakaan, Lab Komputer, Lab Sains, Lapangan Olahraga';
+        $schoolHistory  = $this->settingModel->getValue('history', 'Data belum tersedia');
+        $schoolVision   = $this->settingModel->getValue('vision', 'Data belum tersedia');
+        $schoolMission  = $this->settingModel->getValue('mission', 'Data belum tersedia');
+        $schoolAccred   = $this->settingModel->getValue('accreditation', 'Data belum tersedia');
+        $schoolAccredYear = $this->settingModel->getValue('accreditation_year', '2024');
+        $facilities     = $this->settingModel->getValue('school_facilities', "Perpustakaan\nLab Komputer\nLab Sains\nLapangan Olahraga");
 
-        // Parse facilities (comma-separated string to array)
-        $facilitiesArray = array_map('trim', explode(',', $facilities));
+        // Parse facilities from newline or comma separated settings.
+        $facilitiesArray = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n|,/', (string) $facilities))));
 
         // Ambil galeri aktif dari database
         $gallery = $this->galleryModel->where('is_active', 1)->orderBy('sort_order', 'ASC')->findAll();

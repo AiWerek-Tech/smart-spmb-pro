@@ -7,7 +7,7 @@
         <div class="d-flex justify-content-between align-items-center">
             <div>
                 <h4 class="mb-0 text-primary">Profil & Galeri Sekolah</h4>
-                <p class="text-muted mb-0">Kelola visi, misi, sejarah, slogan, serta foto-foto galeri yang ditampilkan di website publik.</p>
+                <p class="text-muted mb-0">Kelola profil, lingkungan kampus, kebijakan legal, serta galeri foto/video yang tampil di website publik.</p>
             </div>
             <div class="d-flex gap-2">
                 <a href="<?= base_url('admin/banners') ?>" class="btn btn-outline-primary btn-sm">
@@ -60,6 +60,36 @@
                         <textarea class="form-control" id="history" name="history" rows="6" required placeholder="Tuliskan sejarah singkat berdirinya sekolah..."><?= esc(old('history', $settings['history'] ?? '')) ?></textarea>
                     </div>
 
+                    <hr class="my-4">
+
+                    <div class="mb-3">
+                        <label for="school_facilities" class="form-label fw-bold small">Daftar Fasilitas Sekolah</label>
+                        <textarea class="form-control" id="school_facilities" name="school_facilities" rows="4" placeholder="Satu fasilitas per baris..."><?= esc(old('school_facilities', $settings['school_facilities'] ?? '')) ?></textarea>
+                        <small class="text-muted">Data ini dipakai pada halaman Profil dan Lingkungan & Kampus.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="campus_title" class="form-label fw-bold small">Judul Lingkungan & Kampus</label>
+                        <input type="text" class="form-control" id="campus_title" name="campus_title" value="<?= esc(old('campus_title', $settings['campus_title'] ?? '')) ?>">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="campus_description" class="form-label fw-bold small">Deskripsi Lingkungan & Kampus</label>
+                        <textarea class="form-control" id="campus_description" name="campus_description" rows="5"><?= esc(old('campus_description', $settings['campus_description'] ?? '')) ?></textarea>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="mb-3">
+                        <label for="privacy_policy" class="form-label fw-bold small">Kebijakan Privasi</label>
+                        <textarea class="form-control" id="privacy_policy" name="privacy_policy" rows="5"><?= esc(old('privacy_policy', $settings['privacy_policy'] ?? '')) ?></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="terms_conditions" class="form-label fw-bold small">Syarat & Ketentuan</label>
+                        <textarea class="form-control" id="terms_conditions" name="terms_conditions" rows="5"><?= esc(old('terms_conditions', $settings['terms_conditions'] ?? '')) ?></textarea>
+                    </div>
+
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i class="me-2" data-lucide="save"></i> Perbarui Profil
@@ -76,27 +106,58 @@
             <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
                 <div>
                     <h5 class="card-title text-primary"><i class="me-2" data-lucide="images"></i> Galeri Sekolah</h5>
-                    <small class="text-muted">Foto galeri yang tampil di halaman profil.</small>
+                    <small class="text-muted">Foto dan video yang tampil di homepage, halaman galeri, dan lingkungan kampus.</small>
                 </div>
-                <span class="badge bg-label-primary rounded"><?= count($gallery) ?> Foto</span>
+                <span class="badge bg-label-primary rounded"><?= count($gallery) ?> Item</span>
             </div>
             
             <div class="card-body">
                 <!-- Upload form -->
                 <form method="POST" action="<?= base_url('admin/content/gallery/upload') ?>" enctype="multipart/form-data" class="mb-4 p-3 bg-light rounded border">
                     <?= csrf_field() ?>
-                    <label for="gallery_image" class="form-label fw-bold small mb-2"><i class="me-1 text-primary" data-lucide="upload"></i> Unggah Foto Baru</label>
-                    <div class="input-group">
-                        <input type="file" class="form-control form-control-sm" id="gallery_image" name="gallery_image" required>
-                        <button class="btn btn-primary btn-sm px-3" type="submit">
-                            <i  data-lucide="plus"></i> Unggah
-                        </button>
+                    <label class="form-label fw-bold small mb-2"><i class="me-1 text-primary" data-lucide="upload"></i> Tambah Item Galeri</label>
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <input type="text" class="form-control form-control-sm" name="title" placeholder="Judul galeri" required>
+                        </div>
+                        <div class="col-12">
+                            <textarea class="form-control form-control-sm" name="description" rows="2" placeholder="Deskripsi singkat..."></textarea>
+                        </div>
+                        <div class="col-6">
+                            <select class="form-select form-select-sm gallery-media-type" name="media_type" data-target="#new-video-url" data-file="#gallery_image">
+                                <option value="photo">Foto</option>
+                                <option value="video">Video YouTube</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <input type="text" class="form-control form-control-sm" name="category" placeholder="Kategori, mis. Fasilitas">
+                        </div>
+                        <div class="col-12">
+                            <input type="file" class="form-control form-control-sm" id="gallery_image" name="gallery_image" required>
+                            <small class="text-muted">Foto: wajib unggah gambar. Video: gambar opsional sebagai thumbnail.</small>
+                        </div>
+                        <div class="col-12 d-none" id="new-video-url">
+                            <input type="url" class="form-control form-control-sm" name="video_url" placeholder="https://www.youtube.com/watch?v=...">
+                        </div>
+                        <div class="col-6">
+                            <input type="number" class="form-control form-control-sm" name="sort_order" value="0" min="0" placeholder="Urutan">
+                        </div>
+                        <div class="col-6 d-flex align-items-center">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="new_gallery_active" checked>
+                                <label class="form-check-label small" for="new_gallery_active">Aktif</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <button class="btn btn-primary btn-sm px-3 w-100" type="submit">
+                                <i data-lucide="plus"></i> Tambahkan ke Galeri
+                            </button>
+                        </div>
                     </div>
-                    <small class="text-muted d-block mt-1">Ukuran maksimal file: 2 MB (Format: JPG, PNG).</small>
                 </form>
 
                 <!-- Grid list -->
-                <div class="row g-2 overflow-auto" style="max-height: 480px;">
+                <div class="row g-2 overflow-auto" style="max-height: 620px;">
                     <?php if (empty($gallery)): ?>
                         <div class="col-12 text-center py-5 text-muted">
                             <i class="fs-1 mb-2" data-lucide="images"></i>
@@ -104,8 +165,12 @@
                         </div>
                     <?php else: ?>
                         <?php foreach ($gallery as $item): ?>
-                            <div class="col-6 col-sm-4 col-md-6 position-relative gallery-item-wrapper" style="height: 120px;">
+                            <div class="col-6 col-sm-4 col-md-6 position-relative gallery-item-wrapper" style="height: 150px;">
                                 <img src="<?= (strpos($item['image'], 'http') === 0) ? esc($item['image']) : base_url(esc($item['image'])) ?>" class="img-fluid w-100 h-100 rounded border object-fit-cover shadow-xs" alt="<?= esc($item['title']) ?>" onerror="this.onerror=null;this.src='<?= base_url('assets/img/gallery-placeholder.svg') ?>';">
+                                <button type="button" class="btn btn-primary btn-sm p-1 rounded-circle position-absolute top-0 start-0 m-2 shadow-sm d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; border: none;" title="Edit Item" data-bs-toggle="modal" data-bs-target="#editGalleryModal<?= $item['id'] ?>">
+                                    <i data-lucide="pencil" style="width:14px;height:14px;"></i>
+                                </button>
+                                <span class="badge <?= ($item['media_type'] ?? 'photo') === 'video' ? 'bg-danger' : 'bg-primary' ?> position-absolute bottom-0 start-0 m-2"><?= ($item['media_type'] ?? 'photo') === 'video' ? 'Video' : 'Foto' ?></span>
                                 
                                 <!-- Delete Overlay Trigger -->
                                 <form action="<?= base_url('admin/content/gallery/'.$item['id'].'/delete') ?>" method="POST" onsubmit="return confirm('Hapus foto ini?')">
@@ -114,6 +179,65 @@
                                         <i class="font-size-xs" data-lucide="trash-2"></i>
                                     </button>
                                 </form>
+                            </div>
+
+                            <div class="modal fade" id="editGalleryModal<?= $item['id'] ?>" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-lg">
+                                    <div class="modal-content">
+                                        <form method="POST" action="<?= base_url('admin/content/gallery/'.$item['id'].'/update') ?>" enctype="multipart/form-data">
+                                            <?= csrf_field() ?>
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Edit Item Galeri</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row g-3">
+                                                    <div class="col-md-8">
+                                                        <label class="form-label small fw-bold">Judul</label>
+                                                        <input type="text" class="form-control" name="title" value="<?= esc($item['title']) ?>" required>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label small fw-bold">Jenis Media</label>
+                                                        <select class="form-select gallery-media-type" name="media_type" data-target="#edit-video-url-<?= $item['id'] ?>" data-file="#edit-gallery-image-<?= $item['id'] ?>">
+                                                            <option value="photo" <?= ($item['media_type'] ?? 'photo') === 'photo' ? 'selected' : '' ?>>Foto</option>
+                                                            <option value="video" <?= ($item['media_type'] ?? 'photo') === 'video' ? 'selected' : '' ?>>Video YouTube</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <label class="form-label small fw-bold">Deskripsi</label>
+                                                        <textarea class="form-control" name="description" rows="3"><?= esc($item['description'] ?? '') ?></textarea>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label small fw-bold">Kategori</label>
+                                                        <input type="text" class="form-control" name="category" value="<?= esc($item['category'] ?? '') ?>">
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label small fw-bold">Urutan</label>
+                                                        <input type="number" class="form-control" name="sort_order" value="<?= (int) ($item['sort_order'] ?? 0) ?>" min="0">
+                                                    </div>
+                                                    <div class="col-md-3 d-flex align-items-end">
+                                                        <div class="form-check form-switch mb-2">
+                                                            <input class="form-check-input" type="checkbox" name="is_active" id="gallery-active-<?= $item['id'] ?>" <?= ($item['is_active'] ?? 0) ? 'checked' : '' ?>>
+                                                            <label class="form-check-label" for="gallery-active-<?= $item['id'] ?>">Aktif</label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12 <?= ($item['media_type'] ?? 'photo') === 'video' ? '' : 'd-none' ?>" id="edit-video-url-<?= $item['id'] ?>">
+                                                        <label class="form-label small fw-bold">URL YouTube</label>
+                                                        <input type="url" class="form-control" name="video_url" value="<?= esc($item['video_url'] ?? '') ?>">
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <label class="form-label small fw-bold">Ganti Thumbnail/Foto</label>
+                                                        <input type="file" class="form-control" id="edit-gallery-image-<?= $item['id'] ?>" name="gallery_image">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                                <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -125,4 +249,27 @@
 
 
 
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function syncMediaType(select) {
+        const target = document.querySelector(select.dataset.target);
+        const fileInput = document.querySelector(select.dataset.file);
+        const isVideo = select.value === 'video';
+        if (target) target.classList.toggle('d-none', !isVideo);
+        const videoInput = target ? target.querySelector('input[name="video_url"]') : null;
+        if (videoInput) videoInput.required = isVideo;
+        if (fileInput) fileInput.required = !isVideo && fileInput.id === 'gallery_image';
+    }
+
+    document.querySelectorAll('.gallery-media-type').forEach(function(select) {
+        syncMediaType(select);
+        select.addEventListener('change', function() {
+            syncMediaType(select);
+        });
+    });
+});
+</script>
 <?= $this->endSection() ?>

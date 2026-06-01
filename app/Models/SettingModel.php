@@ -105,6 +105,11 @@ class SettingModel extends Model
             'developer_name',
             'developer_phone',
             'developer_email',
+            'school_facilities',
+            'campus_title',
+            'campus_description',
+            'privacy_policy',
+            'terms_conditions',
         ];
 
         $rows   = $this->whereIn('key', $keys)->findAll();

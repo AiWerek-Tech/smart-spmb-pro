@@ -95,7 +95,7 @@
             <div class="form-check mb-3">
                 <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
                 <label class="form-check-label" for="terms" style="font-size:0.8rem;">
-                    Saya setuju dengan <a href="#" target="_blank">Syarat dan Ketentuan</a>
+                    Saya setuju dengan <a href="<?= base_url('/syarat-ketentuan') ?>" target="_blank" rel="noopener">Syarat dan Ketentuan</a>
                 </label>
             </div>
 

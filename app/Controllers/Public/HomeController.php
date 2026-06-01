@@ -70,12 +70,12 @@ class HomeController extends BaseController
         $totalAccepted      = $this->registrationModel->where('status', 'accepted')->countAllResults();
         $totalVerified      = $this->registrationModel->whereIn('status', ['verified', 'accepted'])->countAllResults();
         
-        // Gabungkan atau pilih stats
+        // Ambil statistik dari database; jika admin belum mengisi, hitung dari data sistem.
         $stats = !empty($manualStats) ? $manualStats : [
-            ['label' => 'Pendaftar', 'value' => number_format($totalRegistrations ?: 1250, 0, ',', '.') . '+', 'icon' => 'users'],
-            ['label' => 'Terverifikasi', 'value' => ($totalRegistrations > 0 ? round(($totalVerified/$totalRegistrations)*100) : 98) . '%', 'icon' => 'check-circle'],
-            ['label' => 'Diterima', 'value' => $totalAccepted ?: 320, 'icon' => 'user-check'],
-            ['label' => 'Akreditasi', 'value' => $schoolSettings['accreditation'] ?? 'A', 'icon' => 'award'],
+            ['label' => 'Pendaftar', 'value' => number_format($totalRegistrations, 0, ',', '.'), 'icon' => 'users'],
+            ['label' => 'Terverifikasi', 'value' => ($totalRegistrations > 0 ? round(($totalVerified / $totalRegistrations) * 100) : 0) . '%', 'icon' => 'check-circle'],
+            ['label' => 'Diterima', 'value' => number_format($totalAccepted, 0, ',', '.'), 'icon' => 'user-check'],
+            ['label' => 'Jalur Aktif', 'value' => (string) $this->jalurModel->where('is_active', 1)->countAllResults(), 'icon' => 'map-pin'],
         ];
 
         // 5. Per-jalur stats calculation (data sudah ada dari JOIN, tidak perlu query tambahan)
@@ -96,6 +96,8 @@ class HomeController extends BaseController
 
         // 8. Ambil Gallery
         $gallery = $this->galleryModel->where('is_active', 1)->orderBy('sort_order', 'ASC')->limit(6)->findAll();
+        $campusTitle = $this->settingModel->getValue('campus_title', 'Lingkungan Belajar');
+        $campusDescription = $this->settingModel->getValue('campus_description', 'Informasi lingkungan sekolah belum dikonfigurasi.');
 
         // 9. Ambil Testimonials (limit 6 untuk performa)
         $testimonials = $this->testimonialModel->where('is_active', 1)->orderBy('id', 'DESC')->limit(6)->findAll();
@@ -122,6 +124,8 @@ class HomeController extends BaseController
             'announcements'      => $announcements,
             'faqs'               => $faqs,
             'gallery'            => $gallery,
+            'campusTitle'        => $campusTitle,
+            'campusDescription'  => $campusDescription,
             'testimonials'       => $testimonials,
             'ctaUrl'             => $ctaUrl,
             'ctaText'            => $ctaText,
@@ -133,7 +137,7 @@ class HomeController extends BaseController
     {
         $totalRegistrations = $this->registrationModel->whereNotIn('status', ['draft'])->countAllResults();
         return $this->response->setJSON([
-            'total_registrations' => $totalRegistrations > 0 ? $totalRegistrations : 1250,
+            'total_registrations' => $totalRegistrations,
             'status'              => 'success'
         ]);
     }

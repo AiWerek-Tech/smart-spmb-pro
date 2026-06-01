@@ -155,38 +155,16 @@
         <div class="row g-4">
             <?php if (!empty($gallery)): ?>
                 <?php foreach ($gallery as $index => $item): ?>
-                    <div class="col-lg-4 col-md-6 animate-fade-up delay-<?= ($index % 3) + 1 ?>">
-                        <div class="position-relative overflow-hidden rounded-4 hover-lift shadow-sm" style="aspect-ratio: 16/10;">
-                            <img src="<?= (strpos($item['image'], 'http') === 0) ? esc($item['image']) : base_url($item['image']) ?>" alt="<?= esc($item['title']) ?>" class="w-100 h-100 object-fit-cover" onerror="this.src='<?= base_url('assets/img/gallery-placeholder.svg') ?>'">
-                            <div class="sp-gallery-overlay position-absolute bottom-0 start-0 w-100 p-3" style="background: linear-gradient(transparent, rgba(0,0,0,0.75));">
-                                <span class="text-white fw-bold small"><?= esc($item['title']) ?></span>
-                            </div>
-                        </div>
-                    </div>
+                    <?= view('public/_gallery_card', ['item' => $item, 'index' => $index]) ?>
                 <?php endforeach; ?>
             <?php else: ?>
-                <!-- Fallback gallery placeholder -->
-                <?php 
-                $fallbackGallery = [
-                    ['title' => 'Gedung Utama & Kampus'],
-                    ['title' => 'Perpustakaan Digital'],
-                    ['title' => 'Laboratorium Komputer'],
-                    ['title' => 'Ruang Kelas Modern'],
-                    ['title' => 'Lapangan Olahraga'],
-                    ['title' => 'Laboratorium Sains'],
-                ];
-                $placeholderImg = base_url('assets/img/gallery-placeholder.svg');
-                foreach ($fallbackGallery as $index => $item): 
-                ?>
-                    <div class="col-lg-4 col-md-6 animate-fade-up delay-<?= ($index % 3) + 1 ?>">
-                        <div class="position-relative overflow-hidden rounded-4 hover-lift shadow-sm" style="aspect-ratio: 16/10;">
-                            <img src="<?= $placeholderImg ?>" alt="<?= esc($item['title']) ?>" class="w-100 h-100 object-fit-cover">
-                            <div class="sp-gallery-overlay position-absolute bottom-0 start-0 w-100 p-3" style="background: linear-gradient(transparent, rgba(0,0,0,0.75));">
-                                <span class="text-white fw-bold small"><?= esc($item['title']) ?></span>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+                <div class="col-12">
+                    <?= view('layouts/_empty_state', [
+                        'emptyIcon' => 'images',
+                        'emptyTitle' => 'Galeri Belum Tersedia',
+                        'emptyMessage' => 'Foto dan video sekolah akan tampil setelah dipublikasikan dari dashboard admin.'
+                    ]) ?>
+                </div>
             <?php endif; ?>
         </div>
     </div>

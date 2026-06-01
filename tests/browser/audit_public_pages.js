@@ -6,9 +6,12 @@ const PUBLIC_PAGES = [
   { name: 'SPMB', path: '/spmb' },
   { name: 'Pengumuman', path: '/pengumuman', interact: 'modal' },
   { name: 'Kontak', path: '/kontak', interact: 'form' },
+  { name: 'Galeri', path: '/galeri', interact: 'galleryModal' },
+  { name: 'Lingkungan Kampus', path: '/lingkungan-kampus', interact: 'galleryModal' },
+  { name: 'Kebijakan Privasi', path: '/kebijakan-privasi' },
+  { name: 'Syarat Ketentuan', path: '/syarat-ketentuan' },
   { name: 'Redirect Profil Sejarah', path: '/profil/sejarah' },
   { name: 'Redirect Biaya', path: '/biaya' },
-  { name: 'Redirect Galeri', path: '/galeri' },
   { name: 'Redirect FAQ', path: '/faq' },
 ];
 
@@ -25,7 +28,11 @@ async function runInteract(page, type) {
     if (type === 'home') {
       const broken = await page.evaluate(() => {
         const imgs = [...document.querySelectorAll('.sp-hero-mockup img, .sp-gallery-img-wrapper img, .sp-news-image img')];
-        return imgs.filter((img) => img.naturalWidth === 0 && !img.src.includes('placeholder')).length;
+        return imgs.filter((img) => {
+          const rect = img.getBoundingClientRect();
+          const visible = rect.width > 0 && rect.height > 0 && getComputedStyle(img).visibility !== 'hidden';
+          return visible && img.complete && img.naturalWidth === 0 && !img.src.includes('placeholder');
+        }).length;
       });
       if (broken > 0) notes.push(`${broken} hero/gallery/news image(s) failed to load`);
       const carousel = page.locator('#heroCarousel');
@@ -36,6 +43,16 @@ async function runInteract(page, type) {
           await page.waitForTimeout(400);
         }
       }
+      const homeNews = page.locator('.sp-news-card[data-bs-toggle="modal"]').first();
+      if (await homeNews.count()) {
+        await page.locator('.sp-news-section').scrollIntoViewIfNeeded();
+        await page.waitForTimeout(600);
+        await homeNews.click();
+        await page.waitForTimeout(400);
+        if (!(await page.locator('.modal.show').count())) notes.push('Home news modal did not open');
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(200);
+      }
     }
     if (type === 'gallery') {
       const broken = await page.evaluate(() => {
@@ -43,6 +60,21 @@ async function runInteract(page, type) {
         return imgs.filter((img) => img.naturalWidth === 0).length;
       });
       if (broken > 0) notes.push(`${broken} gallery image(s) failed to load`);
+    }
+    if (type === 'galleryModal') {
+      const broken = await page.evaluate(() => {
+        const imgs = [...document.querySelectorAll('img.object-fit-cover, .sp-gallery-card-btn img')];
+        return imgs.filter((img) => img.naturalWidth === 0).length;
+      });
+      if (broken > 0) notes.push(`${broken} gallery image(s) failed to load`);
+
+      const trigger = page.locator('.sp-gallery-card-btn[data-bs-toggle="modal"]').first();
+      if (await trigger.count()) {
+        await trigger.click();
+        await page.waitForTimeout(400);
+        if (!(await page.locator('.modal.show').count())) notes.push('Gallery modal did not open');
+        await page.keyboard.press('Escape');
+      }
     }
     if (type === 'modal') {
       const trigger = page.locator('[data-bs-toggle="modal"]').first();
@@ -112,7 +144,8 @@ async function auditPage(page, cfg) {
     return iframe ? iframe.src : '';
   });
   const isValidMapsIframe = mapsIframe.includes('/maps/embed') || mapsIframe.includes('output=embed');
-  if (data.iframeCount > 0 && !(cfg.path === '/kontak' && data.iframeCount === 1 && isValidMapsIframe)) {
+  const allowsMediaIframe = ['/galeri', '/lingkungan-kampus', '/profil'].includes(cfg.path) && mapsIframe.includes('youtube.com/embed/');
+  if (data.iframeCount > 0 && !(cfg.path === '/kontak' && data.iframeCount === 1 && isValidMapsIframe) && !allowsMediaIframe) {
     issues.push(`Unexpected iframe count ${data.iframeCount}`);
   }
   if (cfg.path === '/kontak' && data.iframeCount === 1 && !isValidMapsIframe) {
@@ -136,9 +169,6 @@ async function auditPage(page, cfg) {
   }
   if (cfg.path === '/biaya' && !data.finalUrl.includes('spmb')) {
     issues.push(`Redirect did not reach spmb (${data.finalUrl})`);
-  }
-  if (cfg.path === '/galeri' && !data.finalUrl.includes('profil')) {
-    issues.push(`Redirect did not reach profil (${data.finalUrl})`);
   }
   if (cfg.path === '/faq' && !data.finalUrl.includes('spmb')) {
     issues.push(`Redirect did not reach spmb (${data.finalUrl})`);

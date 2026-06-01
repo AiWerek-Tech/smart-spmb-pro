@@ -1196,7 +1196,7 @@ body {
 @media (min-width: 768px) and (max-width: 991.98px) {
     .sp-news-container { grid-template-columns: repeat(2, 1fr); }
 }
-.sp-news-card { background: var(--sp-card-bg); border-radius: 20px; overflow: hidden; border: 1px solid var(--sp-card-border); transition: all 0.3s; }
+.sp-news-card { display: block; background: var(--sp-card-bg); border-radius: 20px; overflow: hidden; border: 1px solid var(--sp-card-border); transition: all 0.3s; cursor: pointer; font: inherit; }
 .sp-news-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.05); }
 
 .sp-news-image { height: 180px; position: relative; }

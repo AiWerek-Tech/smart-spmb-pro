@@ -351,8 +351,8 @@ $appInfo = config('AppInfo');
             <div class="sp-footer-bottom">
                 <p class="sp-footer-copy mb-0">&copy; <?= date('Y') ?> <?= esc($schoolName) ?>. Smart SPMB Pro v<?= esc($appInfo->version) ?> by <?= esc($appInfo->developer) ?></p>
                 <div class="sp-footer-legal">
-                    <a href="#">Kebijakan Privasi</a>
-                    <a href="#">Syarat & Ketentuan</a>
+                    <a href="<?= base_url('/kebijakan-privasi') ?>">Kebijakan Privasi</a>
+                    <a href="<?= base_url('/syarat-ketentuan') ?>">Syarat & Ketentuan</a>
                 </div>
             </div>
         </div>

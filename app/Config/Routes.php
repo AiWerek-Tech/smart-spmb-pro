@@ -15,17 +15,20 @@ use CodeIgniter\Router\RouteCollection;
  */
 $routes->get('/', 'Public\HomeController::index');
 $routes->get('/profil', 'Public\ProfileController::index');
+$routes->get('/lingkungan-kampus', 'Public\PageController::campus');
+$routes->get('/galeri', 'Public\GalleryController::index');
 $routes->get('/spmb', 'Public\SpmbController::index');
 $routes->get('/pengumuman', 'Public\AnnouncementController::index');
 $routes->post('/pengumuman/cek-hasil', 'Public\AnnouncementController::checkResult');
 $routes->get('/kontak', 'Public\ContactController::index');
+$routes->get('/kebijakan-privasi', 'Public\PageController::privacy');
+$routes->get('/syarat-ketentuan', 'Public\PageController::terms');
 
 // Pengalihan Sub-Page & Halaman Menu Utama agar tidak ada 404/halaman kosong (Req 2.0)
 $routes->addRedirect('profil/sejarah', 'profil#sejarah');
 $routes->addRedirect('profil/fasilitas', 'profil#fasilitas');
 $routes->addRedirect('profil/guru', 'profil#guru');
 $routes->addRedirect('biaya', 'spmb#biaya');
-$routes->addRedirect('galeri', 'profil#galeri');
 $routes->addRedirect('faq', 'spmb#faq');
 
 /*
@@ -72,6 +75,7 @@ $routes->group('admin', ['filter' => ['auth', 'role:admin']], function ($routes)
     $routes->get('content', 'Admin\ContentController::index');
     $routes->post('content/save', 'Admin\ContentController::save');
     $routes->post('content/gallery/upload', 'Admin\ContentController::galleryUpload');
+    $routes->post('content/gallery/(:num)/update', 'Admin\ContentController::galleryUpdate/$1');
     $routes->post('content/gallery/(:num)/delete', 'Admin\ContentController::galleryDelete/$1');
 
     // Banner Management
