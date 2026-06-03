@@ -1,40 +1,48 @@
 <?= $this->extend('layouts/dashboard') ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in">
-    <!-- Header Page -->
-    <div class="col-12 mb-4">
+<section class="admin-page-shell animate-fade-in sp-admin-page sp-gelombang-page" aria-labelledby="admin-gelombang-title">
+    <header class="admin-page-header">
         <div>
-            <h4 class="mb-0 text-primary">Kelola Gelombang Pendaftaran</h4>
-            <p class="text-muted mb-0">Atur jadwal gelombang, tanggal buka-tutup pendaftaran, serta tanggal pengumuman hasil seleksi.</p>
+            <p class="admin-panel__kicker">Data SPMB</p>
+            <h1 id="admin-gelombang-title">Kelola Gelombang Pendaftaran</h1>
+            <p class="admin-page-subtitle">Atur jadwal gelombang, tanggal buka-tutup pendaftaran, serta tanggal pengumuman hasil seleksi.</p>
         </div>
-    </div>
+        <div class="admin-page-actions">
+            <span class="sp-pill-soft"><i class="me-1" data-lucide="calendar-range"></i><?= esc($activeYear ?? '-') ?></span>
+            <span class="sp-pill-soft"><i class="me-1" data-lucide="layers"></i><?= count($gelombang ?? []) ?> jadwal</span>
+            <span class="sp-pill-soft"><i class="me-1" data-lucide="shield-check"></i>Maksimal 3 gelombang aktif</span>
+        </div>
+    </header>
 
-    <!-- LEFT SIDE: Gelombang List Table -->
-    <div class="col-lg-8 mb-4">
-        <div class="card shadow-sm border h-100">
-            <div class="card-header bg-white border-bottom py-3">
-                <h5 class="card-title text-primary"><i class="me-2" data-lucide="calendar"></i> Jadwal Gelombang</h5>
-                <small class="text-muted">Maksimal hanya diperbolehkan 3 gelombang aktif.</small>
+    <div class="row g-3">
+
+    <div class="col-xl-8 col-lg-7">
+        <div class="card admin-secondary-panel sp-compact-card h-100">
+            <div class="card-header sp-compact-card-header">
+                <div>
+                    <h2 class="admin-section-title sp-compact-card-title"><i data-lucide="calendar-days"></i>Jadwal Gelombang</h2>
+                    <div class="admin-section-subtitle sp-compact-note">Tersinkron dengan jalur pendaftaran dan hasil seleksi.</div>
+                </div>
             </div>
-            
+
             <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                <div class="table-responsive sp-desktop-table">
+                    <table class="table table-hover table-sm align-middle mb-0 sp-admin-table">
+                        <thead>
                             <tr>
                                 <th class="ps-4">Gelombang / Jalur</th>
                                 <th>Tanggal Pendaftaran</th>
                                 <th>Pengumuman</th>
                                 <th>Status</th>
-                                <th class="text-center pe-4" style="width: 150px;">Aksi</th>
+                                <th class="text-center pe-4" style="width: 124px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (empty($gelombang)): ?>
                                 <tr>
                                     <td colspan="5" class="text-center py-5 text-muted">
-                                        <i class="fs-1 mb-3" data-lucide="calendar-times"></i>
+                                        <i class="fs-1 mb-3" data-lucide="calendar-x"></i>
                                         <p class="mb-0">Belum ada gelombang pendaftaran yang diatur.</p>
                                     </td>
                                 </tr>
@@ -42,31 +50,37 @@
                                 <?php foreach ($gelombang as $g): ?>
                                     <tr>
                                         <td class="ps-4">
-                                            <div class="fw-semibold text-dark"><?= esc($g['name']) ?></div>
-                                            <span class="badge bg-light text-primary border border-primary border-opacity-10 mt-1"><?= esc($g['jalur_name']) ?></span>
+                                            <div class="fw-bold text-dark"><?= esc($g['name']) ?></div>
+                                            <span class="sp-pill-soft mt-1"><?= esc($g['jalur_name']) ?></span>
                                         </td>
                                         <td>
-                                            <div class="small text-dark fw-bold">
-                                                <i class="text-success me-1" data-lucide="log-in"></i> Buka: <?= date('d M Y', strtotime($g['open_date'])) ?>
-                                            </div>
-                                            <div class="small text-danger fw-bold mt-1">
-                                                <i class="me-1" data-lucide="log-out"></i> Tutup: <?= date('d M Y', strtotime($g['close_date'])) ?>
+                                            <div class="sp-date-stack">
+                                                <div class="sp-date-line is-open">
+                                                    <i data-lucide="log-in"></i>
+                                                    <span>Buka: <?= date('d M Y', strtotime($g['open_date'])) ?></span>
+                                                </div>
+                                                <div class="sp-date-line is-close">
+                                                    <i data-lucide="log-out"></i>
+                                                    <span>Tutup: <?= date('d M Y', strtotime($g['close_date'])) ?></span>
+                                                </div>
                                             </div>
                                         </td>
-                                        <td class="fw-semibold small text-info">
-                                            <i class="me-1" data-lucide="bullhorn"></i> <?= date('d M Y', strtotime($g['announcement_date'])) ?>
+                                        <td>
+                                            <div class="sp-date-line is-info">
+                                                <i data-lucide="megaphone"></i>
+                                                <span><?= date('d M Y', strtotime($g['announcement_date'])) ?></span>
+                                            </div>
                                         </td>
                                         <td>
                                             <?php if ($g['is_active']): ?>
-                                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2">Aktif</span>
+                                                <span class="sp-status-pill is-active">Aktif</span>
                                             <?php else: ?>
-                                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-2">Nonaktif</span>
+                                                <span class="sp-status-pill is-muted">Nonaktif</span>
                                             <?php endif; ?>
                                         </td>
                                         <td class="pe-4 text-center">
-                                            <div class="d-flex align-items-center justify-content-center">
-                                                <!-- Edit Trigger button (Loads values in Modal via JS) -->
-                                                <button type="button" class="btn btn-sm btn-outline-primary edit-gelombang-btn me-1" 
+                                            <div class="sp-action-row">
+                                                <button type="button" class="btn btn-sm btn-outline-primary sp-icon-action edit-gelombang-btn"
                                                         data-id="<?= $g['id'] ?>"
                                                         data-jalur="<?= $g['jalur_id'] ?>"
                                                         data-name="<?= esc($g['name']) ?>"
@@ -75,14 +89,12 @@
                                                         data-announce="<?= $g['announcement_date'] ?>"
                                                         data-active="<?= $g['is_active'] ?>"
                                                         title="Edit Gelombang">
-                                                    <i  data-lucide="edit"></i>
+                                                    <i data-lucide="square-pen"></i>
                                                 </button>
-
-                                                <!-- Delete button -->
                                                 <form action="<?= base_url('admin/gelombang/'.$g['id'].'/delete') ?>" method="POST">
                                                     <?= csrf_field() ?>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-confirm" title="Hapus Gelombang">
-                                                        <i  data-lucide="trash-2"></i>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger sp-icon-action delete-confirm" title="Hapus Gelombang">
+                                                        <i data-lucide="trash-2"></i>
                                                     </button>
                                                 </form>
                                             </div>
@@ -93,26 +105,74 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="sp-mobile-records">
+                    <?php if (empty($gelombang)): ?>
+                        <div class="text-center py-5 text-muted">
+                            <i class="fs-1 mb-3" data-lucide="calendar-x"></i>
+                            <p class="mb-0">Belum ada gelombang pendaftaran yang diatur.</p>
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($gelombang as $g): ?>
+                            <article class="sp-record-card">
+                                <div class="sp-record-head">
+                                    <div>
+                                        <div class="fw-bold text-dark"><?= esc($g['name']) ?></div>
+                                        <span class="sp-pill-soft mt-1"><?= esc($g['jalur_name']) ?></span>
+                                    </div>
+                                    <?php if ($g['is_active']): ?>
+                                        <span class="sp-status-pill is-active">Aktif</span>
+                                    <?php else: ?>
+                                        <span class="sp-status-pill is-muted">Nonaktif</span>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="sp-date-stack">
+                                    <div class="sp-date-line is-open"><i data-lucide="log-in"></i><span>Buka: <?= date('d M Y', strtotime($g['open_date'])) ?></span></div>
+                                    <div class="sp-date-line is-close"><i data-lucide="log-out"></i><span>Tutup: <?= date('d M Y', strtotime($g['close_date'])) ?></span></div>
+                                    <div class="sp-date-line is-info"><i data-lucide="megaphone"></i><span>Pengumuman: <?= date('d M Y', strtotime($g['announcement_date'])) ?></span></div>
+                                </div>
+                                <div class="sp-record-actions">
+                                    <button type="button" class="btn btn-outline-primary btn-sm flex-fill edit-gelombang-btn"
+                                            data-id="<?= $g['id'] ?>"
+                                            data-jalur="<?= $g['jalur_id'] ?>"
+                                            data-name="<?= esc($g['name']) ?>"
+                                            data-open="<?= $g['open_date'] ?>"
+                                            data-close="<?= $g['close_date'] ?>"
+                                            data-announce="<?= $g['announcement_date'] ?>"
+                                            data-active="<?= $g['is_active'] ?>">
+                                        <i class="me-1" data-lucide="square-pen"></i>Edit
+                                    </button>
+                                    <form class="flex-fill" action="<?= base_url('admin/gelombang/'.$g['id'].'/delete') ?>" method="POST">
+                                        <?= csrf_field() ?>
+                                        <button type="button" class="btn btn-outline-danger btn-sm w-100 delete-confirm">
+                                            <i class="me-1" data-lucide="trash-2"></i>Hapus
+                                        </button>
+                                    </form>
+                                </div>
+                            </article>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- RIGHT SIDE: Add Gelombang Form -->
-    <div class="col-lg-4 mb-4">
-        <div class="card shadow-sm border">
-            <div class="card-header bg-white border-bottom py-3">
-                <h5 class="card-title text-primary"><i class="me-2" data-lucide="plus"></i> Tambah Gelombang</h5>
-                <small class="text-muted">Buat jadwal gelombang baru.</small>
+    <div class="col-xl-4 col-lg-5">
+        <div class="card admin-secondary-panel sp-compact-card sp-sticky-panel">
+            <div class="card-header sp-compact-card-header">
+                <div>
+                    <h2 class="admin-section-title sp-compact-card-title"><i data-lucide="plus"></i>Tambah Gelombang</h2>
+                    <div class="admin-section-subtitle sp-compact-note">Buat jadwal gelombang baru.</div>
+                </div>
             </div>
-            
+
             <div class="card-body">
-                <form method="POST" action="<?= base_url('admin/gelombang/store') ?>">
+                <form method="POST" action="<?= base_url('admin/gelombang/store') ?>" class="sp-compact-form">
                     <?= csrf_field() ?>
 
-                    <!-- Jalur -->
                     <div class="mb-3">
-                        <label for="jalur_id" class="form-label fw-bold small">Jalur Pendaftaran <span class="text-danger">*</span></label>
-                        <select class="form-select select2" name="jalur_id" id="jalur_id" required>
+                        <label for="jalur_id" class="form-label">Jalur Pendaftaran <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm select2" name="jalur_id" id="jalur_id" required>
                             <option value="" disabled selected>Pilih jalur...</option>
                             <?php foreach ($jalur as $jl): ?>
                                 <option value="<?= $jl['id'] ?>" <?= old('jalur_id') == $jl['id'] ? 'selected' : '' ?>><?= esc($jl['name']) ?></option>
@@ -120,58 +180,53 @@
                         </select>
                     </div>
 
-                    <!-- Name -->
                     <div class="mb-3">
-                        <label for="name" class="form-label fw-bold small">Nama Gelombang <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="name" name="name" placeholder="Contoh: Gelombang 1 Mandiri" required value="<?= old('name') ?>">
+                        <label for="name" class="form-label">Nama Gelombang <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" id="name" name="name" placeholder="Contoh: Gelombang 1 Mandiri" required value="<?= old('name') ?>">
                     </div>
 
-                    <!-- Open Date -->
                     <div class="mb-3">
-                        <label for="open_date" class="form-label fw-bold small">Tanggal Buka <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i  data-lucide="calendar-day"></i></span>
+                        <label for="open_date" class="form-label">Tanggal Buka <span class="text-danger">*</span></label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i data-lucide="calendar-days"></i></span>
                             <input type="text" class="form-control flatpickr" id="open_date" name="open_date" placeholder="Pilih tanggal..." required value="<?= old('open_date') ?>">
                         </div>
                     </div>
 
-                    <!-- Close Date -->
                     <div class="mb-3">
-                        <label for="close_date" class="form-label fw-bold small">Tanggal Tutup <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i  data-lucide="calendar-times"></i></span>
+                        <label for="close_date" class="form-label">Tanggal Tutup <span class="text-danger">*</span></label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i data-lucide="calendar-x"></i></span>
                             <input type="text" class="form-control flatpickr" id="close_date" name="close_date" placeholder="Pilih tanggal..." required value="<?= old('close_date') ?>">
                         </div>
                     </div>
 
-                    <!-- Announcement Date -->
                     <div class="mb-3">
-                        <label for="announcement_date" class="form-label fw-bold small">Tanggal Pengumuman <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i  data-lucide="bullhorn"></i></span>
+                        <label for="announcement_date" class="form-label">Tanggal Pengumuman <span class="text-danger">*</span></label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i data-lucide="megaphone"></i></span>
                             <input type="text" class="form-control flatpickr" id="announcement_date" name="announcement_date" placeholder="Pilih tanggal..." required value="<?= old('announcement_date') ?>">
                         </div>
                     </div>
 
-                    <!-- Active Switch -->
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <div class="form-check form-switch p-0 ps-5 d-flex align-items-center">
                             <input class="form-check-input ms-n5 me-2" type="checkbox" role="switch" id="is_active" name="is_active" value="1" style="width: 2.5em; height: 1.25em;">
                             <label class="form-check-label fw-bold small" for="is_active">Aktifkan gelombang ini</label>
                         </div>
                     </div>
 
-                    <!-- Submit -->
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary">
-                            <i class="me-2" data-lucide="save"></i> Simpan Gelombang
+                            <i class="me-2" data-lucide="save"></i>Simpan Gelombang
                         </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-</div>
+    </div>
+</section>
 
 <!-- ================= EDIT GELOMBANG MODAL ================= -->
 <div class="modal fade" id="editGelombangModal" tabindex="-1" aria-labelledby="editGelombangModalLabel" aria-hidden="true">
@@ -204,7 +259,7 @@
                     <div class="mb-3">
                         <label for="edit_open_date" class="form-label fw-bold small">Tanggal Buka <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <span class="input-group-text"><i  data-lucide="calendar-day"></i></span>
+                            <span class="input-group-text"><i data-lucide="calendar-days"></i></span>
                             <input type="text" class="form-control flatpickr" id="edit_open_date" name="open_date" required>
                         </div>
                     </div>
@@ -213,7 +268,7 @@
                     <div class="mb-3">
                         <label for="edit_close_date" class="form-label fw-bold small">Tanggal Tutup <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <span class="input-group-text"><i  data-lucide="calendar-times"></i></span>
+                            <span class="input-group-text"><i data-lucide="calendar-x"></i></span>
                             <input type="text" class="form-control flatpickr" id="edit_close_date" name="close_date" required>
                         </div>
                     </div>
@@ -222,7 +277,7 @@
                     <div class="mb-3">
                         <label for="edit_announcement_date" class="form-label fw-bold small">Tanggal Pengumuman <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <span class="input-group-text"><i  data-lucide="bullhorn"></i></span>
+                            <span class="input-group-text"><i data-lucide="megaphone"></i></span>
                             <input type="text" class="form-control flatpickr" id="edit_announcement_date" name="announcement_date" required>
                         </div>
                     </div>

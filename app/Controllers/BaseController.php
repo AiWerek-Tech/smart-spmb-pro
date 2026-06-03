@@ -33,7 +33,7 @@ abstract class BaseController extends Controller
      * class instantiation. Add any helpers to this array
      * that you want to load on every controller.
      */
-    protected $helpers = ['url', 'form', 'html', 'text'];
+    protected $helpers = ['url', 'form', 'html', 'text', 'rbac'];
 
     /**
      * Be sure to declare properties for any property fetch you initialized.
@@ -70,6 +70,7 @@ abstract class BaseController extends Controller
             'name'  => session()->get('user_name'),
             'email' => session()->get('user_email'),
             'role'  => session()->get('user_role'),
+            'base_role' => session()->get('user_base_role') ?? session()->get('user_role'),
         ];
     }
 
@@ -79,7 +80,9 @@ abstract class BaseController extends Controller
     protected function hasRole(string ...$roles): bool
     {
         $userRole = session()->get('user_role');
-        return in_array($userRole, $roles, true);
+        $baseRole = session()->get('user_base_role') ?? $userRole;
+
+        return in_array($userRole, $roles, true) || in_array($baseRole, $roles, true);
     }
 
     /**

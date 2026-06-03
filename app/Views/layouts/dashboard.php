@@ -52,6 +52,7 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
     <!-- Smart SPMB Pro — Foundation Design System + Dashboard Layout -->
     <link href="<?= base_url('assets/css/foundation.css') ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/dashboard.css') ?>" rel="stylesheet">
+    <link href="<?= base_url('assets/css/admin-dashboard.css') ?>" rel="stylesheet">
 
     <!-- Lucide Icons with First-Party Local Fallback -->
     <script src="https://unpkg.com/lucide@0.309.0/dist/umd/lucide.min.js"></script>
@@ -63,7 +64,7 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
 
     <?= $this->renderSection('additional_css') ?>
 </head>
-<body data-user-role="<?= esc(session()->get('user_role') ?? 'pendaftar') ?>">
+<body data-user-role="<?= esc(session()->get('user_base_role') ?? session()->get('user_role') ?? 'pendaftar') ?>">
     <script>SpTheme.initDarkMode();</script>
 
     <!-- Skip Navigation -->
@@ -89,97 +90,74 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
             <ul class="sidebar-menu">
                 <!-- Dashboard Route per Role -->
                 <?php 
-                    $role = session()->get('user_role') ?? 'pendaftar'; 
+                    $role = session()->get('user_base_role') ?? session()->get('user_role') ?? 'pendaftar'; 
+                    $roleSlug = session()->get('user_role') ?? $role;
                     $segment1 = service('request')->getUri()->getSegment(1);
                     $segment2 = service('request')->getUri()->getSegment(2);
+                    $currentRegistrantStatus = (string) service('request')->getGet('status');
+                    $canViewPayments = service('rbacEngine')->hasAnyPermission((int) session()->get('user_id'), ['payments.view']);
                 ?>
 
                 <!-- ------------------- ADMIN SIDEBAR ------------------- -->
                 <?php if ($role === 'admin'): ?>
-                    <li class="menu-header">Menu Utama</li>
+                    <?php
+                        $spmbMenuOpen = in_array($segment2, ['academic-years', 'jalur', 'gelombang', 'document-requirements', 'seleksi'], true);
+                        $contentMenuOpen = in_array($segment2, ['content', 'teachers', 'gallery', 'banners', 'announcements', 'testimonials', 'statistics', 'faq'], true);
+                        $systemMenuOpen = in_array($segment2, ['users', 'access', 'settings', 'backup'], true);
+                    ?>
+                    <li class="menu-header">Menu</li>
                     <li class="menu-item <?= ($segment1 === 'admin' && ($segment2 === '' || $segment2 === 'dashboard')) ? 'active' : '' ?>">
                         <a href="<?= base_url('admin/dashboard') ?>" class="menu-link">
                             <i data-lucide="layout-dashboard"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
-                    <li class="menu-item <?= ($segment1 === 'admin' && $segment2 === 'users') ? 'active' : '' ?>">
-                        <a href="<?= base_url('admin/users') ?>" class="menu-link">
-                            <i data-lucide="users"></i>
-                            <span>Kelola Pengguna</span>
-                        </a>
+
+                    <li class="menu-item has-submenu <?= $spmbMenuOpen ? 'open active' : '' ?>">
+                        <button type="button" class="menu-link submenu-toggle" data-sidebar-submenu="spmb" aria-expanded="<?= $spmbMenuOpen ? 'true' : 'false' ?>">
+                            <i data-lucide="graduation-cap"></i>
+                            <span>Data SPMB</span>
+                            <i data-lucide="chevron-down" class="submenu-chevron"></i>
+                        </button>
+                        <ul class="submenu-list" data-sidebar-submenu-panel="spmb">
+                            <li><a href="<?= base_url('admin/academic-years') ?>" class="submenu-link <?= $segment2 === 'academic-years' ? 'active' : '' ?>"><i data-lucide="calendar-range"></i><span>Tahun Pelajaran</span></a></li>
+                            <li><a href="<?= base_url('admin/jalur') ?>" class="submenu-link <?= $segment2 === 'jalur' ? 'active' : '' ?>"><i data-lucide="git-fork"></i><span>Jalur Pendaftaran</span></a></li>
+                            <li><a href="<?= base_url('admin/gelombang') ?>" class="submenu-link <?= $segment2 === 'gelombang' ? 'active' : '' ?>"><i data-lucide="calendar"></i><span>Gelombang</span></a></li>
+                            <li><a href="<?= base_url('admin/document-requirements') ?>" class="submenu-link <?= $segment2 === 'document-requirements' ? 'active' : '' ?>"><i data-lucide="file-check-2"></i><span>Syarat Dokumen</span></a></li>
+                            <li><a href="<?= base_url('admin/seleksi') ?>" class="submenu-link <?= $segment2 === 'seleksi' ? 'active' : '' ?>"><i data-lucide="award"></i><span>Hasil Seleksi</span></a></li>
+                        </ul>
                     </li>
 
-                    <li class="menu-header">Data SPMB</li>
-                    <li class="menu-item <?= ($segment1 === 'admin' && $segment2 === 'jalur') ? 'active' : '' ?>">
-                        <a href="<?= base_url('admin/jalur') ?>" class="menu-link">
-                            <i data-lucide="git-fork"></i>
-                            <span>Jalur Pendaftaran</span>
-                        </a>
-                    </li>
-                    <li class="menu-item <?= ($segment1 === 'admin' && $segment2 === 'gelombang') ? 'active' : '' ?>">
-                        <a href="<?= base_url('admin/gelombang') ?>" class="menu-link">
-                            <i data-lucide="calendar"></i>
-                            <span>Gelombang</span>
-                        </a>
-                    </li>
-                    <li class="menu-item <?= ($segment1 === 'admin' && $segment2 === 'seleksi') ? 'active' : '' ?>">
-                        <a href="<?= base_url('admin/seleksi') ?>" class="menu-link">
-                            <i data-lucide="award"></i>
-                            <span>Hasil Seleksi</span>
-                        </a>
+                    <li class="menu-item has-submenu <?= $contentMenuOpen ? 'open active' : '' ?>">
+                        <button type="button" class="menu-link submenu-toggle" data-sidebar-submenu="content" aria-expanded="<?= $contentMenuOpen ? 'true' : 'false' ?>">
+                            <i data-lucide="layers"></i>
+                            <span>Konten Publik</span>
+                            <i data-lucide="chevron-down" class="submenu-chevron"></i>
+                        </button>
+                        <ul class="submenu-list" data-sidebar-submenu-panel="content">
+                            <li><a href="<?= base_url('admin/content') ?>" class="submenu-link <?= $segment2 === 'content' ? 'active' : '' ?>"><i data-lucide="school"></i><span>Profil Sekolah</span></a></li>
+                            <li><a href="<?= base_url('admin/teachers') ?>" class="submenu-link <?= $segment2 === 'teachers' ? 'active' : '' ?>"><i data-lucide="users"></i><span>Tenaga Pendidik</span></a></li>
+                            <li><a href="<?= base_url('admin/gallery') ?>" class="submenu-link <?= $segment2 === 'gallery' ? 'active' : '' ?>"><i data-lucide="image"></i><span>Galeri Sekolah</span></a></li>
+                            <li><a href="<?= base_url('admin/banners') ?>" class="submenu-link <?= $segment2 === 'banners' ? 'active' : '' ?>"><i data-lucide="image"></i><span>Banner Hero</span></a></li>
+                            <li><a href="<?= base_url('admin/announcements') ?>" class="submenu-link <?= $segment2 === 'announcements' ? 'active' : '' ?>"><i data-lucide="megaphone"></i><span>Pengumuman</span></a></li>
+                            <li><a href="<?= base_url('admin/testimonials') ?>" class="submenu-link <?= $segment2 === 'testimonials' ? 'active' : '' ?>"><i data-lucide="message-square"></i><span>Testimoni</span></a></li>
+                            <li><a href="<?= base_url('admin/statistics') ?>" class="submenu-link <?= $segment2 === 'statistics' ? 'active' : '' ?>"><i data-lucide="bar-chart-2"></i><span>Statistik</span></a></li>
+                            <li><a href="<?= base_url('admin/faq') ?>" class="submenu-link <?= $segment2 === 'faq' ? 'active' : '' ?>"><i data-lucide="help-circle"></i><span>FAQ</span></a></li>
+                        </ul>
                     </li>
 
-                    <li class="menu-header">Konten & Publik</li>
-                    <li class="menu-item <?= ($segment1 === 'admin' && $segment2 === 'banners') ? 'active' : '' ?>">
-                        <a href="<?= base_url('admin/banners') ?>" class="menu-link">
-                            <i data-lucide="image"></i>
-                            <span>Banner Hero</span>
-                        </a>
-                    </li>
-                    <li class="menu-item <?= ($segment1 === 'admin' && $segment2 === 'announcements') ? 'active' : '' ?>">
-                        <a href="<?= base_url('admin/announcements') ?>" class="menu-link">
-                            <i data-lucide="megaphone"></i>
-                            <span>Pengumuman</span>
-                        </a>
-                    </li>
-                    <li class="menu-item <?= ($segment1 === 'admin' && $segment2 === 'content') ? 'active' : '' ?>">
-                        <a href="<?= base_url('admin/content') ?>" class="menu-link">
-                            <i data-lucide="school"></i>
-                            <span>Profil & Galeri</span>
-                        </a>
-                    </li>
-                    <li class="menu-item <?= ($segment1 === 'admin' && $segment2 === 'testimonials') ? 'active' : '' ?>">
-                        <a href="<?= base_url('admin/testimonials') ?>" class="menu-link">
-                            <i data-lucide="message-square"></i>
-                            <span>Testimoni</span>
-                        </a>
-                    </li>
-                    <li class="menu-item <?= ($segment1 === 'admin' && $segment2 === 'statistics') ? 'active' : '' ?>">
-                        <a href="<?= base_url('admin/statistics') ?>" class="menu-link">
-                            <i data-lucide="bar-chart-2"></i>
-                            <span>Statistik</span>
-                        </a>
-                    </li>
-                    <li class="menu-item <?= ($segment1 === 'admin' && $segment2 === 'faq') ? 'active' : '' ?>">
-                        <a href="<?= base_url('admin/faq') ?>" class="menu-link">
-                            <i data-lucide="help-circle"></i>
-                            <span>Kelola FAQ</span>
-                        </a>
-                    </li>
-
-                    <li class="menu-header">Pengaturan</li>
-                    <li class="menu-item <?= ($segment1 === 'admin' && $segment2 === 'settings') ? 'active' : '' ?>">
-                        <a href="<?= base_url('admin/settings') ?>" class="menu-link">
+                    <li class="menu-item has-submenu <?= $systemMenuOpen ? 'open active' : '' ?>">
+                        <button type="button" class="menu-link submenu-toggle" data-sidebar-submenu="system" aria-expanded="<?= $systemMenuOpen ? 'true' : 'false' ?>">
                             <i data-lucide="settings"></i>
-                            <span>Konfigurasi Sistem</span>
-                        </a>
-                    </li>
-                    <li class="menu-item <?= ($segment1 === 'admin' && $segment2 === 'backup') ? 'active' : '' ?>">
-                        <a href="<?= base_url('admin/backup') ?>" class="menu-link">
-                            <i data-lucide="database"></i>
-                            <span>Backup & Restore</span>
-                        </a>
+                            <span>Sistem</span>
+                            <i data-lucide="chevron-down" class="submenu-chevron"></i>
+                        </button>
+                        <ul class="submenu-list" data-sidebar-submenu-panel="system">
+                            <li><a href="<?= base_url('admin/users') ?>" class="submenu-link <?= $segment2 === 'users' ? 'active' : '' ?>"><i data-lucide="users"></i><span>Pengguna</span></a></li>
+                            <li><a href="<?= base_url('admin/access') ?>" class="submenu-link <?= $segment2 === 'access' ? 'active' : '' ?>"><i data-lucide="shield-check"></i><span>Mode & Hak Akses</span></a></li>
+                            <li><a href="<?= base_url('admin/settings') ?>" class="submenu-link <?= $segment2 === 'settings' ? 'active' : '' ?>"><i data-lucide="sliders-horizontal"></i><span>Konfigurasi</span></a></li>
+                            <li><a href="<?= base_url('admin/backup') ?>" class="submenu-link <?= $segment2 === 'backup' ? 'active' : '' ?>"><i data-lucide="database"></i><span>Backup & Restore</span></a></li>
+                        </ul>
                     </li>
 
                 <!-- ------------------- OPERATOR SIDEBAR ------------------- -->
@@ -193,6 +171,14 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
                     </li>
 
                     <li class="menu-header">Pengelolaan SPMB</li>
+                    <?php if ($canViewPayments): ?>
+                    <li class="menu-item <?= ($segment1 === 'bendahara') ? 'active' : '' ?>">
+                        <a href="<?= base_url('bendahara/invoices') ?>" class="menu-link">
+                            <i data-lucide="wallet"></i>
+                            <span>Pembayaran</span>
+                        </a>
+                    </li>
+                    <?php endif; ?>
                     <li class="menu-item <?= ($segment1 === 'operator' && $segment2 === 'registrants') ? 'active' : '' ?>">
                         <a href="<?= base_url('operator/registrants') ?>" class="menu-link">
                             <i data-lucide="graduation-cap"></i>
@@ -203,6 +189,12 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
                         <a href="<?= base_url('operator/dapodik') ?>" class="menu-link">
                             <i data-lucide="check-square"></i>
                             <span>Validasi Dapodik</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="<?= base_url('operator/export/excel') ?>" class="menu-link">
+                            <i data-lucide="download"></i>
+                            <span>Ekspor Data</span>
                         </a>
                     </li>
 
@@ -227,6 +219,12 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
                             <span>Unggah Dokumen</span>
                         </a>
                     </li>
+                    <li class="menu-item <?= ($segment1 === 'hasil-seleksi') ? 'active' : '' ?>">
+                        <a href="<?= base_url('hasil-seleksi') ?>" class="menu-link">
+                            <i data-lucide="clipboard-check"></i>
+                            <span>Hasil Seleksi</span>
+                        </a>
+                    </li>
                 <?php endif; ?>
 
                 <li class="menu-header">Sesi</li>
@@ -243,7 +241,7 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
         <div class="main-container">
             <!-- Top Navbar — Glassmorphism -->
             <nav class="top-navbar" aria-label="Navigasi atas">
-                <button class="menu-toggle-btn" id="menu-toggle" aria-label="Toggle sidebar">
+                <button class="menu-toggle-btn" id="menu-toggle" aria-label="Toggle sidebar" aria-controls="sidebar" aria-expanded="true">
                     <i data-lucide="menu"></i>
                 </button>
                 <div class="navbar-content">
@@ -289,7 +287,7 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
                             <div class="d-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
                                 <div class="text-end me-2 d-none d-sm-block">
                                     <div class="fw-semibold" style="font-size: 0.85rem; color: var(--sp-heading-color);"><?= esc(session()->get('user_name')) ?></div>
-                                    <div class="text-uppercase" style="font-size: 0.7rem; font-weight: 700; color: var(--sp-primary); letter-spacing: 0.5px;"><?= esc(session()->get('user_role')) ?></div>
+                                    <div class="text-uppercase" style="font-size: 0.7rem; font-weight: 700; color: var(--sp-primary); letter-spacing: 0.5px;"><?= esc($roleSlug) ?></div>
                                 </div>
                                 <div class="avatar-container">
                                     <img src="https://ui-avatars.com/api/?name=<?= urlencode(session()->get('user_name') ?? 'User') ?>&background=7c3aed&color=fff" class="avatar" alt="Avatar User">
@@ -361,10 +359,10 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
 
                 if ($role === 'admin') {
                     $bottomNavItems = [
-                        ['label' => 'Beranda', 'icon' => 'layout-dashboard', 'url' => base_url('admin/dashboard'), 'active' => $segment1 === 'admin' && ($segment2 === '' || $segment2 === 'dashboard')],
-                        ['label' => 'Pengguna', 'icon' => 'users', 'url' => base_url('admin/users'), 'active' => $segment1 === 'admin' && $segment2 === 'users'],
+                        ['label' => 'Dashboard', 'icon' => 'layout-dashboard', 'url' => base_url('admin/dashboard'), 'active' => $segment1 === 'admin' && ($segment2 === '' || $segment2 === 'dashboard')],
+                        ['label' => 'Pendaftar', 'icon' => 'graduation-cap', 'url' => base_url('operator/registrants'), 'active' => $segment1 === 'operator' && $segment2 === 'registrants' && $currentRegistrantStatus !== 'submitted'],
+                        ['label' => 'Verifikasi', 'icon' => 'file-check-2', 'url' => base_url('operator/registrants?status=submitted'), 'active' => $segment1 === 'operator' && (($segment2 === 'registrants' && $currentRegistrantStatus === 'submitted') || $segment2 === 'documents')],
                         ['label' => 'Seleksi', 'icon' => 'award', 'url' => base_url('admin/seleksi'), 'active' => $segment1 === 'admin' && $segment2 === 'seleksi'],
-                        ['label' => 'Konten', 'icon' => 'school', 'url' => base_url('admin/content'), 'active' => $segment1 === 'admin' && in_array($segment2, ['content', 'banners', 'announcements', 'testimonials', 'statistics', 'faq'], true)],
                     ];
                 } elseif ($role === 'operator') {
                     $bottomNavItems = [
@@ -433,32 +431,52 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
             }
 
             // Sidebar Toggle (Mobile slide / Desktop collapse)
+            function setMobileSidebarOpen(isOpen) {
+                $('#sidebar').toggleClass('show', isOpen);
+                $('#sidebar-overlay').toggleClass('show', isOpen);
+                $('#dashboard-more-toggle').attr('aria-expanded', isOpen ? 'true' : 'false');
+                $('#menu-toggle').attr('aria-expanded', isOpen ? 'true' : 'false');
+            }
+
             $('#menu-toggle').on('click', function() {
                 if ($(window).width() >= 992) {
                     $('.layout-wrapper').toggleClass('sidebar-collapsed');
+                    $(this).attr('aria-expanded', $('.layout-wrapper').hasClass('sidebar-collapsed') ? 'false' : 'true');
                 } else {
-                    $('#sidebar').toggleClass('show');
-                    $('#sidebar-overlay').toggleClass('show');
+                    setMobileSidebarOpen(!$('#sidebar').hasClass('show'));
                 }
             });
 
             $('#sidebar-overlay').on('click', function() {
-                $('#sidebar').removeClass('show');
-                $(this).removeClass('show');
-                $('#dashboard-more-toggle').attr('aria-expanded', 'false');
+                setMobileSidebarOpen(false);
             });
 
             $('#dashboard-more-toggle').on('click', function() {
-                $('#sidebar').toggleClass('show');
-                $('#sidebar-overlay').toggleClass('show');
-                $(this).attr('aria-expanded', $('#sidebar').hasClass('show') ? 'true' : 'false');
+                setMobileSidebarOpen(!$('#sidebar').hasClass('show'));
+            });
+
+            $('.submenu-toggle').on('click', function() {
+                const $item = $(this).closest('.has-submenu');
+                const willOpen = !$item.hasClass('open');
+
+                $item.toggleClass('open', willOpen);
+                $(this).attr('aria-expanded', willOpen ? 'true' : 'false');
+
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
             });
 
             $('#sidebar a.menu-link').on('click', function() {
                 if ($(window).width() < 992) {
-                    $('#sidebar').removeClass('show');
-                    $('#sidebar-overlay').removeClass('show');
-                    $('#dashboard-more-toggle').attr('aria-expanded', 'false');
+                    setMobileSidebarOpen(false);
+                }
+            });
+
+            $(document).on('keydown', function(event) {
+                if (event.key === 'Escape' && $(window).width() < 992 && $('#sidebar').hasClass('show')) {
+                    setMobileSidebarOpen(false);
+                    $('#dashboard-more-toggle').trigger('focus');
                 }
             });
 

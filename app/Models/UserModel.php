@@ -29,7 +29,7 @@ class UserModel extends Model
         'name'     => 'required|max_length[100]',
         'email'    => 'required|valid_email|max_length[150]',
         'password' => 'required|min_length[8]',
-        'role'     => 'required|in_list[admin,operator,pendaftar]',
+        'role'     => 'permit_empty|max_length[50]',
     ];
 
     protected $validationMessages = [
@@ -38,27 +38,18 @@ class UserModel extends Model
         ],
     ];
 
-    /**
-     * Cari pengguna berdasarkan email.
-     */
     public function findByEmail(string $email): ?array
     {
         return $this->where('email', $email)->first();
     }
 
-    /**
-     * Ambil pengguna aktif berdasarkan email.
-     */
     public function findActiveByEmail(string $email): ?array
     {
         return $this->where('email', $email)
-                    ->where('is_active', 1)
-                    ->first();
+            ->where('is_active', 1)
+            ->first();
     }
 
-    /**
-     * Cek apakah email sudah terdaftar.
-     */
     public function emailExists(string $email, ?int $excludeId = null): bool
     {
         $builder = $this->where('email', $email);
@@ -70,9 +61,6 @@ class UserModel extends Model
         return $builder->countAllResults() > 0;
     }
 
-    /**
-     * Toggle status aktif pengguna.
-     */
     public function toggleActive(int $id): bool
     {
         $user = $this->find($id);
@@ -83,9 +71,6 @@ class UserModel extends Model
         return $this->update($id, ['is_active' => $user['is_active'] ? 0 : 1]);
     }
 
-    /**
-     * Ambil semua pengguna dengan filter opsional.
-     */
     public function getUsers(?string $role = null, ?int $isActive = null): array
     {
         $builder = $this->builder();

@@ -1,7 +1,11 @@
 <?php
 $settingModel = new \App\Models\SettingModel();
 $globalThemeColor = $settingModel->getValue('theme_color', 'purple');
+$schoolName = $settingModel->getValue('school_name', 'Smart SPMB Pro');
+$schoolLogo = $settingModel->getValue('school_logo', '');
+$schoolLogoUrl = !empty($schoolLogo) ? base_url($schoolLogo) : '';
 $appInfo = config('AppInfo');
+$registrationGate = $registrationGate ?? ['is_open' => true, 'status' => 'unconfigured', 'message' => ''];
 ?>
 <!DOCTYPE html>
 <html lang="id" data-theme-color="<?= esc($globalThemeColor) ?>">
@@ -13,6 +17,12 @@ $appInfo = config('AppInfo');
     <meta name="application-name" content="<?= esc($appInfo->name) ?>">
     <meta name="version" content="<?= esc($appInfo->version) ?>">
     <title><?= $title ?? 'Pendaftaran' ?> - Smart SPMB Pro</title>
+    <?php if ($schoolLogoUrl): ?>
+        <link rel="icon" type="image/x-icon" href="<?= esc($schoolLogoUrl) ?>">
+        <link rel="apple-touch-icon" href="<?= esc($schoolLogoUrl) ?>">
+    <?php else: ?>
+        <link rel="icon" type="image/svg+xml" href="<?= base_url('assets/img/favicon.svg') ?>">
+    <?php endif; ?>
     
     <script src="<?= base_url('assets/js/theme-sync.js') ?>"></script>
     <script>
@@ -32,6 +42,7 @@ $appInfo = config('AppInfo');
     <!-- Custom CSS -->
     <link href="<?= base_url('assets/css/foundation.css') ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/dashboard.css') ?>" rel="stylesheet">
+    <link href="<?= base_url('assets/css/admin-dashboard.css') ?>" rel="stylesheet">
 
     <!-- Lucide Icons with local fallback -->
     <script src="https://unpkg.com/lucide@0.309.0/dist/umd/lucide.min.js"></script>
@@ -72,7 +83,7 @@ $appInfo = config('AppInfo');
             font-size: 1.75rem;
             margin-bottom: 8px;
             color: #ffffff !important;
-            letter-spacing: -0.03em;
+            letter-spacing: 0;
         }
 
         .wizard-header p {
@@ -80,6 +91,35 @@ $appInfo = config('AppInfo');
             opacity: 0.85;
             font-size: 0.9rem;
             font-weight: 500;
+        }
+
+        .wizard-school-brand {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 14px;
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .wizard-school-logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            overflow: hidden;
+        }
+
+        .wizard-school-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 4px;
         }
 
         .form-group {
@@ -168,6 +208,11 @@ $appInfo = config('AppInfo');
                 z-index: 30;
                 padding: calc(18px + env(safe-area-inset-top, 0px)) 20px 18px;
                 text-align: left;
+            }
+
+            .wizard-school-brand {
+                justify-content: flex-start;
+                margin-bottom: 10px;
             }
 
             .wizard-header h2 {
@@ -269,6 +314,16 @@ $appInfo = config('AppInfo');
         <div class="wizard-container">
             <!-- Header -->
             <div class="wizard-header">
+                <div class="wizard-school-brand">
+                    <span class="wizard-school-logo">
+                        <?php if ($schoolLogoUrl): ?>
+                            <img src="<?= esc($schoolLogoUrl) ?>" alt="Logo <?= esc($schoolName) ?>">
+                        <?php else: ?>
+                            <i data-lucide="graduation-cap" style="width: 24px; height: 24px; color: #fff;"></i>
+                        <?php endif; ?>
+                    </span>
+                    <span><?= esc($schoolName) ?></span>
+                </div>
                 <h2><i data-lucide="graduation-cap" class="d-inline-block align-middle me-2" style="width: 28px; height: 28px; color: #fff;"></i>Form Pendaftaran Online</h2>
                 <p>Selesaikan semua langkah pengisian data calon peserta untuk menyelesaikan pendaftaran</p>
             </div>
@@ -312,6 +367,18 @@ $appInfo = config('AppInfo');
                 <hr class="my-1" style="border-color: var(--sp-card-border);">
             </div>
 
+            <?php if (($registrationGate['status'] ?? '') === 'open'): ?>
+                <div class="px-4 pb-2">
+                    <div class="alert alert-success border-0 d-flex align-items-start mb-0">
+                        <i data-lucide="calendar-check" class="me-2 mt-1 flex-shrink-0" style="width: 18px; height: 18px;"></i>
+                        <div>
+                            <strong>Jadwal Pendaftaran Aktif</strong>
+                            <p class="mb-0 small"><?= esc($registrationGate['message'] ?? 'Pendaftaran sedang dibuka.') ?></p>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <!-- Content Slot -->
             <div class="px-4 pb-2">
                 <?= $this->renderSection('step_content') ?>
@@ -319,6 +386,9 @@ $appInfo = config('AppInfo');
 
             <!-- Footer Navigation -->
             <div class="wizard-footer">
+                <button type="button" class="btn btn-outline-secondary wizard-nav-btn align-items-center" id="homeBtn">
+                    <i data-lucide="home" class="me-2" style="width: 16px; height: 16px;"></i> Beranda
+                </button>
                 <button type="button" class="btn btn-secondary wizard-nav-btn align-items-center" id="prevBtn" style="display: none;">
                     <i data-lucide="arrow-left" class="me-2" style="width: 16px; height: 16px;"></i> Kembali
                 </button>
@@ -387,6 +457,29 @@ $appInfo = config('AppInfo');
             }
         });
 
+        document.getElementById('homeBtn')?.addEventListener('click', async function() {
+            const formEl = document.getElementById(`stepForm${currentStep}`);
+            if (formEl) {
+                const saved = await saveCurrentStep();
+                if (!saved) {
+                    const leaveAnyway = await swalFire({
+                        icon: 'question',
+                        title: 'Kembali ke Beranda?',
+                        text: 'Perubahan terbaru belum berhasil disimpan. Draft terakhir yang sudah tersimpan tetap aman.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Tetap ke Beranda',
+                        cancelButtonText: 'Lanjut Mengisi'
+                    });
+
+                    if (!leaveAnyway.isConfirmed) {
+                        return;
+                    }
+                }
+            }
+
+            window.location.href = '<?= base_url('/') ?>';
+        });
+
         // Next button (saves step via AJAX, then redirects to next step page)
         document.getElementById('nextBtn')?.addEventListener('click', function() {
             if (currentStep < 8) {
@@ -431,7 +524,7 @@ $appInfo = config('AppInfo');
                 const result = await response.json();
 
                 if (!result.success) {
-                    swalFire({
+                    await swalFire({
                         icon: 'error',
                         title: 'Validasi Gagal',
                         html: '<ul style="text-align: left; font-size: 0.9rem; margin-top: 8px;">' + 
@@ -444,7 +537,7 @@ $appInfo = config('AppInfo');
                 return true;
             } catch (error) {
                 console.error('Error saving step:', error);
-                swalFire({
+                await swalFire({
                     icon: 'error',
                     title: 'Terjadi Kesalahan',
                     text: 'Sistem gagal menyimpan data. Harap coba lagi.'

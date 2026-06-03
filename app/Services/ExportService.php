@@ -27,6 +27,8 @@ class ExportService
     protected StudentFamilyModel $familyModel;
     protected StudentDocumentModel $documentModel;
     protected BaseConnection $db;
+    protected AcademicYearService $academicYearService;
+    protected UploadDirectoryService $uploadDirectoryService;
 
     public function __construct()
     {
@@ -37,6 +39,8 @@ class ExportService
         $this->familyModel       = new StudentFamilyModel();
         $this->documentModel     = new StudentDocumentModel();
         $this->db                = \Config\Database::connect();
+        $this->academicYearService = new AcademicYearService();
+        $this->uploadDirectoryService = new UploadDirectoryService($this->academicYearService);
     }
 
     // -------------------------------------------------------------------------
@@ -60,8 +64,10 @@ class ExportService
     {
         try {
             // Ambil data pendaftar sesuai filter
+            $activeYear = $this->academicYearService->activeYear();
             $registrations = $this->registrationModel
                 ->applyFilters($filters)
+                ->where('registrations.academic_year', $activeYear)
                 ->findAll();
 
             if (empty($registrations)) {
@@ -131,15 +137,11 @@ class ExportService
                 $sheet->getColumnDimension($col)->setAutoSize(true);
             }
 
-            // Simpan file ke storage/exports/
+            // Simpan file ke storage uploads/{tahun}/exports/excel/
             $filename    = $this->getSchoolName() . '_Data_Pendaftar_' . date('Y-m-d') . '.xlsx';
-            $storageDir  = WRITEPATH . 'uploads/exports/';
+            $directory = $this->uploadDirectoryService->writableDirectory('exports/excel', $activeYear);
 
-            if (! is_dir($storageDir)) {
-                mkdir($storageDir, 0755, true);
-            }
-
-            $filePath = $storageDir . $filename;
+            $filePath = $directory['absolute'] . $filename;
             $writer   = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
             $writer->save($filePath);
 
@@ -176,11 +178,12 @@ class ExportService
      * @param  int   $studentId
      * @return array ['success' => bool, 'file_path' => string|null, 'filename' => string|null, 'message' => string]
      */
-    public function exportToPdfFpd(int $studentId): array
+    public function exportToPdfFpd(int $studentId, ?string $academicYear = null): array
     {
         try {
+            $academicYear ??= $this->academicYearService->activeYear();
             $student      = $this->studentModel->find($studentId);
-            $registration = $this->registrationModel->where('student_id', $studentId)->first();
+            $registration = $this->registrationModel->findByStudentId($studentId, $academicYear);
             $address      = $this->addressModel->findByStudentId($studentId);
             $father       = $this->familyModel->getFather($studentId);
             $mother       = $this->familyModel->getMother($studentId);
@@ -217,15 +220,11 @@ class ExportService
             $dompdf->setPaper('A4', 'portrait');
             $dompdf->render();
 
-            // Simpan file ke storage/exports/
+            // Simpan file ke storage uploads/{tahun}/exports/pdf/
             $filename   = 'F-PD_' . ($student['full_name'] ?? 'Siswa') . '_' . date('Y-m-d-H-i-s') . '.pdf';
-            $storageDir = WRITEPATH . 'uploads/exports/';
+            $directory = $this->uploadDirectoryService->writableDirectory('exports/pdf', $registration['academic_year'] ?? null);
 
-            if (! is_dir($storageDir)) {
-                mkdir($storageDir, 0755, true);
-            }
-
-            $filePath = $storageDir . $filename;
+            $filePath = $directory['absolute'] . $filename;
             file_put_contents($filePath, $dompdf->output());
 
             return [
@@ -235,7 +234,7 @@ class ExportService
                 'message'   => 'Ekspor PDF F-PD berhasil.',
             ];
         } catch (\Throwable $e) {
-            log_message('error', 'ExportService::exportToPdfFpd failed: ' . $e->getMessage());
+            log_message('error', 'ExportService::exportToPdfFpd failed: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return [
                 'success'   => false,
@@ -260,11 +259,12 @@ class ExportService
      * @param  int   $studentId
      * @return array ['success' => bool, 'file_path' => string|null, 'filename' => string|null, 'message' => string]
      */
-    public function exportToPdfKartu(int $studentId): array
+    public function exportToPdfKartu(int $studentId, ?string $academicYear = null): array
     {
         try {
+            $academicYear ??= $this->academicYearService->activeYear();
             $student      = $this->studentModel->find($studentId);
-            $registration = $this->registrationModel->where('student_id', $studentId)->first();
+            $registration = $this->registrationModel->findByStudentId($studentId, $academicYear);
 
             if (! $student || ! $registration) {
                 return [
@@ -277,6 +277,7 @@ class ExportService
 
             // Ambil foto siswa dari dokumen
             $photoDocument = $this->documentModel->where('student_id', $studentId)
+                                                   ->where('academic_year', $academicYear)
                                                    ->where('document_type', 'foto')
                                                    ->first();
             $photoPath = $photoDocument ? $photoDocument['file_path'] : null;
@@ -302,15 +303,11 @@ class ExportService
             $dompdf->setPaper([0, 0, 298.898, 419.528], 'portrait'); // A6 105×148mm
             $dompdf->render();
 
-            // Simpan file ke storage/exports/
+            // Simpan file ke storage uploads/{tahun}/exports/pdf/
             $filename   = 'Kartu_Peserta_' . ($student['full_name'] ?? 'Siswa') . '_' . date('Y-m-d-H-i-s') . '.pdf';
-            $storageDir = WRITEPATH . 'uploads/exports/';
+            $directory = $this->uploadDirectoryService->writableDirectory('exports/pdf', $registration['academic_year'] ?? null);
 
-            if (! is_dir($storageDir)) {
-                mkdir($storageDir, 0755, true);
-            }
-
-            $filePath = $storageDir . $filename;
+            $filePath = $directory['absolute'] . $filename;
             file_put_contents($filePath, $dompdf->output());
 
             return [
@@ -320,7 +317,7 @@ class ExportService
                 'message'   => 'Ekspor Kartu Peserta berhasil.',
             ];
         } catch (\Throwable $e) {
-            log_message('error', 'ExportService::exportToPdfKartu failed: ' . $e->getMessage());
+            log_message('error', 'ExportService::exportToPdfKartu failed: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return [
                 'success'   => false,
@@ -339,11 +336,12 @@ class ExportService
      * @param  int   $studentId
      * @return array ['success' => bool, 'file_path' => string|null, 'filename' => string|null, 'message' => string]
      */
-    public function exportToPdfSkl(int $studentId): array
+    public function exportToPdfSkl(int $studentId, ?string $academicYear = null): array
     {
         try {
+            $academicYear ??= $this->academicYearService->activeYear();
             $student      = $this->studentModel->find($studentId);
-            $registration = $this->registrationModel->where('student_id', $studentId)->first();
+            $registration = $this->registrationModel->findByStudentId($studentId, $academicYear);
 
             if (! $student || ! $registration) {
                 return [
@@ -396,15 +394,11 @@ class ExportService
             $dompdf->setPaper('A4', 'portrait');
             $dompdf->render();
 
-            // Simpan file ke storage/exports/
+            // Simpan file ke storage uploads/{tahun}/exports/pdf/
             $filename   = 'SKL_' . ($student['full_name'] ?? 'Siswa') . '_' . date('Y-m-d-H-i-s') . '.pdf';
-            $storageDir = WRITEPATH . 'uploads/exports/';
+            $directory = $this->uploadDirectoryService->writableDirectory('exports/pdf', $registration['academic_year'] ?? null);
 
-            if (! is_dir($storageDir)) {
-                mkdir($storageDir, 0755, true);
-            }
-
-            $filePath = $storageDir . $filename;
+            $filePath = $directory['absolute'] . $filename;
             file_put_contents($filePath, $dompdf->output());
 
             return [
@@ -414,7 +408,7 @@ class ExportService
                 'message'   => 'Ekspor SKL PDF berhasil.',
             ];
         } catch (\Throwable $e) {
-            log_message('error', 'ExportService::exportToPdfSkl failed: ' . $e->getMessage());
+            log_message('error', 'ExportService::exportToPdfSkl failed: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return [
                 'success'   => false,

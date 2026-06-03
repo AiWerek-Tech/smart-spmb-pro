@@ -14,7 +14,7 @@ class ThemeController extends BaseController
      */
     public function save(): ResponseInterface
     {
-        $role = session()->get('user_role');
+        $role = session()->get('user_base_role') ?? session()->get('user_role');
         if (empty($role)) {
             return $this->response->setJSON([
                 'success' => false,

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Libraries\RbacEngine;
 use App\Models\UserModel;
 use CodeIgniter\Database\BaseConnection;
 
@@ -15,11 +16,15 @@ class AuthService
 {
     protected UserModel $userModel;
     protected BaseConnection $db;
+    protected PermissionService $permissionService;
+    protected RbacEngine $rbacEngine;
 
     public function __construct()
     {
         $this->userModel = new UserModel();
         $this->db        = \Config\Database::connect();
+        $this->permissionService = new PermissionService();
+        $this->rbacEngine = service('rbacEngine');
     }
 
     // -------------------------------------------------------------------------
@@ -66,6 +71,7 @@ class AuthService
 
         // Buat sesi dan regenerasi session ID (cegah session fixation)
         $this->createSession($user);
+        (new AuditLogService())->record('auth', 'login');
 
         return [
             'success' => true,
@@ -84,13 +90,18 @@ class AuthService
         // Regenerasi session ID untuk mencegah session fixation (Req 25.5)
         $session->regenerate(true);
 
+        $baseRole = $this->permissionService->baseRoleFor((string) $user['role']);
+
         $session->set([
             'user_id'    => $user['id'],
             'user_name'  => $user['name'],
             'user_email' => $user['email'],
             'user_role'  => $user['role'],
+            'user_base_role' => $baseRole,
             'logged_in'  => true,
         ]);
+
+        $this->rbacEngine->refreshSession((int) $user['id']);
     }
 
     /**
@@ -101,7 +112,30 @@ class AuthService
      */
     public function getRedirectUrl(string $role): string
     {
-        return match ($role) {
+        $userId = (int) session()->get('user_id');
+        if ($userId > 0) {
+            $permissions = $this->rbacEngine->getUserPermissions($userId);
+
+            if (in_array('manage_system', $permissions, true) || in_array('admin.dashboard.view', $permissions, true)) {
+                return base_url('admin/dashboard');
+            }
+
+            if (
+                in_array('view_registrants', $permissions, true)
+                || in_array('registrants.view', $permissions, true)
+                || in_array('operator.dashboard.view', $permissions, true)
+            ) {
+                return base_url('operator/dashboard');
+            }
+
+            if (in_array('submit_registration', $permissions, true) || in_array('pendaftar.dashboard.view', $permissions, true)) {
+                return base_url('pendaftar/dashboard');
+            }
+        }
+
+        $baseRole = $this->permissionService->baseRoleFor($role);
+
+        return match ($baseRole) {
             'admin'     => base_url('admin/dashboard'),
             'operator'  => base_url('operator/dashboard'),
             'pendaftar' => base_url('pendaftar/dashboard'),
@@ -161,6 +195,7 @@ class AuthService
         }
 
         // Ambil data user yang baru dibuat dan buat sesi
+        $this->assignPrimaryRole((int) $userId, 'pendaftar');
         $user = $this->userModel->find($userId);
         $this->createSession($user);
 
@@ -337,8 +372,37 @@ class AuthService
      */
     public function logout(): void
     {
+        (new AuditLogService())->record('auth', 'logout');
+
         $session = session();
-        $session->remove(['user_id', 'user_name', 'user_email', 'user_role', 'logged_in']);
+        $session->remove(['user_id', 'user_name', 'user_email', 'user_role', 'user_base_role', 'user_roles', 'user_permissions', 'rbac_cached_at', 'logged_in']);
         $session->destroy();
+    }
+
+    private function assignPrimaryRole(int $userId, string $roleSlug): void
+    {
+        if (! $this->db->tableExists('roles') || ! $this->db->tableExists('user_roles')) {
+            return;
+        }
+
+        $role = $this->db->table('roles')->select('id')->where('slug', $roleSlug)->get()->getRowArray();
+        if (! $role) {
+            return;
+        }
+
+        $exists = $this->db->table('user_roles')
+            ->where('user_id', $userId)
+            ->where('role_id', $role['id'])
+            ->countAllResults();
+
+        if ($exists === 0) {
+            $this->db->table('user_roles')->insert([
+                'user_id'     => $userId,
+                'role_id'     => (int) $role['id'],
+                'assigned_by' => null,
+                'assigned_at' => date('Y-m-d H:i:s'),
+                'expires_at'  => null,
+            ]);
+        }
     }
 }

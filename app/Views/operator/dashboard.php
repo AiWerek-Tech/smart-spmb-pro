@@ -1,20 +1,21 @@
 <?= $this->extend('layouts/dashboard') ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in">
+<div class="admin-page-shell role-page-shell">
     <!-- Header Page with Academic Year -->
-    <div class="col-12 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div class="role-page-header">
         <div>
-            <h3 class="mb-1 fw-bold text-dark" style="font-family: 'Plus Jakarta Sans', sans-serif;">Panel Operator</h3>
-            <p class="text-muted mb-0">Halaman kerja verifikasi berkas dan sinkronisasi data Dapodik calon peserta didik.</p>
+            <h1 class="role-page-header__title">Panel Operator</h1>
+            <p class="role-page-header__subtitle">Halaman kerja verifikasi berkas dan sinkronisasi data Dapodik calon peserta didik.</p>
         </div>
-        <div>
+        <div class="role-page-actions">
             <span class="badge bg-label-primary p-2 px-3 fs-6 rounded d-flex align-items-center"><i data-lucide="calendar" class="me-1" style="width: 16px; height: 16px;"></i> TA <?= esc($academicYear) ?></span>
         </div>
     </div>
 
     <!-- Operator Task Cards -->
-    <div class="col-sm-6 col-lg-3 mb-4">
+    <div class="row g-3">
+    <div class="col-sm-6 col-lg-3">
         <div class="card stat-card stat-card-primary h-100">
             <div class="card-body d-flex flex-column justify-content-between">
                 <div>
@@ -34,7 +35,7 @@
         </div>
     </div>
 
-    <div class="col-sm-6 col-lg-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
         <div class="card stat-card stat-card-warning h-100">
             <div class="card-body d-flex flex-column justify-content-between">
                 <div>
@@ -58,7 +59,7 @@
         </div>
     </div>
 
-    <div class="col-sm-6 col-lg-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
         <div class="card stat-card stat-card-info h-100">
             <div class="card-body d-flex flex-column justify-content-between">
                 <div>
@@ -78,7 +79,7 @@
         </div>
     </div>
 
-    <div class="col-sm-6 col-lg-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
         <div class="card stat-card stat-card-success h-100">
             <div class="card-body d-flex flex-column justify-content-between">
                 <div>
@@ -99,10 +100,12 @@
             </div>
         </div>
     </div>
+    </div>
 
     <!-- Main Workspace Split -->
     <!-- Column 1: Shortcuts & Actions -->
-    <div class="col-lg-4 mb-4">
+    <div class="row g-3">
+    <div class="col-lg-4">
         <div class="card shadow-sm border mb-4">
             <div class="card-header bg-transparent">
                 <h5 class="card-title m-0">Akses Pintasan</h5>
@@ -145,7 +148,7 @@
     </div>
 
     <!-- Column 2: Recent Registrations -->
-    <div class="col-lg-8 mb-4">
+    <div class="col-lg-8">
         <div class="card shadow-sm border">
             <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
                 <h5 class="card-title m-0 text-dark d-flex align-items-center">
@@ -199,6 +202,7 @@
                 </div>
             </div>
         </div>
+    </div>
     </div>
 </div>
 <?= $this->endSection() ?>

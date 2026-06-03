@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Models\SettingModel;
 use App\Models\GalleryModel;
 use App\Models\TeacherModel;
+use App\Services\AcademicYearService;
 
 /**
  * ProfileController — Halaman profil sekolah.
@@ -20,12 +21,14 @@ class ProfileController extends BaseController
     protected SettingModel $settingModel;
     protected GalleryModel $galleryModel;
     protected TeacherModel $teacherModel;
+    protected AcademicYearService $academicYearService;
 
     public function __construct()
     {
         $this->settingModel = new SettingModel();
         $this->galleryModel = new GalleryModel();
         $this->teacherModel = new TeacherModel();
+        $this->academicYearService = new AcademicYearService();
     }
 
     /**
@@ -49,10 +52,16 @@ class ProfileController extends BaseController
         // Parse facilities from newline or comma separated settings.
         $facilitiesArray = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n|,/', (string) $facilities))));
 
-        // Ambil galeri aktif dari database
-        $gallery = $this->galleryModel->where('is_active', 1)->orderBy('sort_order', 'ASC')->findAll();
+        $activeYear = $this->academicYearService->activeYear();
 
-        $teachers = $this->teacherModel->activeOrdered();
+        // Ambil galeri aktif dari database sesuai tahun pelajaran aktif.
+        $gallery = $this->galleryModel
+            ->where('academic_year', $activeYear)
+            ->where('is_active', 1)
+            ->orderBy('sort_order', 'ASC')
+            ->findAll();
+
+        $teachers = $this->teacherModel->activeOrdered($activeYear);
 
         return view('public/profile', [
             'title'          => 'Profil Sekolah',

@@ -155,7 +155,7 @@
         <!-- Header -->
         <div class="card-header">
             <h2>KARTU PESERTA SPMB ONLINE</h2>
-            <h3>TAHUN AJARAN <?= esc($registration['academic_year']) ?> / <?= esc($registration['academic_year'] + 1) ?></h3>
+            <h3>TAHUN AJARAN <?= esc($registration['academic_year']) ?></h3>
         </div>
 
         <div class="card-title">KARTU UJIAN & SELEKSI</div>

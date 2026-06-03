@@ -1,67 +1,70 @@
 <?= $this->extend('layouts/dashboard') ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in">
-    <!-- Header Page -->
-    <div class="col-12 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+<section class="admin-page-shell animate-fade-in" aria-labelledby="admin-seleksi-title">
+    <header class="admin-page-header">
         <div>
-            <h4 class="mb-0 text-primary">Hasil Seleksi & Kelulusan</h4>
-            <p class="text-muted mb-0">Tentukan status kelulusan peserta SPMB menjadi <strong>Diterima</strong> atau <strong>Ditolak</strong>.</p>
+            <p class="admin-panel__kicker">Data SPMB</p>
+            <h1 id="admin-seleksi-title">Hasil Seleksi & Kelulusan</h1>
+            <p class="admin-page-subtitle">Tentukan status kelulusan peserta SPMB menjadi <strong>Diterima</strong> atau <strong>Ditolak</strong>.</p>
         </div>
-        <form action="<?= base_url('admin/seleksi/hitung-ranking') ?>" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghitung ulang ranking seluruh pendaftar?');">
-            <?= csrf_field() ?>
-            <button type="submit" class="btn btn-warning shadow-sm">
-                <i class="me-2" data-lucide="calculator"></i> Kalkulasi Ranking
-            </button>
-        </form>
-    </div>
+        <div class="admin-page-actions">
+            <form action="<?= base_url('admin/seleksi/hitung-ranking') ?>" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghitung ulang ranking seluruh pendaftar?');">
+                <?= csrf_field() ?>
+                <button type="submit" class="btn btn-warning shadow-sm">
+                    <i class="me-2" data-lucide="calculator"></i> Kalkulasi Ranking
+                </button>
+            </form>
+        </div>
+    </header>
 
     <!-- Filters Card -->
-    <div class="col-12 mb-4">
-        <div class="card shadow-sm border">
-            <div class="card-body p-3">
-                <form method="GET" action="<?= base_url('admin/seleksi') ?>" class="row g-3">
-                    <div class="col-md-3">
-                        <label for="jalur" class="form-label small fw-bold">Jalur Pendaftaran</label>
-                        <select name="jalur" id="jalur" class="form-select select2">
-                            <option value="">Semua Jalur</option>
-                            <?php foreach ($jalur as $j): ?>
-                                <option value="<?= $j['id'] ?>" <?= $jalurId == $j['id'] ? 'selected' : '' ?>><?= esc($j['name']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label for="status" class="form-label small fw-bold">Status Verifikasi</label>
-                        <select name="status" id="status" class="form-select select2">
-                            <option value="">Semua Status</option>
-                            <option value="submitted" <?= $status === 'submitted' ? 'selected' : '' ?>>Baru (Submitted)</option>
-                            <option value="verified" <?= $status === 'verified' ? 'selected' : '' ?>>Berkas Valid (Verified)</option>
-                            <option value="accepted" <?= $status === 'accepted' ? 'selected' : '' ?>>Diterima (Accepted)</option>
-                            <option value="rejected" <?= $status === 'rejected' ? 'selected' : '' ?>>Ditolak (Rejected)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label for="search" class="form-label small fw-bold">Cari Nama / No Pendaftaran</label>
-                        <input type="text" name="search" id="search" class="form-control" placeholder="Cari nama, NIK, NISN..." value="<?= esc($search) ?>">
-                    </div>
-                    <div class="col-md-3 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary w-100 me-2">
-                            <i class="me-2" data-lucide="search"></i> Saring
-                        </button>
-                        <a href="<?= base_url('admin/seleksi') ?>" class="btn btn-outline-secondary w-100">
-                            <i class="me-2" data-lucide="rotate-ccw"></i> Reset
-                        </a>
-                    </div>
-                </form>
+    <section class="admin-filter-panel" aria-label="Filter hasil seleksi">
+        <form method="GET" action="<?= base_url('admin/seleksi') ?>" class="row g-3">
+            <div class="col-md-3">
+                <label for="jalur" class="form-label small fw-bold">Jalur Pendaftaran</label>
+                <select name="jalur" id="jalur" class="form-select select2">
+                    <option value="">Semua Jalur</option>
+                    <?php foreach ($jalur as $j): ?>
+                        <option value="<?= $j['id'] ?>" <?= $jalurId == $j['id'] ? 'selected' : '' ?>><?= esc($j['name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
             </div>
-        </div>
-    </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label small fw-bold">Status Verifikasi</label>
+                <select name="status" id="status" class="form-select select2">
+                    <option value="">Semua Status</option>
+                    <option value="submitted" <?= $status === 'submitted' ? 'selected' : '' ?>>Baru (Submitted)</option>
+                    <option value="verified" <?= $status === 'verified' ? 'selected' : '' ?>>Berkas Valid (Verified)</option>
+                    <option value="accepted" <?= $status === 'accepted' ? 'selected' : '' ?>>Diterima (Accepted)</option>
+                    <option value="rejected" <?= $status === 'rejected' ? 'selected' : '' ?>>Ditolak (Rejected)</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="search" class="form-label small fw-bold">Cari Nama / No Pendaftaran</label>
+                <input type="text" name="search" id="search" class="form-control" placeholder="Cari nama, NIK, NISN..." value="<?= esc($search) ?>">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100 me-2">
+                    <i class="me-2" data-lucide="search"></i> Saring
+                </button>
+                <a href="<?= base_url('admin/seleksi') ?>" class="btn btn-outline-secondary w-100">
+                    <i class="me-2" data-lucide="rotate-ccw"></i> Reset
+                </a>
+            </div>
+        </form>
+    </section>
 
     <!-- Applicants List Card -->
-    <div class="col-12">
-        <div class="card shadow-sm border">
-            <div class="card-body p-0">
-                <div class="table-responsive">
+    <section class="admin-secondary-panel" aria-labelledby="seleksi-table-title">
+        <div class="admin-secondary-panel__header">
+            <div>
+                <h2 class="admin-section-title" id="seleksi-table-title">Daftar Keputusan Seleksi</h2>
+                <p class="admin-section-subtitle">Urutkan, filter, lalu tetapkan status kelulusan peserta.</p>
+            </div>
+        </div>
+        <div class="card-body p-0">
+                <div class="table-responsive admin-table-shell">
                     <table id="seleksiTable" class="table table-hover align-middle mb-0" style="width:100%">
                         <thead class="table-light">
                             <tr>
@@ -80,7 +83,7 @@
                             <?php if (empty($registrants)): ?>
                                 <tr>
                                     <td colspan="9" class="text-center py-5 text-muted">
-                                        <i class="fs-1 mb-3" data-lucide="user-slash"></i>
+                                        <i class="fs-1 mb-3" data-lucide="user-x"></i>
                                         <p class="mb-0">Tidak ada pendaftar yang memenuhi kriteria pencarian.</p>
                                     </td>
                                 </tr>
@@ -174,10 +177,9 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
         </div>
-    </div>
-</div>
+    </section>
+</section>
 <?= $this->endSection() ?>
  
 <?= $this->section('scripts') ?>

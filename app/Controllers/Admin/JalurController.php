@@ -5,16 +5,19 @@ namespace App\Controllers\Admin;
 use App\Controllers\BaseController;
 use App\Models\JalurModel;
 use App\Models\GelombangModel;
+use App\Services\AcademicYearService;
 
 class JalurController extends BaseController
 {
     protected JalurModel $jalurModel;
     protected GelombangModel $gelombangModel;
+    protected AcademicYearService $academicYearService;
 
     public function __construct()
     {
         $this->jalurModel = new JalurModel();
         $this->gelombangModel = new GelombangModel();
+        $this->academicYearService = new AcademicYearService();
     }
 
     // -------------------------------------------------------------------------
@@ -26,11 +29,13 @@ class JalurController extends BaseController
      */
     public function index()
     {
-        $jalur = $this->jalurModel->getJalurWithRegistrantCount();
+        $activeYear = $this->academicYearService->activeYear();
+        $jalur = $this->jalurModel->getJalurWithRegistrantCount($activeYear);
 
         $data = [
             'title' => 'Jalur Pendaftaran',
             'jalur' => $jalur,
+            'activeYear' => $activeYear,
         ];
 
         return view('admin/jalur/index', $data);
@@ -56,10 +61,11 @@ class JalurController extends BaseController
         }
 
         $newQuota = (int)$this->request->getPost('quota');
+        $activeYear = $this->academicYearService->activeYear();
 
         // Validasi kuota baru tidak lebih kecil dari jumlah pendaftar saat ini (Req 11)
-        if (!$this->jalurModel->validateQuota($id, $newQuota)) {
-            $currentRegistrants = $this->jalurModel->countRegistrants($id);
+        if ($newQuota < $this->jalurModel->countRegistrants($id, $activeYear)) {
+            $currentRegistrants = $this->jalurModel->countRegistrants($id, $activeYear);
             return redirect()->back()->withInput()->with('error', "Kuota baru ($newQuota) tidak boleh lebih kecil dari jumlah pendaftar terdaftar ($currentRegistrants).");
         }
 
@@ -96,13 +102,15 @@ class JalurController extends BaseController
      */
     public function gelombang()
     {
-        $gelombang = $this->gelombangModel->getGelombangWithJalur();
+        $activeYear = $this->academicYearService->activeYear();
+        $gelombang = $this->gelombangModel->getGelombangWithJalur($activeYear);
         $jalur = $this->jalurModel->findAll();
 
         $data = [
             'title'     => 'Kelola Gelombang Pendaftaran',
             'gelombang' => $gelombang,
             'jalur'     => $jalur,
+            'activeYear' => $activeYear,
         ];
 
         return view('admin/jalur/gelombang', $data);
@@ -128,6 +136,7 @@ class JalurController extends BaseController
         $openDate = $this->request->getPost('open_date');
         $closeDate = $this->request->getPost('close_date');
         $isActive = $this->request->getPost('is_active') !== null ? 1 : 0;
+        $activeYear = $this->academicYearService->activeYear();
 
         // Validasi: close_date > open_date (Req 11)
         if (!$this->gelombangModel->validateDates($openDate, $closeDate)) {
@@ -135,11 +144,12 @@ class JalurController extends BaseController
         }
 
         // Validasi: Maksimal 3 gelombang aktif (Req 11)
-        if ($isActive && $this->gelombangModel->countActiveGelombang() >= 3) {
+        if ($isActive && $this->gelombangModel->countActiveGelombang($activeYear) >= 3) {
             return redirect()->back()->withInput()->with('error', 'Maksimal gelombang aktif yang diperbolehkan di dalam sistem adalah 3.');
         }
 
         $gelombangId = $this->gelombangModel->insert([
+            'academic_year'      => $activeYear,
             'jalur_id'          => $this->request->getPost('jalur_id'),
             'name'              => $this->request->getPost('name'),
             'open_date'         => $openDate,
@@ -180,6 +190,7 @@ class JalurController extends BaseController
         $openDate = $this->request->getPost('open_date');
         $closeDate = $this->request->getPost('close_date');
         $isActive = $this->request->getPost('is_active') !== null ? 1 : 0;
+        $activeYear = $gelombang['academic_year'] ?? $this->academicYearService->activeYear();
 
         // Validasi: close_date > open_date (Req 11)
         if (!$this->gelombangModel->validateDates($openDate, $closeDate)) {
@@ -188,7 +199,7 @@ class JalurController extends BaseController
 
         // Validasi: Maksimal 3 gelombang aktif (Req 11)
         if ($isActive && !$gelombang['is_active']) {
-            if ($this->gelombangModel->countActiveGelombang() >= 3) {
+            if ($this->gelombangModel->countActiveGelombang($activeYear) >= 3) {
                 return redirect()->back()->withInput()->with('error', 'Maksimal gelombang aktif yang diperbolehkan di dalam sistem adalah 3.');
             }
         }

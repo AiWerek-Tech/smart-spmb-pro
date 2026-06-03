@@ -178,6 +178,33 @@ class AuthControllerTest extends CIUnitTestCase
         $result->assertSee('password_confirm');
     }
 
+    public function testRegisterViewShowsEmailPurposeHelperText(): void
+    {
+        $result = $this->withSession([])
+            ->get('/auth/register');
+
+        $result->assertStatus(200);
+        $result->assertSee('Email digunakan untuk menerima informasi pendaftaran');
+        $result->assertSee('dapat menggunakan email orang tua/wali/keluarga');
+    }
+
+    public function testRegisterWithoutEmailShowsClearFieldValidation(): void
+    {
+        $result = $this->post('/auth/register', [
+            'name'             => 'New User',
+            'email'            => '',
+            'password'         => 'password123',
+            'password_confirm' => 'password123',
+            'terms'            => 'on',
+        ]);
+
+        $result->assertStatus(302);
+        $result->assertSessionHas('errors');
+
+        $errors = session()->getFlashdata('errors');
+        $this->assertSame('Email wajib diisi.', $errors['email'] ?? null);
+    }
+
     /**
      * Test register() — Registrasi dengan data valid.
      *

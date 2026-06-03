@@ -2,7 +2,7 @@
 
 <?= $this->section('step_content') ?>
 <div class="p-4">
-    <h4 class="mb-4 text-primary"><i  data-lucide="heart"></i> Langkah 6: Data Periodik Siswa</h4>
+    <h4 class="wizard-step-title"><i data-lucide="heart"></i> Langkah 6: Data Periodik Siswa</h4>
     
     <form id="stepForm6" method="POST">
         <?= csrf_field() ?>

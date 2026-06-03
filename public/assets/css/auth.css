@@ -11,9 +11,14 @@
    1. AUTH WRAPPER — Split Screen
    ───────────────────────────────────────────── */
 .auth-wrapper {
+    font-family: 'Poppins', sans-serif;
     display: flex;
     min-height: 100vh;
     background-color: var(--sp-body-bg);
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
 }
 
 /* ─────────────────────────────────────────────

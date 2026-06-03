@@ -1,23 +1,30 @@
 <?= $this->extend('layouts/dashboard') ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in">
-    <!-- Header Page -->
-    <div class="col-12 mb-4 d-flex justify-content-between align-items-center">
+<section class="admin-page-shell animate-fade-in" aria-labelledby="admin-announcements-title">
+    <header class="admin-page-header">
         <div>
-            <h4 class="mb-0 text-primary">Kelola Pengumuman</h4>
-            <p class="text-muted mb-0">Kelola info pengumuman resmi sekolah untuk calon pendaftar.</p>
+            <p class="admin-panel__kicker">Konten Publik</p>
+            <h1 id="admin-announcements-title">Kelola Pengumuman</h1>
+            <p class="admin-page-subtitle">Kelola info pengumuman resmi sekolah untuk calon pendaftar.</p>
         </div>
-        <a href="<?= base_url('admin/announcements/create') ?>" class="btn btn-primary d-flex align-items-center">
-            <i class="me-2" data-lucide="plus"></i> Buat Pengumuman
-        </a>
-    </div>
+        <div class="admin-page-actions">
+            <a href="<?= base_url('admin/announcements/create') ?>" class="btn btn-primary d-flex align-items-center">
+                <i class="me-2" data-lucide="plus"></i> Buat Pengumuman
+            </a>
+        </div>
+    </header>
 
     <!-- Announcements List Card -->
-    <div class="col-12">
-        <div class="card shadow-sm border">
-            <div class="card-body p-0">
-                <div class="table-responsive">
+    <section class="admin-secondary-panel" aria-labelledby="announcements-table-title">
+        <div class="admin-secondary-panel__header">
+            <div>
+                <h2 class="admin-section-title" id="announcements-table-title">Daftar Pengumuman</h2>
+                <p class="admin-section-subtitle">Atur draft, publikasi, dan arsip pengumuman resmi.</p>
+            </div>
+        </div>
+        <div class="card-body p-0">
+                <div class="table-responsive admin-table-shell">
                     <table id="announcementsTable" class="table table-hover align-middle mb-0" style="width:100%">
                         <thead class="table-light">
                             <tr>
@@ -98,10 +105,9 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
         </div>
-    </div>
-</div>
+    </section>
+</section>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>

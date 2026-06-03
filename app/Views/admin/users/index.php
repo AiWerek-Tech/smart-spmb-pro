@@ -54,56 +54,56 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in">
-    <!-- Header Title -->
-    <div class="col-12 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+<section class="admin-page-shell animate-fade-in" aria-labelledby="admin-users-title">
+    <header class="admin-page-header">
         <div>
-            <h4 class="mb-0 text-primary fw-bold" style="font-family: 'Plus Jakarta Sans', sans-serif;">Kelola Pengguna</h4>
-            <p class="text-muted mb-0">Kelola hak akses dan akun untuk Administrator, Operator, dan Pendaftar.</p>
+            <p class="admin-panel__kicker">Manajemen Akun</p>
+            <h1 id="admin-users-title">Kelola Pengguna</h1>
+            <p class="admin-page-subtitle">Kelola hak akses dan akun untuk Administrator, Operator, dan Pendaftar.</p>
         </div>
-        <a href="<?= base_url('admin/users/create') ?>" class="btn btn-primary d-flex align-items-center">
-            <i data-lucide="user-plus" class="me-2" style="width: 16px; height: 16px;"></i> Tambah Pengguna
-        </a>
-    </div>
+        <div class="admin-page-actions">
+            <a href="<?= base_url('admin/users/create') ?>" class="btn btn-primary">
+                <i data-lucide="user-plus" class="me-2" style="width: 16px; height: 16px;"></i> Tambah Pengguna
+            </a>
+        </div>
+    </header>
 
     <!-- Filters Card -->
-    <div class="col-12 mb-4">
-        <div class="card shadow-sm border">
-            <div class="card-body p-3">
-                <form method="GET" action="<?= base_url('admin/users') ?>" class="row g-3">
-                    <div class="col-md-4">
-                        <label for="role" class="form-label small fw-semibold text-muted">Filter Peran</label>
-                        <select name="role" id="role" class="form-select select2">
-                            <option value="">Semua Peran</option>
-                            <option value="admin" <?= $role === 'admin' ? 'selected' : '' ?>>Admin</option>
-                            <option value="operator" <?= $role === 'operator' ? 'selected' : '' ?>>Operator</option>
-                            <option value="pendaftar" <?= $role === 'pendaftar' ? 'selected' : '' ?>>Pendaftar</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="status" class="form-label small fw-semibold text-muted">Filter Status</label>
-                        <select name="status" id="status" class="form-select select2">
-                            <option value="">Semua Status</option>
-                            <option value="1" <?= $status === '1' ? 'selected' : '' ?>>Aktif</option>
-                            <option value="0" <?= $status === '0' ? 'selected' : '' ?>>Nonaktif</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4 d-flex align-items-end user-filter-actions">
-                        <button type="submit" class="btn btn-outline-primary w-100 me-2 d-flex align-items-center justify-content-center">
-                            <i data-lucide="filter" class="me-2" style="width: 16px; height: 16px;"></i> Saring
-                        </button>
-                        <a href="<?= base_url('admin/users') ?>" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center">
-                            <i data-lucide="rotate-ccw" class="me-2" style="width: 16px; height: 16px;"></i> Reset
-                        </a>
-                    </div>
-                </form>
+    <section class="admin-filter-panel" aria-label="Filter pengguna">
+        <form method="GET" action="<?= base_url('admin/users') ?>" class="row g-3">
+            <div class="col-md-4">
+                <label for="role" class="form-label small fw-semibold text-muted">Filter Peran</label>
+                <select name="role" id="role" class="form-select select2">
+                    <option value="">Semua Peran</option>
+                    <?php foreach (($roles ?? []) as $roleOption): ?>
+                        <option value="<?= esc($roleOption['slug']) ?>" <?= $role === $roleOption['slug'] ? 'selected' : '' ?>>
+                            <?= esc($roleOption['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
             </div>
-        </div>
-    </div>
+            <div class="col-md-4">
+                <label for="status" class="form-label small fw-semibold text-muted">Filter Status</label>
+                <select name="status" id="status" class="form-select select2">
+                    <option value="">Semua Status</option>
+                    <option value="1" <?= $status === '1' ? 'selected' : '' ?>>Aktif</option>
+                    <option value="0" <?= $status === '0' ? 'selected' : '' ?>>Nonaktif</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end user-filter-actions">
+                <button type="submit" class="btn btn-outline-primary w-100 me-2">
+                    <i data-lucide="filter" class="me-2" style="width: 16px; height: 16px;"></i> Saring
+                </button>
+                <a href="<?= base_url('admin/users') ?>" class="btn btn-outline-secondary w-100">
+                    <i data-lucide="rotate-ccw" class="me-2" style="width: 16px; height: 16px;"></i> Reset
+                </a>
+            </div>
+        </form>
+    </section>
 
     <!-- Users List Card -->
-    <div class="col-12 d-md-none">
-        <div class="users-mobile-list">
+    <section class="d-md-none" aria-label="Daftar pengguna mobile">
+        <div class="users-mobile-list admin-mobile-record-list">
             <?php if (empty($users)): ?>
                 <article class="user-mobile-card text-center text-muted py-5">
                     <i data-lucide="user-x" class="d-block mx-auto mb-3" style="width: 40px; height: 40px; color: var(--sp-text-muted);"></i>
@@ -162,13 +162,17 @@
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
-    </div>
+    </section>
 
-    <div class="col-12">
-        <div class="card shadow-sm border users-table-card">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table id="usersTable" class="table table-hover align-middle mb-0" style="width:100%">
+    <section class="admin-secondary-panel users-table-card" aria-labelledby="users-table-title">
+        <div class="admin-secondary-panel__header">
+            <div>
+                <h2 class="admin-section-title" id="users-table-title">Daftar Akun</h2>
+                <p class="admin-section-subtitle">Tinjau status akun, peran, dan akses cepat untuk setiap pengguna.</p>
+            </div>
+        </div>
+        <div class="admin-table-shell">
+            <table id="usersTable" class="table table-hover align-middle mb-0" style="width:100%">
                         <thead>
                             <tr>
                                 <th class="ps-4" style="width: 50px;">No</th>
@@ -206,8 +210,10 @@
                                                 <span class="badge bg-label-danger"><i data-lucide="shield" class="me-1 d-inline-block align-middle" style="width: 12px; height: 12px;"></i><span class="align-middle">Admin</span></span>
                                             <?php elseif ($u['role'] === 'operator'): ?>
                                                 <span class="badge bg-label-info"><i data-lucide="settings" class="me-1 d-inline-block align-middle" style="width: 12px; height: 12px;"></i><span class="align-middle">Operator</span></span>
-                                            <?php else: ?>
+                                            <?php elseif ($u['role'] === 'pendaftar'): ?>
                                                 <span class="badge bg-label-success"><i data-lucide="graduation-cap" class="me-1 d-inline-block align-middle" style="width: 12px; height: 12px;"></i><span class="align-middle">Pendaftar</span></span>
+                                            <?php else: ?>
+                                                <span class="badge bg-label-primary"><i data-lucide="badge-check" class="me-1 d-inline-block align-middle" style="width: 12px; height: 12px;"></i><span class="align-middle"><?= esc($u['role']) ?></span></span>
                                             <?php endif; ?>
                                         </td>
                                         <td>
@@ -250,12 +256,10 @@
                                 <?php endforeach; ?>
                             <?php endif; ?>
                         </tbody>
-                    </table>
-                </div>
-            </div>
+            </table>
         </div>
-    </div>
-</div>
+    </section>
+</section>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>

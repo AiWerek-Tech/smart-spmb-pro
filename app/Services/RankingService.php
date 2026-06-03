@@ -7,6 +7,7 @@ use App\Models\StudentAddressModel;
 use App\Models\StudentAchievementModel;
 use App\Models\RegistrationModel;
 use App\Models\JalurModel;
+use App\Services\AcademicYearService;
 
 /**
  * RankingService — Layanan kalkulasi ranking otomatis bagi pendaftar.
@@ -23,6 +24,7 @@ class RankingService
     protected StudentAchievementModel $achievementModel;
     protected RegistrationModel $registrationModel;
     protected JalurModel $jalurModel;
+    protected AcademicYearService $academicYearService;
 
     public function __construct()
     {
@@ -31,6 +33,7 @@ class RankingService
         $this->achievementModel = new StudentAchievementModel();
         $this->registrationModel = new RegistrationModel();
         $this->jalurModel       = new JalurModel();
+        $this->academicYearService = new AcademicYearService();
     }
 
     /**
@@ -42,11 +45,13 @@ class RankingService
     {
         $db = \Config\Database::connect();
         $db->transStart();
+        $academicYear = $this->academicYearService->activeYear();
 
-        // Ambil semua pendaftaran yang statusnya bukan 'draft' beserta info jalur
+        // Ambil pendaftaran tahun aktif yang statusnya bukan 'draft' beserta info jalur
         $registrations = $this->registrationModel
             ->select('registrations.student_id, registrations.jalur_id, jalur.name as jalur_name')
             ->join('jalur', 'jalur.id = registrations.jalur_id')
+            ->where('registrations.academic_year', $academicYear)
             ->whereNotIn('registrations.status', ['draft'])
             ->findAll();
 
@@ -132,8 +137,9 @@ class RankingService
         $db->transComplete();
 
         return [
-            'success' => $db->transStatus(),
-            'count'   => $count,
+            'success'       => $db->transStatus(),
+            'count'         => $count,
+            'academic_year' => $academicYear,
         ];
     }
 }

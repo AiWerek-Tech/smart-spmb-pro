@@ -113,6 +113,12 @@ class AuthController extends BaseController
             'email'                => 'required|valid_email|is_unique[users.email]',
             'password'             => 'required|min_length[8]|max_length[255]',
             'password_confirm'     => 'required|matches[password]',
+        ], [
+            'email' => [
+                'required'    => 'Email wajib diisi.',
+                'valid_email' => 'Format email tidak valid.',
+                'is_unique'   => 'Email sudah terdaftar. Gunakan email lain atau masuk.',
+            ],
         ])) {
             return redirect()->back()
                 ->withInput()

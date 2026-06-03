@@ -5,16 +5,19 @@ namespace App\Controllers\Public;
 use App\Controllers\BaseController;
 use App\Models\GalleryModel;
 use App\Models\SettingModel;
+use App\Services\AcademicYearService;
 
 class PageController extends BaseController
 {
     private SettingModel $settingModel;
     private GalleryModel $galleryModel;
+    private AcademicYearService $academicYearService;
 
     public function __construct()
     {
         $this->settingModel = new SettingModel();
         $this->galleryModel = new GalleryModel();
+        $this->academicYearService = new AcademicYearService();
     }
 
     public function privacy()
@@ -48,6 +51,7 @@ class PageController extends BaseController
             'campusDescription' => $this->settingModel->getValue('campus_description', 'Informasi lingkungan sekolah belum dikonfigurasi.'),
             'facilities' => $facilityList,
             'gallery' => $this->galleryModel
+                ->where('academic_year', $this->academicYearService->activeYear())
                 ->where('is_active', 1)
                 ->groupStart()
                     ->where('category', 'Lingkungan')

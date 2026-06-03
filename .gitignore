@@ -36,3 +36,8 @@ Thumbs.db
 # Node modules (if any frontend tooling)
 /node_modules/
 /tests/browser/node_modules/
+
+# Local/Agent temp directories
+/.superpowers/
+/tmp/
+

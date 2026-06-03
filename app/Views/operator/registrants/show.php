@@ -1,13 +1,13 @@
 <?= $this->extend('layouts/dashboard') ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in">
+<div class="admin-page-shell role-page-shell">
     <!-- Back button & Top bar -->
-    <div class="col-12 mb-3 d-flex justify-content-between align-items-center">
-        <a href="<?= base_url('operator/registrants') ?>" class="text-decoration-none">
+    <div class="role-page-header">
+        <a href="<?= base_url('operator/registrants') ?>" class="role-back-link">
             <i class="me-1" data-lucide="arrow-left"></i> Kembali ke Daftar Pendaftar
         </a>
-        <div class="d-flex">
+        <div class="role-page-actions">
             <!-- Verify documents link -->
             <a href="<?= base_url('operator/documents/'.$registration['id']) ?>" class="btn btn-sm btn-success me-2">
                 <i class="me-1" data-lucide="folder-open"></i> Verifikasi Dokumen
@@ -20,16 +20,15 @@
     </div>
 
     <!-- Candidate Top Card Info -->
-    <div class="col-12 mb-4">
-        <div class="card shadow-sm border bg-white">
-            <div class="card-body">
+    <div>
+        <div class="role-summary-card">
                 <div class="row align-items-center">
                     <div class="col-auto text-center mb-3 mb-md-0">
                         <img src="https://ui-avatars.com/api/?name=<?= urlencode($registration['full_name']) ?>&background=7c3aed&color=fff&size=80" class="rounded border p-1" alt="Avatar">
                     </div>
                     <div class="col">
                         <div class="d-flex align-items-center flex-wrap">
-                            <h4 class="mb-0 text-dark fw-bold me-3"><?= esc($registration['full_name']) ?></h4>
+                            <h1 class="role-page-header__title me-3"><?= esc($registration['full_name']) ?></h1>
                             <span class="badge bg-light text-primary border me-2">Jalur <?= esc($registration['jalur_name']) ?></span>
                             
                             <?php if ($registration['status'] === 'accepted'): ?>
@@ -58,12 +57,11 @@
                         </div>
                     </div>
                 </div>
-            </div>
         </div>
     </div>
 
     <!-- Details Tab Content -->
-    <div class="col-12">
+    <div>
         <div class="card shadow-sm border">
             <div class="card-header p-0 bg-light border-bottom">
                 <ul class="nav nav-tabs border-0" id="profileTabs" role="tablist">
@@ -89,7 +87,7 @@
                 <div class="tab-content" id="profileTabsContent">
                     <!-- TAB 1: IDENTITAS SISWA -->
                     <div class="tab-pane fade show active" id="identitas" role="tabpanel">
-                        <h5 class="text-primary fw-bold mb-3"><i class="me-1" data-lucide="user"></i> Identitas Calon Siswa (Sesuai NIK/Akte)</h5>
+                        <h5 class="role-subsection-title"><i class="me-1" data-lucide="user"></i> Identitas Calon Siswa (Sesuai NIK/Akte)</h5>
                         <div class="row">
                             <div class="col-md-6">
                                 <table class="table table-sm table-borderless align-middle text-dark">
@@ -144,7 +142,7 @@
 
                     <!-- TAB 2: ALAMAT & KONTAK -->
                     <div class="tab-pane fade" id="alamat" role="tabpanel">
-                        <h5 class="text-primary fw-bold mb-3"><i class="me-1" data-lucide="map-pin"></i> Alamat Domisili & Kontak Peserta</h5>
+                        <h5 class="role-subsection-title"><i class="me-1" data-lucide="map-pin"></i> Alamat Domisili & Kontak Peserta</h5>
                         <div class="row">
                             <div class="col-md-6">
                                 <table class="table table-sm table-borderless text-dark">
@@ -203,7 +201,7 @@
                             <!-- Data Ayah -->
                             <div class="col-md-6">
                                 <div class="p-3 border rounded bg-light">
-                                    <h6 class="text-primary fw-bold mb-3"><i class="me-1" data-lucide="user-check"></i> Data Ayah Kandung</h6>
+                                    <h6 class="role-subsection-title"><i class="me-1" data-lucide="user-check"></i> Data Ayah Kandung</h6>
                                     <table class="table table-sm table-borderless text-dark mb-0">
                                         <tr>
                                             <td class="fw-semibold text-muted" style="width: 150px;">Nama Lengkap</td>
@@ -232,7 +230,7 @@
                             <!-- Data Ibu -->
                             <div class="col-md-6">
                                 <div class="p-3 border rounded bg-light">
-                                    <h6 class="text-primary fw-bold mb-3"><i class="me-1" data-lucide="user-astronaut"></i> Data Ibu Kandung</h6>
+                                    <h6 class="role-subsection-title"><i class="me-1" data-lucide="user-astronaut"></i> Data Ibu Kandung</h6>
                                     <table class="table table-sm table-borderless text-dark mb-0">
                                         <tr>
                                             <td class="fw-semibold text-muted" style="width: 150px;">Nama Lengkap</td>
@@ -261,7 +259,7 @@
                             <!-- Data Wali -->
                             <div class="col-md-12">
                                 <div class="p-3 border rounded bg-light">
-                                    <h6 class="text-primary fw-bold mb-3"><i class="me-1" data-lucide="users"></i> Data Wali (Opsional)</h6>
+                                    <h6 class="role-subsection-title"><i class="me-1" data-lucide="users"></i> Data Wali (Opsional)</h6>
                                     <?php if (empty($guardian['full_name'])): ?>
                                         <p class="text-muted small mb-0">Calon siswa tidak mendaftarkan data Wali (tinggal bersama orang tua kandung).</p>
                                     <?php else: ?>
@@ -293,7 +291,7 @@
                     <div class="tab-pane fade" id="periodic" role="tabpanel">
                         <div class="row">
                             <div class="col-md-5 mb-4">
-                                <h6 class="text-primary fw-bold mb-3"><i class="me-1" data-lucide="heart"></i> Kondisi Fisik & KIP/KKS</h6>
+                                <h6 class="role-subsection-title"><i class="me-1" data-lucide="heart"></i> Kondisi Fisik & KIP/KKS</h6>
                                 <table class="table table-sm table-borderless text-dark">
                                     <tr>
                                         <td class="fw-semibold text-muted" style="width: 180px;">Tinggi / Berat Badan</td>
@@ -315,7 +313,7 @@
                             </div>
                             
                             <div class="col-md-7 mb-4">
-                                <h6 class="text-primary fw-bold mb-3"><i class="me-1" data-lucide="award"></i> Prestasi Calon Siswa</h6>
+                                <h6 class="role-subsection-title"><i class="me-1" data-lucide="award"></i> Prestasi Calon Siswa</h6>
                                 <div class="table-responsive">
                                     <table class="table table-sm table-striped border">
                                         <thead class="table-light">
@@ -352,7 +350,7 @@
 
                     <!-- TAB 5: BERKAS UPLOAD -->
                     <div class="tab-pane fade" id="docs" role="tabpanel">
-                        <h5 class="text-primary fw-bold mb-3"><i class="me-1" data-lucide="folder"></i> Dokumen Berkas yang Diunggah</h5>
+                        <h5 class="role-subsection-title"><i class="me-1" data-lucide="folder"></i> Dokumen Berkas yang Diunggah</h5>
                         <div class="table-responsive">
                             <table class="table table-striped align-middle border">
                                 <thead class="table-light">

@@ -1,13 +1,17 @@
 <?= $this->extend('layouts/dashboard') ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in justify-content-center">
-    <div class="col-md-10">
+<div class="admin-page-shell role-page-shell">
+    <div>
         <!-- Back button -->
-        <div class="mb-3">
-            <a href="<?= base_url('operator/registrants/'.$registration['id']) ?>" class="text-decoration-none">
+        <div class="role-page-header mb-3">
+            <a href="<?= base_url('operator/registrants/'.$registration['id']) ?>" class="role-back-link">
                 <i class="me-1" data-lucide="arrow-left"></i> Batal, Kembali ke Profil Detail
             </a>
+            <div>
+                <h1 class="role-page-header__title">Koreksi Data Pendaftar</h1>
+                <p class="role-page-header__subtitle">Perbarui data F-PD calon peserta tanpa mengubah status seleksi.</p>
+            </div>
         </div>
 
         <form method="POST" action="<?= base_url('operator/registrants/'.$registration['id'].'/update') ?>" autocomplete="off">
@@ -27,7 +31,7 @@
             <!-- CARD 1: IDENTITAS SISWA -->
             <div class="card shadow-sm border mb-4">
                 <div class="card-header bg-white border-bottom py-3">
-                    <h5 class="card-title text-primary"><i class="me-2" data-lucide="user"></i> Koreksi Identitas Siswa</h5>
+                    <h5 class="card-title mb-1"><i class="me-2" data-lucide="user"></i> Koreksi Identitas Siswa</h5>
                     <small class="text-muted">Perbaiki nama, gender, tempat tanggal lahir, NIK, dan NISN.</small>
                 </div>
                 <div class="card-body">
@@ -102,7 +106,7 @@
             <!-- CARD 2: ALAMAT & KONTAK -->
             <div class="card shadow-sm border mb-4">
                 <div class="card-header bg-white border-bottom py-3">
-                    <h5 class="card-title text-primary"><i class="me-2" data-lucide="map-pin"></i> Koreksi Alamat & Kontak</h5>
+                    <h5 class="card-title mb-1"><i class="me-2" data-lucide="map-pin"></i> Koreksi Alamat & Kontak</h5>
                     <small class="text-muted">Perbaiki data lokasi tinggal dan no hp/email.</small>
                 </div>
                 <div class="card-body">
@@ -159,14 +163,14 @@
             <!-- CARD 3: ORANG TUA / WALI -->
             <div class="card shadow-sm border mb-4">
                 <div class="card-header bg-white border-bottom py-3">
-                    <h5 class="card-title text-primary"><i class="me-2" data-lucide="users"></i> Koreksi Orang Tua</h5>
+                    <h5 class="card-title mb-1"><i class="me-2" data-lucide="users"></i> Koreksi Orang Tua</h5>
                     <small class="text-muted">Perbaiki data nama dan pekerjaan ayah & ibu.</small>
                 </div>
                 <div class="card-body">
                     <div class="row g-4">
                         <!-- Ayah -->
                         <div class="col-md-6 border-end">
-                            <h6 class="text-dark fw-bold mb-3"><i class="text-primary me-1" data-lucide="user-check"></i> Data Ayah Kandung</h6>
+                            <h6 class="role-subsection-title"><i class="text-primary me-1" data-lucide="user-check"></i> Data Ayah Kandung</h6>
                             <div class="mb-3">
                                 <label for="father_name" class="form-label fw-bold small">Nama Ayah</label>
                                 <input type="text" class="form-control" name="father_name" id="father_name" value="<?= old('father_name', $father['full_name'] ?? '') ?>">
@@ -183,7 +187,7 @@
 
                         <!-- Ibu -->
                         <div class="col-md-6">
-                            <h6 class="text-dark fw-bold mb-3"><i class="text-primary me-1" data-lucide="user"></i> Data Ibu Kandung</h6>
+                            <h6 class="role-subsection-title"><i class="text-primary me-1" data-lucide="user"></i> Data Ibu Kandung</h6>
                             <div class="mb-3">
                                 <label for="mother_name" class="form-label fw-bold small">Nama Ibu</label>
                                 <input type="text" class="form-control" name="mother_name" id="mother_name" value="<?= old('mother_name', $mother['full_name'] ?? '') ?>">
@@ -204,7 +208,7 @@
             <!-- CARD 4: DATA PERIODIK -->
             <div class="card shadow-sm border mb-4">
                 <div class="card-header bg-white border-bottom py-3">
-                    <h5 class="card-title text-primary"><i class="me-2" data-lucide="clipboard-list"></i> Koreksi Data Fisik</h5>
+                    <h5 class="card-title mb-0"><i class="me-2" data-lucide="clipboard-list"></i> Koreksi Data Fisik</h5>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">

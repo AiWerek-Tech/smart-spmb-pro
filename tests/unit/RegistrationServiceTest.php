@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use App\Models\UserModel;
+use App\Models\DocumentRequirementModel;
 use App\Models\StudentModel;
+use App\Models\StudentDocumentModel;
 use App\Models\JalurModel;
+use App\Models\GelombangModel;
+use App\Models\FeeTypeModel;
 use App\Models\RegistrationModel;
 use App\Services\RegistrationService;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -27,7 +31,11 @@ class RegistrationServiceTest extends CIUnitTestCase
     protected RegistrationService $service;
     protected UserModel $userModel;
     protected StudentModel $studentModel;
+    protected StudentDocumentModel $documentModel;
+    protected DocumentRequirementModel $documentRequirementModel;
     protected JalurModel $jalurModel;
+    protected GelombangModel $gelombangModel;
+    protected FeeTypeModel $feeTypeModel;
     protected RegistrationModel $registrationModel;
 
     protected function setUp(): void
@@ -40,7 +48,11 @@ class RegistrationServiceTest extends CIUnitTestCase
         $this->service            = new RegistrationService();
         $this->userModel          = new UserModel();
         $this->studentModel       = new StudentModel();
+        $this->documentModel      = new StudentDocumentModel();
+        $this->documentRequirementModel = new DocumentRequirementModel();
         $this->jalurModel         = new JalurModel();
+        $this->gelombangModel     = new GelombangModel();
+        $this->feeTypeModel       = new FeeTypeModel();
         $this->registrationModel  = new RegistrationModel();
     }
 
@@ -50,9 +62,19 @@ class RegistrationServiceTest extends CIUnitTestCase
         $db->query('SET FOREIGN_KEY_CHECKS=0;');
 
         // Cleanup
+        foreach (['payment_logs', 'payments', 'invoice_items', 'invoices', 'payment_methods'] as $table) {
+            if ($db->tableExists($table)) {
+                $db->table($table)->truncate();
+            }
+        }
+
         $this->registrationModel->where('1=1')->delete();
+        $this->feeTypeModel->where('1=1')->delete();
+        $this->documentModel->where('1=1')->delete();
+        $this->documentRequirementModel->where('1=1')->delete();
         $this->studentModel->where('1=1')->delete();
         $this->userModel->where('1=1')->delete();
+        $this->gelombangModel->where('1=1')->delete();
         $this->jalurModel->where('1=1')->delete();
 
         $db->query('SET FOREIGN_KEY_CHECKS=1;');
@@ -98,6 +120,38 @@ class RegistrationServiceTest extends CIUnitTestCase
             'quota'       => 100,
             'is_active'   => 1,
         ]);
+    }
+
+    protected function createGelombang(int $jalurId, string $openDate, string $closeDate): int
+    {
+        return $this->gelombangModel->insert([
+            'academic_year'     => '2026/2027',
+            'jalur_id'          => $jalurId,
+            'name'              => 'Gelombang Uji',
+            'open_date'         => $openDate,
+            'close_date'        => $closeDate,
+            'announcement_date' => date('Y-m-d', strtotime($closeDate . ' +7 days')),
+            'is_active'         => 1,
+        ]);
+    }
+
+    protected function createRequiredDocuments(int $userId): void
+    {
+        $student = $this->studentModel->findByUserId($userId);
+        $this->assertNotNull($student);
+
+        foreach (['kk', 'akta', 'foto'] as $type) {
+            $this->documentModel->insert([
+                'student_id'    => (int) $student['id'],
+                'academic_year' => '2026/2027',
+                'document_type' => $type,
+                'file_name'     => $type . '.jpg',
+                'file_path'     => 'uploads/documents/' . $userId . '/' . $type . '.jpg',
+                'file_size'     => 1024,
+                'mime_type'     => 'image/jpeg',
+                'status'        => 'approved',
+            ]);
+        }
     }
 
     // =========================================================================
@@ -157,6 +211,7 @@ class RegistrationServiceTest extends CIUnitTestCase
     {
         $userId   = $this->createUserWithStudent();
         $jalurId  = $this->createJalur();
+        $this->createRequiredDocuments($userId);
 
         $result = $this->service->finalize($userId, $jalurId);
 
@@ -169,6 +224,40 @@ class RegistrationServiceTest extends CIUnitTestCase
         $this->assertNotNull($registration);
         $this->assertEquals('submitted', $registration['status']);
         $this->assertEquals($jalurId, $registration['jalur_id']);
+    }
+
+    public function testFinalizeCreatesInvoiceFromAutoInvoiceFees(): void
+    {
+        $userId = $this->createUserWithStudent();
+        $jalurId = $this->createJalur();
+        $this->createRequiredDocuments($userId);
+        $this->feeTypeModel->insert([
+            'code'                         => 'formulir',
+            'name'                         => 'Biaya Formulir',
+            'amount'                       => 125000,
+            'billing_period'               => 'Satu Kali',
+            'is_required'                  => 1,
+            'is_active'                    => 1,
+            'show_on_homepage'             => 1,
+            'requires_payment_before_form' => 0,
+            'auto_invoice'                 => 1,
+            'icon'                         => 'wallet',
+            'sort_order'                   => 100,
+        ]);
+
+        $result = $this->service->finalize($userId, $jalurId);
+
+        $this->assertTrue($result['success'], $result['message'] ?? '');
+        $registration = $this->registrationModel->where('user_id', $userId)->first();
+        $invoice = \Config\Database::connect()
+            ->table('invoices')
+            ->where('registration_id', $registration['id'])
+            ->get()
+            ->getRowArray();
+
+        $this->assertNotNull($invoice);
+        $this->assertSame('unpaid', $invoice['status']);
+        $this->assertSame(125000.0, (float) $invoice['total_amount']);
     }
 
     /**
@@ -186,10 +275,12 @@ class RegistrationServiceTest extends CIUnitTestCase
 
         // Daftar user pertama
         $userId1 = $this->createUserWithStudent();
+        $this->createRequiredDocuments($userId1);
         $this->service->finalize($userId1, $jalurId);
 
         // Coba daftar user kedua (kuota penuh)
         $userId2 = $this->createUserWithStudent();
+        $this->createRequiredDocuments($userId2);
         $result  = $this->service->finalize($userId2, $jalurId);
 
         $this->assertFalse($result['success']);
@@ -214,6 +305,40 @@ class RegistrationServiceTest extends CIUnitTestCase
 
         $this->assertFalse($result['success']);
         $this->assertStringContainsString('tidak aktif', $result['message']);
+    }
+
+    public function testFinalizeFaultsWhenGelombangNotYetOpen(): void
+    {
+        $userId = $this->createUserWithStudent();
+        $jalurId = $this->createJalur();
+        $this->createRequiredDocuments($userId);
+        $gelombangId = $this->createGelombang(
+            $jalurId,
+            date('Y-m-d', strtotime('+7 days')),
+            date('Y-m-d', strtotime('+21 days'))
+        );
+
+        $result = $this->service->finalize($userId, $jalurId, $gelombangId);
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('belum dibuka', $result['message']);
+    }
+
+    public function testFinalizeFaultsWhenGelombangAlreadyClosed(): void
+    {
+        $userId = $this->createUserWithStudent();
+        $jalurId = $this->createJalur();
+        $this->createRequiredDocuments($userId);
+        $gelombangId = $this->createGelombang(
+            $jalurId,
+            date('Y-m-d', strtotime('-21 days')),
+            date('Y-m-d', strtotime('-7 days'))
+        );
+
+        $result = $this->service->finalize($userId, $jalurId, $gelombangId);
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('sudah ditutup', $result['message']);
     }
 
     // =========================================================================
@@ -303,6 +428,42 @@ class RegistrationServiceTest extends CIUnitTestCase
         $draftData = $this->service->getDraftData($userId);
         $this->assertNotEmpty($draftData['step_1']);
         $this->assertEquals('Student Name', $draftData['step_1']['full_name']);
+    }
+
+    public function testSaveStep8UsesConfiguredRequiredDocuments(): void
+    {
+        $userId = $this->createUserWithStudent();
+        $student = $this->studentModel->findByUserId($userId);
+        $this->assertNotNull($student);
+
+        $this->documentRequirementModel->where('academic_year', '2026/2027')->delete();
+        $this->documentRequirementModel->insert([
+            'academic_year'         => '2026/2027',
+            'jalur_id'              => null,
+            'document_type'         => 'kk',
+            'label'                 => 'Kartu Keluarga',
+            'is_required'           => 1,
+            'allowed_extensions'    => 'jpg,jpeg,png,pdf',
+            'max_size_kb'           => 2048,
+            'requires_verification' => 0,
+            'is_active'             => 1,
+            'sort_order'            => 10,
+        ]);
+
+        $this->documentModel->insert([
+            'student_id'    => (int) $student['id'],
+            'academic_year' => '2026/2027',
+            'document_type' => 'kk',
+            'file_name'     => 'kk.jpg',
+            'file_path'     => 'uploads/documents/' . $userId . '/kk.jpg',
+            'file_size'     => 1024,
+            'mime_type'     => 'image/jpeg',
+            'status'        => 'pending',
+        ]);
+
+        $result = $this->service->saveStep($userId, 8, []);
+
+        $this->assertTrue($result['success'], $result['message'] ?? '');
     }
 
     // =========================================================================

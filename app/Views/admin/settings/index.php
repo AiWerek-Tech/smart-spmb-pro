@@ -89,17 +89,18 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in">
-    <!-- Header Title (Premium Aesthetics) -->
-    <div class="col-12 mb-4">
+<section class="admin-page-shell animate-fade-in" aria-labelledby="admin-settings-title">
+    <!-- Header Title -->
+    <header class="admin-page-header">
         <div>
-            <h3 class="mb-1 fw-bold text-dark" style="font-family: 'Plus Jakarta Sans', sans-serif;">Konfigurasi Sistem</h3>
-            <p class="text-muted mb-0">Kelola identitas sekolah, tahun ajaran aktif, peta lokasi, serta tampilan visual dasbor secara fleksibel.</p>
+            <p class="admin-panel__kicker">Konfigurasi Global</p>
+            <h1 id="admin-settings-title">Konfigurasi Sistem</h1>
+            <p class="admin-page-subtitle">Kelola identitas sekolah, tahun ajaran aktif, peta lokasi, serta tampilan visual dasbor secara fleksibel.</p>
         </div>
-    </div>
+    </header>
 
     <!-- Main Container Row inside unified Page layout -->
-    <div class="col-12">
+    <div>
         <form method="POST" action="<?= base_url('admin/settings/save') ?>" enctype="multipart/form-data">
             <?= csrf_field() ?>
             <input type="hidden" name="theme_color_operator" value="<?= esc(old('theme_color_operator', $settings['theme_color_operator'] ?? 'navy')) ?>">
@@ -119,7 +120,7 @@
             <div class="row">
                 <!-- Navigation Tabs (Native Bootstrap 5 Left Sidebar Mode) -->
                 <div class="col-lg-3 mb-4">
-                    <div class="nav flex-column nav-pills" id="settings-tabs" role="tablist" aria-orientation="vertical">
+                    <div class="nav flex-column nav-pills admin-secondary-panel admin-settings-tabs-panel admin-settings-tabs" id="settings-tabs" role="tablist" aria-orientation="vertical">
                         <button class="nav-link active text-start py-3 px-4 mb-2 d-flex align-items-center border-0" id="nav-general-tab" data-bs-toggle="pill" data-bs-target="#nav-general" type="button" role="tab" aria-controls="nav-general" aria-selected="true">
                             <i data-lucide="school" class="me-3" style="width: 18px; height: 18px;"></i> Profil & Tahun Ajaran
                         </button>
@@ -140,24 +141,24 @@
 
                 <!-- Content Panels (Right side inside standalone Card) -->
                 <div class="col-lg-9">
-                    <div class="card shadow-sm border">
+                    <div class="card admin-secondary-panel shadow-sm border">
                         <div class="card-body p-4">
                             <div class="tab-content" id="settings-tab-content">
                                 <!-- PANEL 1: GENERAL PROFILE -->
                                 <div class="tab-pane fade show active" id="nav-general" role="tabpanel" aria-labelledby="nav-general-tab">
                                     <div class="mb-4">
-                                        <h5 class="text-primary fw-bold d-flex align-items-center mb-1">
+                                        <h5 class="admin-section-title text-primary fw-bold d-flex align-items-center mb-1">
                                             <i data-lucide="school" class="me-2" style="width: 20px; height: 20px;"></i> Profil Sekolah & Tahun Ajaran
                                         </h5>
-                                        <p class="text-muted small mb-0">Atur logo sekolah, slogan, serta periode tahun akademik yang aktif saat ini.</p>
+                                        <p class="admin-section-subtitle text-muted small mb-0">Atur logo sekolah, slogan, serta periode tahun akademik yang aktif saat ini.</p>
                                     </div>
                                     <hr class="mb-4">
 
                                     <div class="row mb-3">
                                         <div class="col-md-6 mb-3 mb-md-0">
-                                            <label for="academic_year" class="form-label fw-bold small">Tahun Ajaran Aktif <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="academic_year" name="academic_year" value="<?= esc(old('academic_year', $settings['academic_year'] ?? '')) ?>" placeholder="Contoh: 2026/2027" required>
-                                            <small class="text-muted">Gunakan format YYYY/YYYY (contoh: 2026/2027).</small>
+                                            <label for="academic_year" class="form-label fw-bold small">Tahun Pelajaran Aktif</label>
+                                            <input type="text" class="form-control" id="academic_year" name="academic_year" value="<?= esc($settings['academic_year'] ?? '') ?>" readonly>
+                                            <small class="text-muted">Dikelola dari <a href="<?= base_url('admin/academic-years') ?>">menu Tahun Pelajaran</a> sebagai sumber kebenaran sistem.</small>
                                         </div>
                                         <div class="col-md-6">
                                             <label for="school_name" class="form-label fw-bold small">Nama Sekolah <span class="text-danger">*</span></label>
@@ -192,10 +193,10 @@
                                 <!-- PANEL 2: CONTACT & ADDRESS -->
                                 <div class="tab-pane fade" id="nav-contact" role="tabpanel" aria-labelledby="nav-contact-tab">
                                     <div class="mb-4">
-                                        <h5 class="text-primary fw-bold d-flex align-items-center mb-1">
+                                        <h5 class="admin-section-title text-primary fw-bold d-flex align-items-center mb-1">
                                             <i data-lucide="map-pin" class="me-2" style="width: 20px; height: 20px;"></i> Informasi Kontak & Peta
                                         </h5>
-                                        <p class="text-muted small mb-0">Kelola info kontak operasional sekolah serta kode pemetaan lokasi Google Maps.</p>
+                                        <p class="admin-section-subtitle text-muted small mb-0">Kelola info kontak operasional sekolah serta kode pemetaan lokasi Google Maps.</p>
                                     </div>
                                     <hr class="mb-4">
 
@@ -269,10 +270,10 @@
                                 <!-- PANEL 3: ACCREDITATION -->
                                 <div class="tab-pane fade" id="nav-accreditation" role="tabpanel" aria-labelledby="nav-accreditation-tab">
                                     <div class="mb-4">
-                                        <h5 class="text-primary fw-bold d-flex align-items-center mb-1">
+                                        <h5 class="admin-section-title text-primary fw-bold d-flex align-items-center mb-1">
                                             <i data-lucide="award" class="me-2" style="width: 20px; height: 20px;"></i> Data Akreditasi Sekolah
                                         </h5>
-                                        <p class="text-muted small mb-0">Atur predikat akreditasi resmi sekolah serta tahun penetapan terbarunya.</p>
+                                        <p class="admin-section-subtitle text-muted small mb-0">Atur predikat akreditasi resmi sekolah serta tahun penetapan terbarunya.</p>
                                     </div>
                                     <hr class="mb-4">
 
@@ -310,10 +311,10 @@
                                 <!-- PANEL 4: THEME & APPEARANCE -->
                                 <div class="tab-pane fade" id="nav-theme" role="tabpanel" aria-labelledby="nav-theme-tab">
                                     <div class="mb-4">
-                                        <h5 class="text-primary fw-bold d-flex align-items-center mb-1">
+                                        <h5 class="admin-section-title text-primary fw-bold d-flex align-items-center mb-1">
                                             <i data-lucide="palette" class="me-2" style="width: 20px; height: 20px;"></i> Pengaturan Tema Warna Global
                                         </h5>
-                                        <p class="text-muted small mb-0">Sesuaikan identitas visual aplikasi. Warna tema default akan diterapkan ke seluruh halaman publik, portal login, dan dasbor.</p>
+                                        <p class="admin-section-subtitle text-muted small mb-0">Sesuaikan identitas visual aplikasi. Warna tema default akan diterapkan ke seluruh halaman publik, portal login, dan dasbor.</p>
                                     </div>
                                     <hr class="mb-4">
 
@@ -455,10 +456,10 @@
                                 <!-- PANEL 5: APPLICATION INFO -->
                                 <div class="tab-pane fade" id="nav-app" role="tabpanel" aria-labelledby="nav-app-tab">
                                     <div class="mb-4">
-                                        <h5 class="text-primary fw-bold d-flex align-items-center mb-1">
+                                        <h5 class="admin-section-title text-primary fw-bold d-flex align-items-center mb-1">
                                             <i data-lucide="badge-info" class="me-2" style="width: 20px; height: 20px;"></i> Informasi Aplikasi
                                         </h5>
-                                        <p class="text-muted small mb-0">Identitas rilis produksi dan kontak developer resmi.</p>
+                                        <p class="admin-section-subtitle text-muted small mb-0">Identitas rilis produksi dan kontak developer resmi.</p>
                                     </div>
                                     <hr class="mb-4">
 
@@ -503,7 +504,7 @@
                         </div>
 
                         <!-- Card Save Footer -->
-                        <div class="card-footer bg-light border-top d-flex justify-content-end p-3">
+                        <div class="card-footer admin-secondary-panel__footer bg-light border-top d-flex justify-content-end p-3">
                             <button type="submit" class="btn btn-primary px-4 py-2 d-flex align-items-center shadow-sm">
                                 <i data-lucide="save" class="me-2" style="width: 18px; height: 18px;"></i> Simpan Konfigurasi
                             </button>
@@ -513,7 +514,7 @@
             </div>
         </form>
     </div>
-</div>
+</section>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>

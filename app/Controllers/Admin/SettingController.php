@@ -4,14 +4,20 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\SettingModel;
+use App\Services\AcademicYearService;
+use App\Services\UploadDirectoryService;
 
 class SettingController extends BaseController
 {
     protected SettingModel $settingModel;
+    protected AcademicYearService $academicYearService;
+    protected UploadDirectoryService $uploadDirectoryService;
 
     public function __construct()
     {
         $this->settingModel = new SettingModel();
+        $this->academicYearService = new AcademicYearService($this->settingModel);
+        $this->uploadDirectoryService = new UploadDirectoryService($this->academicYearService);
     }
 
     /**
@@ -53,6 +59,7 @@ class SettingController extends BaseController
         ];
 
         $settings = array_merge($defaults, $settings);
+        $settings['academic_year'] = $this->academicYearService->activeYear();
 
         $data = [
             'title'    => 'Konfigurasi Sistem',
@@ -93,7 +100,7 @@ class SettingController extends BaseController
 
         $settingsData = [
             'school_name'        => $this->request->getPost('school_name'),
-            'academic_year'      => $this->request->getPost('academic_year'),
+            'academic_year'      => $this->academicYearService->activeYear(),
             'phone'              => $this->request->getPost('phone'),
             'email'              => $this->request->getPost('email'),
             'address'            => $this->request->getPost('address'),
@@ -115,10 +122,10 @@ class SettingController extends BaseController
 
         // Proses unggah logo sekolah jika valid
         if ($logoFile !== null && $logoFile->isValid() && !$logoFile->hasMoved()) {
+            $directory = $this->uploadDirectoryService->publicDirectory('logos');
             $newName = $logoFile->getRandomName();
-            // Pindahkan ke public/uploads/images/
-            if ($logoFile->move(FCPATH . 'uploads/images/', $newName)) {
-                $settingsData['school_logo'] = 'uploads/images/' . $newName;
+            if ($logoFile->move($directory['absolute'], $newName)) {
+                $settingsData['school_logo'] = $directory['relative'] . $newName;
             }
         }
 

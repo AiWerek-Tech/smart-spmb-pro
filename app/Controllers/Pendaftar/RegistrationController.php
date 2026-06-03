@@ -5,6 +5,9 @@ namespace App\Controllers\Pendaftar;
 use App\Controllers\BaseController;
 use App\Services\RegistrationService;
 use App\Services\ValidationService;
+use App\Services\AcademicYearService;
+use App\Services\DocumentRequirementService;
+use App\Services\RegistrationGateService;
 use App\Models\JalurModel;
 
 /**
@@ -22,12 +25,18 @@ class RegistrationController extends BaseController
 {
     protected RegistrationService $registrationService;
     protected ValidationService $validationService;
+    protected AcademicYearService $academicYearService;
+    protected DocumentRequirementService $documentRequirementService;
+    protected RegistrationGateService $registrationGateService;
     protected JalurModel $jalurModel;
 
     public function __construct()
     {
         $this->registrationService = new RegistrationService();
         $this->validationService   = new ValidationService();
+        $this->academicYearService = new AcademicYearService();
+        $this->documentRequirementService = new DocumentRequirementService();
+        $this->registrationGateService = new RegistrationGateService();
         $this->jalurModel          = new JalurModel();
     }
 
@@ -50,10 +59,16 @@ class RegistrationController extends BaseController
     {
         $userId = session()->get('user_id');
         $step   = (int)$stepNumber;
+        $academicYear = $this->academicYearService->activeYear();
+        $gate = $this->registrationGateService->status(null, $academicYear);
 
         // Validasi step number (1-8)
         if ($step < 1 || $step > 8) {
             return redirect()->to(base_url('pendaftar/daftar'))->with('error', 'Step tidak valid');
+        }
+
+        if (! $gate['is_open']) {
+            return redirect()->to(base_url('pendaftar/dashboard'))->with('error', $gate['message']);
         }
 
         // Ambil draft data sebelumnya
@@ -62,6 +77,7 @@ class RegistrationController extends BaseController
 
         // Ambil jalur untuk dropdown (Req 8.3)
         $jalurs = $this->jalurModel->where('is_active', 1)->findAll();
+        $requirements = $this->documentRequirementService->requirements($academicYear);
 
         // Tambahkan data jalur ke view
         $viewData = [
@@ -69,6 +85,10 @@ class RegistrationController extends BaseController
             'step'         => $step,
             'stepData'     => $stepData,
             'jalurs'       => $jalurs,
+            'requirements' => $requirements,
+            'uploadRequirements' => $this->documentRequirementService->requirementsForUpload($academicYear),
+            'academicYear' => $academicYear,
+            'registrationGate' => $gate,
             'errors'       => [],
             'dapodikValues' => $this->getDapodikDropdownData(),
         ];
@@ -86,10 +106,20 @@ class RegistrationController extends BaseController
     {
         $userId = session()->get('user_id');
         $step   = (int)$stepNumber;
+        $academicYear = $this->academicYearService->activeYear();
+        $gate = $this->registrationGateService->status(null, $academicYear);
 
         // Validasi step number
         if ($step < 1 || $step > 8) {
             return $this->response->setJSON(['success' => false, 'message' => 'Step tidak valid'])->setStatusCode(400);
+        }
+
+        if (! $gate['is_open']) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => $gate['message'],
+                'errors'  => ['schedule' => $gate['message']],
+            ])->setStatusCode(403);
         }
 
         // Ambil data dari POST
@@ -124,6 +154,7 @@ class RegistrationController extends BaseController
         $userId    = session()->get('user_id');
         $jalurId   = $this->request->getPost('jalur_id');
         $gelombangId = $this->request->getPost('gelombang_id') ?? null;
+        $academicYear = $this->academicYearService->activeYear();
 
         // Validasi jalur
         if (empty($jalurId)) {
@@ -131,6 +162,14 @@ class RegistrationController extends BaseController
                 'success' => false,
                 'message' => 'Jalur pendaftaran harus dipilih',
             ])->setStatusCode(422);
+        }
+
+        $gate = $this->registrationGateService->status((int) $jalurId, $academicYear, $gelombangId ? (int) $gelombangId : null);
+        if (! $gate['is_open']) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => $gate['message'],
+            ])->setStatusCode(403);
         }
 
         // Validasi bahwa semua 8 step sudah terisi

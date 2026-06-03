@@ -2,6 +2,7 @@
 
 namespace App\Filters;
 
+use App\Services\PermissionService;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -38,6 +39,8 @@ class RoleFilter implements FilterInterface
         }
 
         $userRole = session()->get('user_role');
+        $userBaseRole = session()->get('user_base_role');
+        $userId = (int) session()->get('user_id');
 
         // Jika tidak ada peran di sesi, tolak akses
         // (AuthFilter seharusnya sudah menangani ini lebih dulu)
@@ -58,7 +61,21 @@ class RoleFilter implements FilterInterface
             }
         }
 
-        if (empty($allowedRoles) || ! in_array($userRole, $allowedRoles, true)) {
+        if ($userBaseRole === null || $userBaseRole === '') {
+            $userBaseRole = (new PermissionService())->baseRoleFor((string) $userRole);
+        }
+
+        $effectiveRoles = [$userRole, $userBaseRole];
+        if ($userId > 0) {
+            foreach (service('rbacEngine')->getRoles($userId) as $role) {
+                $effectiveRoles[] = $role['slug'] ?? '';
+                $effectiveRoles[] = $role['base_role'] ?? '';
+            }
+        }
+
+        $effectiveRoles = array_values(array_unique(array_filter($effectiveRoles)));
+
+        if (empty($allowedRoles) || array_intersect($allowedRoles, $effectiveRoles) === []) {
             return $this->denyAccess();
         }
 

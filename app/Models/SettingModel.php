@@ -109,6 +109,7 @@ class SettingModel extends Model
             'developer_name',
             'developer_phone',
             'developer_email',
+            'school_operational_mode',
             'school_facilities',
             'school_founded_year',
             'campus_title',

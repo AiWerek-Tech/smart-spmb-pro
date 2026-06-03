@@ -6,7 +6,10 @@ use App\Controllers\BaseController;
 use App\Models\StudentModel;
 use App\Models\StudentDocumentModel;
 use App\Models\RegistrationModel;
+use App\Services\AcademicYearService;
+use App\Services\DocumentRequirementService;
 use App\Services\ExportService;
+use App\Services\UploadDirectoryService;
 
 class DocumentController extends BaseController
 {
@@ -14,6 +17,9 @@ class DocumentController extends BaseController
     protected StudentDocumentModel $documentModel;
     protected RegistrationModel $registrationModel;
     protected ExportService $exportService;
+    protected AcademicYearService $academicYearService;
+    protected DocumentRequirementService $documentRequirementService;
+    protected UploadDirectoryService $uploadDirectoryService;
 
     public function __construct()
     {
@@ -21,6 +27,9 @@ class DocumentController extends BaseController
         $this->documentModel     = new StudentDocumentModel();
         $this->registrationModel = new RegistrationModel();
         $this->exportService     = new ExportService();
+        $this->academicYearService = new AcademicYearService();
+        $this->documentRequirementService = new DocumentRequirementService();
+        $this->uploadDirectoryService = new UploadDirectoryService($this->academicYearService);
     }
 
     /**
@@ -36,12 +45,18 @@ class DocumentController extends BaseController
         }
 
         $studentId = (int)$student['id'];
-        $documents = $this->documentModel->findByStudentId($studentId);
+        $academicYear = $this->academicYearService->activeYear();
+        $registration = $this->registrationModel->findByUserId($userId, $academicYear);
+        $documents = $this->documentModel->findByStudentId($studentId, $academicYear);
+        $jalurId = isset($registration['jalur_id']) ? (int) $registration['jalur_id'] : null;
+        $requirements = $this->documentRequirementService->requirementsForUpload($academicYear, $jalurId);
 
         $data = [
-            'title'     => 'Unggah Dokumen Berkas',
-            'student'   => $student,
-            'documents' => $documents,
+            'title'        => 'Unggah Dokumen Berkas',
+            'student'      => $student,
+            'documents'    => $documents,
+            'requirements' => $requirements,
+            'academicYear' => $academicYear,
         ];
 
         return view('pendaftar/documents/index', $data);
@@ -60,43 +75,43 @@ class DocumentController extends BaseController
         }
 
         $studentId = (int)$student['id'];
+        $academicYear = $this->academicYearService->activeYear();
+        $registration = $this->registrationModel->findByUserId($userId, $academicYear);
+        $jalurId = isset($registration['jalur_id']) ? (int) $registration['jalur_id'] : null;
+        $docType = (string) $this->request->getPost('document_type');
+        $definition = $this->documentRequirementService->uploadDefinition($academicYear, $jalurId, $docType);
 
-        $rules = [
-            'document_type' => 'required|in_list[kk,akta,foto,raport,sertifikat,kip_kks]',
-            'document_file' => 'uploaded[document_file]|is_image[document_file]|max_size[document_file,2048]',
-        ];
-
-        // Khususon untuk file raport/sertifikat yang bisa berformat PDF
-        $docType = $this->request->getPost('document_type');
-        if (in_array($docType, ['raport', 'sertifikat'], true)) {
-            $rules['document_file'] = 'uploaded[document_file]|ext_in[document_file,pdf,jpg,jpeg,png]|max_size[document_file,2048]';
+        if (!$definition) {
+            return redirect()->back()->withInput()->with('error', 'Jenis dokumen tidak tersedia untuk tahun pelajaran atau jalur pendaftaran ini.');
         }
 
+        $allowedExtensions = implode(',', $this->documentRequirementService->extensionList($definition));
+        $maxSizeKb = (int) ($definition['max_size_kb'] ?? 2048);
+
+        $rules = [
+            'document_type' => 'required|alpha_dash|max_length[60]',
+            'document_file' => 'uploaded[document_file]|ext_in[document_file,' . $allowedExtensions . ']|max_size[document_file,' . $maxSizeKb . ']',
+        ];
+
         if (!$this->validate($rules)) {
-            return redirect()->back()->withInput()->with('error', 'Ukuran file melebihi batas maksimal 2 MB atau format file tidak diizinkan.');
+            return redirect()->back()->withInput()->with('error', 'Ukuran file melebihi batas maksimal atau format file tidak diizinkan untuk jenis dokumen ini.');
         }
 
         $file = $this->request->getFile('document_file');
         if ($file->isValid() && !$file->hasMoved()) {
-            if (!$this->isAllowedDocumentMime((string) $docType, (string) $file->getMimeType())) {
+            if (!$this->isAllowedDocumentMime($this->documentRequirementService->extensionList($definition), (string) $file->getMimeType())) {
                 return redirect()->back()->withInput()->with('error', 'Format file tidak sesuai dengan isi dokumen yang diunggah.');
             }
 
             $newName = $file->getRandomName();
-            
-            // Simpan ke storage writeable/uploads/documents/{user_id}/
-            $subFolder = 'documents/' . $userId . '/';
-            $targetDir = WRITEPATH . 'uploads/' . $subFolder;
 
-            if (!is_dir($targetDir)) {
-                mkdir($targetDir, 0755, true);
-            }
+            $directory = $this->uploadDirectoryService->writableDirectory('documents/' . $userId, $academicYear);
 
-            if ($file->move($targetDir, $newName)) {
-                $filePath = 'uploads/' . $subFolder . $newName;
+            if ($file->move($directory['absolute'], $newName)) {
+                $filePath = $directory['relative'] . $newName;
 
                 // Cek apakah dokumen sejenis sudah diunggah sebelumnya
-                $existing = $this->documentModel->findByStudentAndType($studentId, $docType);
+                $existing = $this->documentModel->findByStudentAndType($studentId, $docType, $academicYear);
                 if ($existing) {
                     // Hapus file fisik lama
                     $oldPhysical = $this->resolveDocumentPath($existing['file_path']);
@@ -117,6 +132,7 @@ class DocumentController extends BaseController
                     // Insert data baru
                     $this->documentModel->insert([
                         'student_id'    => $studentId,
+                        'academic_year' => $academicYear,
                         'document_type' => $docType,
                         'file_name'     => $file->getClientName(),
                         'file_path'     => $filePath,
@@ -157,6 +173,10 @@ class DocumentController extends BaseController
             return redirect()->to('pendaftar/dokumen')->with('error', 'Dokumen tidak ditemukan.');
         }
 
+        if (($doc['academic_year'] ?? '') !== $this->academicYearService->activeYear()) {
+            return redirect()->to('pendaftar/dokumen')->with('error', 'Dokumen arsip tahun pelajaran lain tidak dapat dihapus dari tahun aktif.');
+        }
+
         // Hapus file fisik
         $physicalPath = $this->resolveDocumentPath($doc['file_path']);
         if (file_exists($physicalPath)) {
@@ -190,12 +210,13 @@ class DocumentController extends BaseController
         $studentId = (int)$student['id'];
         
         // Pastikan sudah finalisasi pendaftaran
-        $registration = $this->registrationModel->findByUserId($userId);
+        $academicYear = $this->academicYearService->activeYear();
+        $registration = $this->registrationModel->findByUserId($userId, $academicYear);
         if (!$registration || $registration['status'] === 'draft') {
             return redirect()->to('pendaftar/dashboard')->with('error', 'Anda harus menyelesaikan pendaftaran terlebih dahulu.');
         }
 
-        $result = $this->exportService->exportToPdfFpd($studentId);
+        $result = $this->exportService->exportToPdfFpd($studentId, $academicYear);
 
         if (!$result['success']) {
             return redirect()->to('pendaftar/dashboard')->with('error', $result['message']);
@@ -219,12 +240,13 @@ class DocumentController extends BaseController
         $studentId = (int)$student['id'];
         
         // Pastikan sudah lolos verifikasi berkas (status verified atau accepted)
-        $registration = $this->registrationModel->findByUserId($userId);
+        $academicYear = $this->academicYearService->activeYear();
+        $registration = $this->registrationModel->findByUserId($userId, $academicYear);
         if (!$registration || !in_array($registration['status'], ['verified', 'accepted'], true)) {
             return redirect()->to('pendaftar/dashboard')->with('error', 'Akses ditolak! Kartu Peserta hanya dapat diunduh jika berkas pendaftaran Anda telah disetujui (Lolos Verifikasi).');
         }
 
-        $result = $this->exportService->exportToPdfKartu($studentId);
+        $result = $this->exportService->exportToPdfKartu($studentId, $academicYear);
 
         if (!$result['success']) {
             return redirect()->to('pendaftar/dashboard')->with('error', $result['message']);
@@ -248,12 +270,13 @@ class DocumentController extends BaseController
         $studentId = (int)$student['id'];
         
         // Pastikan status diterima (accepted)
-        $registration = $this->registrationModel->findByUserId($userId);
+        $academicYear = $this->academicYearService->activeYear();
+        $registration = $this->registrationModel->findByUserId($userId, $academicYear);
         if (!$registration || $registration['status'] !== 'accepted') {
             return redirect()->to('pendaftar/dashboard')->with('error', 'Akses ditolak! Surat Keterangan Lulus hanya tersedia jika Anda dinyatakan Diterima.');
         }
 
-        $result = $this->exportService->exportToPdfSkl($studentId);
+        $result = $this->exportService->exportToPdfSkl($studentId, $academicYear);
 
         if (!$result['success']) {
             return redirect()->to('pendaftar/dashboard')->with('error', $result['message']);
@@ -262,15 +285,25 @@ class DocumentController extends BaseController
         return $this->response->download($result['file_path'], null)->setFileName($result['filename']);
     }
 
-    private function isAllowedDocumentMime(string $documentType, string $mimeType): bool
+    private function isAllowedDocumentMime(array $extensions, string $mimeType): bool
     {
-        $allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $extensionMimeMap = [
+            'jpg'  => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png'  => 'image/png',
+            'gif'  => 'image/gif',
+            'webp' => 'image/webp',
+            'pdf'  => 'application/pdf',
+        ];
 
-        if (in_array($documentType, ['raport', 'sertifikat'], true)) {
-            $allowed[] = 'application/pdf';
+        $allowed = [];
+        foreach ($extensions as $extension) {
+            if (isset($extensionMimeMap[$extension])) {
+                $allowed[] = $extensionMimeMap[$extension];
+            }
         }
 
-        return in_array($mimeType, $allowed, true);
+        return in_array($mimeType, array_unique($allowed), true);
     }
 
     private function resolveDocumentPath(string $storedPath): string

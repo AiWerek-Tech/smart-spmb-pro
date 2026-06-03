@@ -14,6 +14,7 @@ class GelombangModel extends Model
     protected $useSoftDeletes   = false;
 
     protected $allowedFields = [
+        'academic_year',
         'jalur_id',
         'name',
         'open_date',
@@ -27,6 +28,7 @@ class GelombangModel extends Model
     protected $updatedField  = 'updated_at';
 
     protected $validationRules = [
+        'academic_year' => 'permit_empty|max_length[9]',
         'jalur_id'   => 'required|integer',
         'name'       => 'required|max_length[100]',
         'open_date'  => 'required|valid_date',
@@ -36,40 +38,58 @@ class GelombangModel extends Model
     /**
      * Ambil semua gelombang yang aktif.
      */
-    public function getActiveGelombang(): array
+    public function getActiveGelombang(?string $academicYear = null): array
     {
-        return $this->where('is_active', 1)
-                    ->orderBy('open_date', 'ASC')
-                    ->findAll();
+        $query = $this->where('is_active', 1);
+
+        if ($academicYear !== null && $academicYear !== '') {
+            $query->where('academic_year', $academicYear);
+        }
+
+        return $query->orderBy('open_date', 'ASC')->findAll();
     }
 
     /**
      * Ambil gelombang beserta informasi jalur.
      */
-    public function getGelombangWithJalur(): array
+    public function getGelombangWithJalur(?string $academicYear = null): array
     {
-        return $this->select('gelombang.*, jalur.name AS jalur_name')
-                    ->join('jalur', 'jalur.id = gelombang.jalur_id')
-                    ->orderBy('gelombang.open_date', 'ASC')
-                    ->findAll();
+        $query = $this->select('gelombang.*, jalur.name AS jalur_name')
+            ->join('jalur', 'jalur.id = gelombang.jalur_id');
+
+        if ($academicYear !== null && $academicYear !== '') {
+            $query->where('gelombang.academic_year', $academicYear);
+        }
+
+        return $query->orderBy('gelombang.open_date', 'ASC')->findAll();
     }
 
     /**
      * Ambil gelombang berdasarkan jalur_id.
      */
-    public function findByJalurId(int $jalurId): array
+    public function findByJalurId(int $jalurId, ?string $academicYear = null): array
     {
-        return $this->where('jalur_id', $jalurId)
-                    ->orderBy('open_date', 'ASC')
-                    ->findAll();
+        $query = $this->where('jalur_id', $jalurId);
+
+        if ($academicYear !== null && $academicYear !== '') {
+            $query->where('academic_year', $academicYear);
+        }
+
+        return $query->orderBy('open_date', 'ASC')->findAll();
     }
 
     /**
      * Hitung jumlah gelombang aktif.
      */
-    public function countActiveGelombang(): int
+    public function countActiveGelombang(?string $academicYear = null): int
     {
-        return $this->where('is_active', 1)->countAllResults();
+        $query = $this->where('is_active', 1);
+
+        if ($academicYear !== null && $academicYear !== '') {
+            $query->where('academic_year', $academicYear);
+        }
+
+        return $query->countAllResults();
     }
 
     /**

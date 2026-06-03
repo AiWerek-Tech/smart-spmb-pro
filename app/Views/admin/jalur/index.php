@@ -1,40 +1,39 @@
 <?= $this->extend('layouts/dashboard') ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in">
-    <!-- Header Page -->
-    <div class="col-12 mb-4">
+<section class="admin-page-shell animate-fade-in" aria-labelledby="admin-jalur-title">
+    <header class="admin-page-header">
         <div>
-            <h4 class="mb-0 text-primary">Jalur Pendaftaran</h4>
-            <p class="text-muted mb-0">Kelola kuota, status aktif, dan deskripsi jalur pendaftaran SPMB.</p>
+            <p class="admin-panel__kicker">Data SPMB</p>
+            <h1 id="admin-jalur-title">Jalur Pendaftaran</h1>
+            <p class="admin-page-subtitle">Kelola kuota, status aktif, dan deskripsi jalur pendaftaran SPMB.</p>
         </div>
-    </div>
+        <div class="admin-page-actions">
+            <span class="sp-status-pill"><i data-lucide="calendar-range"></i> <?= esc($activeYear ?? '-') ?></span>
+        </div>
+    </header>
 
-    <!-- Jalur Cards List -->
     <?php if (empty($jalur)): ?>
-        <div class="col-12 text-center py-5 text-muted bg-white rounded border shadow-xs">
-            <i class="fs-1 mb-3" data-lucide="route"></i>
-            <p class="mb-0">Tidak ada jalur pendaftaran yang terdaftar di database.</p>
-        </div>
+        <section class="admin-secondary-panel">
+            <?= view('components/empty_state', ['icon' => 'route', 'title' => 'Belum ada jalur pendaftaran', 'text' => 'Tidak ada jalur pendaftaran yang terdaftar di database.']) ?>
+        </section>
     <?php else: ?>
-        <?php foreach ($jalur as $j): ?>
-            <?php 
-                $quota = (int) $j['quota'];
-                $count = (int) $j['registrant_count'];
-                $percent = $quota > 0 ? min(($count / $quota) * 100, 100) : 0;
-                $barClass = 'bg-primary';
-                if ($percent >= 90) {
-                    $barClass = 'bg-danger';
-                } elseif ($percent >= 70) {
-                    $barClass = 'bg-warning';
-                }
-            ?>
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card h-100 shadow-sm border border-top-3 <?= $j['is_active'] ? 'border-primary' : 'border-secondary' ?>">
-                    <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
-                        <h5 class="card-title text-dark mb-0"><?= esc($j['name']) ?></h5>
-                        
-                        <!-- Toggle Form -->
+        <div class="admin-data-grid" aria-label="Daftar jalur pendaftaran">
+            <?php foreach ($jalur as $j): ?>
+                <?php
+                    $quota = (int) $j['quota'];
+                    $count = (int) $j['registrant_count'];
+                    $percent = $quota > 0 ? min(($count / $quota) * 100, 100) : 0;
+                    $barClass = 'bg-primary';
+                    if ($percent >= 90) {
+                        $barClass = 'bg-danger';
+                    } elseif ($percent >= 70) {
+                        $barClass = 'bg-warning';
+                    }
+                ?>
+                <article class="admin-secondary-panel admin-route-card <?= $j['is_active'] ? 'is-active' : '' ?>">
+                    <div class="admin-route-card__header">
+                        <h2 class="admin-route-card__title"><?= esc($j['name']) ?></h2>
                         <form action="<?= base_url('admin/jalur/'.$j['id'].'/toggle') ?>" method="POST">
                             <?= csrf_field() ?>
                             <div class="form-check form-switch p-0 m-0">
@@ -42,24 +41,20 @@
                             </div>
                         </form>
                     </div>
-                    
-                    <div class="card-body">
-                        <!-- Quota stats -->
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="text-muted small">Pendaftar Terisi</span>
-                            <span class="fw-bold text-dark" style="font-size: 0.9rem;"><?= $count ?> / <?= $quota ?> Peserta</span>
+
+                    <div class="admin-quota-meter">
+                        <div class="admin-quota-meter__top">
+                            <span>Pendaftar Terisi</span>
+                            <strong><?= $count ?> / <?= $quota ?> Peserta</strong>
                         </div>
-                        
-                        <!-- Progress bar -->
-                        <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress">
                             <div class="progress-bar <?= $barClass ?>" role="progressbar" style="width: <?= $percent ?>%;" aria-valuenow="<?= $percent ?>" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
-
-                        <!-- Description -->
-                        <p class="text-muted small mb-0" style="min-height: 50px;"><?= esc($j['description']) ?: 'Belum ada deskripsi jalur.' ?></p>
                     </div>
 
-                    <div class="card-footer bg-light border-top d-flex justify-content-between align-items-center py-2">
+                    <p class="admin-route-card__description"><?= esc($j['description']) ?: 'Belum ada deskripsi jalur.' ?></p>
+
+                    <div class="admin-route-card__footer">
                         <span class="badge <?= $j['is_active'] ? 'bg-label-success' : 'bg-label-secondary' ?> rounded-pill px-2">
                             <?php if ($j['is_active']): ?>
                                 <i class="me-1" data-lucide="check"></i>
@@ -69,8 +64,7 @@
                             <?= $j['is_active'] ? 'Aktif' : 'Nonaktif' ?>
                         </span>
 
-                        <!-- Edit Button (loads in Modal) -->
-                        <button type="button" class="btn btn-sm btn-outline-primary edit-jalur-btn" 
+                        <button type="button" class="btn btn-outline-primary edit-jalur-btn"
                                 data-id="<?= $j['id'] ?>"
                                 data-name="<?= esc($j['name']) ?>"
                                 data-quota="<?= $quota ?>"
@@ -79,18 +73,21 @@
                             <i class="me-1" data-lucide="edit"></i> Edit
                         </button>
                     </div>
-                </div>
-            </div>
-        <?php endforeach; ?>
+                </article>
+            <?php endforeach; ?>
+        </div>
     <?php endif; ?>
-</div>
+</section>
 
 <!-- ================= EDIT JALUR MODAL ================= -->
 <div class="modal fade" id="editJalurModal" tabindex="-1" aria-labelledby="editJalurModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content academic-year-modal">
             <div class="modal-header">
-                <h5 class="modal-title" id="editJalurModalLabel"><i class="me-1 text-primary" data-lucide="edit"></i> Edit Jalur Pendaftaran</h5>
+                <div>
+                    <p class="admin-panel__kicker">Data SPMB</p>
+                    <h2 class="admin-section-title" id="editJalurModalLabel"><i class="me-1 text-primary" data-lucide="edit"></i> Edit Jalur Pendaftaran</h2>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="editJalurForm" method="POST" action="">

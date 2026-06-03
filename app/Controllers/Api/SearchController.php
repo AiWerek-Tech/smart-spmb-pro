@@ -21,7 +21,7 @@ class SearchController extends BaseController
     public function index(): ResponseInterface
     {
         $query = $this->request->getGet('q');
-        $role = session()->get('user_role');
+        $role = session()->get('user_base_role') ?? session()->get('user_role');
         
         if (empty($query) || strlen($query) < 2) {
             return $this->response->setJSON(['results' => []]);

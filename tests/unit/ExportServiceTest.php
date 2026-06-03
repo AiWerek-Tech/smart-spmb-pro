@@ -169,16 +169,18 @@ class ExportServiceTest extends CIUnitTestCase
             'special_condition' => 'Tidak Ada Kondisi Khusus',
         ]);
 
-        // Photo
-        $this->documentModel->insert([
-            'student_id'    => $studentId,
-            'document_type' => 'foto',
-            'file_name'     => 'test_photo.jpg',
-            'file_path'     => 'uploads/documents/' . $userId . '/test_photo.jpg',
-            'file_size'     => 1024,
-            'mime_type'     => 'image/jpeg',
-            'status'        => 'approved',
-        ]);
+        foreach (['kk', 'akta', 'foto'] as $type) {
+            $this->documentModel->insert([
+                'student_id'    => $studentId,
+                'academic_year' => '2026/2027',
+                'document_type' => $type,
+                'file_name'     => $type . '.jpg',
+                'file_path'     => 'uploads/documents/' . $userId . '/' . $type . '.jpg',
+                'file_size'     => 1024,
+                'mime_type'     => 'image/jpeg',
+                'status'        => 'approved',
+            ]);
+        }
 
         // Jalur
         $jalurId = $this->jalurModel->insert([

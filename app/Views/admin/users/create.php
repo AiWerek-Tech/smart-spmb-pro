@@ -1,19 +1,26 @@
 <?= $this->extend('layouts/dashboard') ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <!-- Back button -->
-        <div class="mb-3">
-            <a href="<?= base_url('admin/users') ?>" class="text-decoration-none">
-                <i class="me-1" data-lucide="arrow-left"></i> Kembali ke Daftar Pengguna
+<section class="admin-page-shell animate-fade-in" aria-labelledby="admin-user-create-title">
+    <header class="admin-page-header">
+        <div>
+            <p class="admin-panel__kicker">Manajemen Akun</p>
+            <h1 id="admin-user-create-title">Tambah Pengguna Baru</h1>
+            <p class="admin-page-subtitle">Masukkan informasi akun baru dan tetapkan peran akses yang sesuai.</p>
+        </div>
+        <div class="admin-page-actions">
+            <a href="<?= base_url('admin/users') ?>" class="btn btn-outline-secondary">
+                <i class="me-1" data-lucide="arrow-left"></i> Kembali
             </a>
         </div>
+    </header>
 
-        <div class="card shadow-sm">
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card admin-secondary-panel shadow-sm">
             <div class="card-header bg-white border-bottom py-3">
-                <h5 class="card-title text-primary"><i class="me-2" data-lucide="user-plus"></i> Tambah Pengguna Baru</h5>
-                <small class="text-muted">Masukkan informasi akun baru di bawah ini.</small>
+                <h2 class="admin-section-title text-primary"><i class="me-2" data-lucide="user-plus"></i> Form Akun</h2>
+                <p class="admin-section-subtitle">Masukkan informasi akun baru di bawah ini.</p>
             </div>
             
             <div class="card-body">
@@ -56,9 +63,11 @@
                             <span class="input-group-text bg-light text-muted"><i  data-lucide="user-tag"></i></span>
                             <select class="form-select select2" id="role" name="role" required>
                                 <option value="" disabled selected>Pilih peran...</option>
-                                <option value="admin" <?= old('role') === 'admin' ? 'selected' : '' ?>>Admin</option>
-                                <option value="operator" <?= old('role') === 'operator' ? 'selected' : '' ?>>Operator</option>
-                                <option value="pendaftar" <?= old('role') === 'pendaftar' ? 'selected' : '' ?>>Pendaftar (Siswa)</option>
+                                <?php foreach (($roles ?? []) as $role): ?>
+                                    <option value="<?= esc($role['slug']) ?>" <?= old('role') === $role['slug'] ? 'selected' : '' ?>>
+                                        <?= esc($role['name']) ?> (<?= esc(ucfirst($role['base_role'])) ?>)
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                     </div>
@@ -104,4 +113,5 @@
         </div>
     </div>
 </div>
+</section>
 <?= $this->endSection() ?>

@@ -2,7 +2,7 @@
 
 <?= $this->section('step_content') ?>
 <div class="p-4">
-    <h4 class="mb-4 text-primary"><i  data-lucide="map"></i> Langkah 2: Alamat & Kontak</h4>
+    <h4 class="wizard-step-title"><i data-lucide="map"></i> Langkah 2: Alamat & Kontak</h4>
     
     <form id="stepForm2" method="POST">
         <?= csrf_field() ?>

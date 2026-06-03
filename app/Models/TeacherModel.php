@@ -14,6 +14,7 @@ class TeacherModel extends Model
     protected $useSoftDeletes   = false;
 
     protected $allowedFields = [
+        'academic_year',
         'name',
         'role',
         'photo',
@@ -26,16 +27,22 @@ class TeacherModel extends Model
     protected $updatedField  = 'updated_at';
 
     protected $validationRules = [
+        'academic_year' => 'permit_empty|max_length[9]',
         'name'       => 'required|max_length[150]',
         'role'       => 'required|max_length[150]',
         'is_active'  => 'required|in_list[0,1]',
         'sort_order' => 'required|integer',
     ];
 
-    public function activeOrdered(): array
+    public function activeOrdered(?string $academicYear = null): array
     {
-        return $this->where('is_active', 1)
-            ->orderBy('sort_order', 'ASC')
+        $query = $this->where('is_active', 1);
+
+        if ($academicYear !== null && $academicYear !== '') {
+            $query->where('academic_year', $academicYear);
+        }
+
+        return $query->orderBy('sort_order', 'ASC')
             ->orderBy('name', 'ASC')
             ->findAll();
     }

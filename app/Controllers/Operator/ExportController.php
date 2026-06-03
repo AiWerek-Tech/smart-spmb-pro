@@ -54,7 +54,7 @@ class ExportController extends BaseController
         }
 
         $studentId = (int)$registration['student_id'];
-        $result = $this->exportService->exportToPdfFpd($studentId);
+        $result = $this->exportService->exportToPdfFpd($studentId, (string) $registration['academic_year']);
 
         if (!$result['success']) {
             return redirect()->back()->with('error', $result['message']);

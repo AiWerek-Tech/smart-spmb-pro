@@ -1,21 +1,24 @@
 <?= $this->extend('layouts/dashboard') ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in justify-content-center">
-    <div class="col-lg-10 col-xl-8">
+<div class="admin-page-shell role-page-shell">
+    <div>
         <!-- Back button -->
-        <div class="mb-3">
-            <a href="<?= base_url('operator/dapodik') ?>" class="text-decoration-none">
+        <div class="role-page-header mb-3">
+            <a href="<?= base_url('operator/dapodik') ?>" class="role-back-link">
                 <i class="me-1" data-lucide="arrow-left"></i> Kembali ke Validasi Dapodik
             </a>
+            <div>
+                <h1 class="role-page-header__title">Laporan Dapodik</h1>
+                <p class="role-page-header__subtitle">Ringkasan kesiapan 11 field wajib calon peserta.</p>
+            </div>
         </div>
 
         <!-- Candidate Top Summary Card -->
-        <div class="card shadow-sm border mb-4">
-            <div class="card-body">
+        <div class="role-summary-card mb-4">
                 <div class="row align-items-center">
                     <div class="col">
-                        <h4 class="fw-bold text-dark mb-1"><?= esc($registration['full_name']) ?></h4>
+                        <h2 class="role-detail-title"><?= esc($registration['full_name']) ?></h2>
                         <p class="text-muted mb-0">No. Pendaftaran: <strong class="text-primary"><?= esc($registration['registration_number']) ?></strong> | NIK: <?= esc($registration['nik']) ?></p>
                     </div>
                     <div class="col-md-auto text-md-end mt-2 mt-md-0">
@@ -27,7 +30,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
         </div>
 
         <!-- Status banners -->
@@ -35,7 +37,7 @@
             <div class="alert alert-success border-0 shadow-sm d-flex align-items-center mb-4 py-3">
                 <i class="fs-3 me-3 text-success" data-lucide="check-circle-2"></i>
                 <div>
-                    <h6 class="text-success fw-bold mb-1">DATA SIAP DAPODIK (100% LENGKAP)</h6>
+                    <h6 class="role-subsection-title text-success mb-1">DATA SIAP DAPODIK (100% LENGKAP)</h6>
                     <p class="mb-0 small text-dark">Seluruh 11 data Dapodik wajib telah terisi sempurna. Calon siswa ini siap disinkronisasikan ke sistem Dapodik nasional sekolah.</p>
                 </div>
             </div>
@@ -43,7 +45,7 @@
             <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-4 py-3">
                 <i class="fs-3 me-3 text-warning" data-lucide="alert-circle"></i>
                 <div>
-                    <h6 class="text-warning fw-bold mb-1">DATA BELUM SIAP DAPODIK (TIDAK LENGKAP)</h6>
+                    <h6 class="role-subsection-title text-warning mb-1">DATA BELUM SIAP DAPODIK (TIDAK LENGKAP)</h6>
                     <p class="mb-0 small text-dark">Ditemukan <strong><?= count($missingFields) ?> data wajib</strong> yang masih kosong. Tekan tombol koreksi di bawah untuk mengisi data.</p>
                 </div>
             </div>
@@ -52,7 +54,7 @@
         <!-- Detailed 11 checklist card -->
         <div class="card shadow-sm border mb-4">
             <div class="card-header bg-white border-bottom py-3">
-                <h5 class="card-title text-primary m-0"><i class="me-2" data-lucide="clipboard-check"></i> Laporan Validasi 11 Field Dapodik Wajib</h5>
+                <h5 class="card-title m-0"><i class="me-2" data-lucide="clipboard-check"></i> Laporan Validasi 11 Field Dapodik Wajib</h5>
                 <small class="text-muted">Setiap field harus terisi agar dapat diekspor tanpa kendala ke Dapodik.</small>
             </div>
             

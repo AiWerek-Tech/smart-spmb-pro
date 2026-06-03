@@ -7,6 +7,8 @@ use App\Models\SettingModel;
 use App\Models\GelombangModel;
 use App\Models\JalurModel;
 use App\Models\FaqModel;
+use App\Services\AcademicYearService;
+use App\Services\FeeService;
 
 /**
  * SpmbController — Halaman informasi SPMB (jadwal, persyaratan, alur, FAQ).
@@ -22,6 +24,8 @@ class SpmbController extends BaseController
     protected GelombangModel $gelombangModel;
     protected JalurModel $jalurModel;
     protected FaqModel $faqModel;
+    protected AcademicYearService $academicYearService;
+    protected FeeService $feeService;
 
     public function __construct()
     {
@@ -29,6 +33,8 @@ class SpmbController extends BaseController
         $this->gelombangModel = new GelombangModel();
         $this->jalurModel     = new JalurModel();
         $this->faqModel       = new FaqModel();
+        $this->academicYearService = new AcademicYearService($this->settingModel);
+        $this->feeService = new FeeService();
     }
 
     /**
@@ -39,14 +45,19 @@ class SpmbController extends BaseController
      */
     public function index()
     {
-        // Ambil jadwal per gelombang (Req 3.2)
-        $gelombang = $this->gelombangModel->findAll();
+        $academicYear = $this->academicYearService->activeYear();
+
+        // Ambil jadwal per gelombang sesuai tahun pelajaran aktif (Req 3.2)
+        $gelombang = $this->gelombangModel->getGelombangWithJalur($academicYear);
 
         // Ambil jalur beserta persyaratan (Req 3.3)
         $jalurs = $this->jalurModel->findAll();
 
+        $feeSummary = $this->feeService->homepageSummary();
+
         // Ambil FAQ (Req 3.5)
         $faqs = $this->faqModel->getActiveFaqs();
+        $faqs = $this->mergePaymentFaq($faqs, $feeSummary);
 
         // Ambil informasi alur (hardcoded atau dari settings)
         $alur = [
@@ -59,31 +70,6 @@ class SpmbController extends BaseController
         // Ambil data profil sekolah dari settings
         $schoolSettings = $this->settingModel->getSchoolProfile();
 
-        // Data Informasi Biaya SPMB (Integrasi MVC dinamis)
-        $fees = [
-            [
-                'name' => 'Biaya Pendaftaran & Formulir',
-                'amount' => 'Rp 250.000',
-                'period' => 'Satu Kali',
-                'desc' => 'Mencakup formulir online, verifikasi berkas, kartu ujian seleksi, dan biaya administrasi pendaftaran.',
-                'icon' => 'file-text'
-            ],
-            [
-                'name' => 'Sumbangan Pengembangan (Uang Pangkal)',
-                'amount' => 'Rp 3.500.000',
-                'period' => 'Satu Kali',
-                'desc' => 'Mencakup 5 stel seragam lengkap, paket buku pelajaran, asuransi siswa, pemeliharaan laboratorium komputer/bahasa, perpustakaan, dan fasilitas sekolah.',
-                'icon' => 'building-2'
-            ],
-            [
-                'name' => 'Uang Sekolah Bulanan (SPP)',
-                'amount' => 'Rp 750.000',
-                'period' => 'Bulanan',
-                'desc' => 'Mencakup biaya operasional belajar mengajar, ekstrakurikuler wajib dan pilihan, evaluasi berkala, e-learning, dan kegiatan OSIS.',
-                'icon' => 'credit-card'
-            ]
-        ];
-
         return view('public/spmb', [
             'title'          => 'Informasi SPMB',
             'gelombang'      => $gelombang,
@@ -91,7 +77,26 @@ class SpmbController extends BaseController
             'alur'           => $alur,
             'faqs'           => $faqs,
             'schoolSettings' => $schoolSettings,
-            'fees'           => $fees,
+            'fees'           => $feeSummary['fees'],
+            'feeSummary'     => $feeSummary,
+            'academicYear'   => $academicYear,
         ]);
+    }
+
+    private function mergePaymentFaq(array $faqs, array $feeSummary): array
+    {
+        $paymentFaq = [
+            'question' => 'Apakah pendaftaran ini dikenakan biaya?',
+            'answer'   => $feeSummary['payment_faq_answer'],
+        ];
+
+        $filtered = array_values(array_filter($faqs, static function (array $faq): bool {
+            $question = strtolower((string) ($faq['question'] ?? ''));
+            return !str_contains($question, 'biaya') && !str_contains($question, 'pembayaran');
+        }));
+
+        array_unshift($filtered, $paymentFaq);
+
+        return $filtered;
     }
 }

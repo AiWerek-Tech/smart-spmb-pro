@@ -14,6 +14,7 @@ class GalleryModel extends Model
     protected $useSoftDeletes   = false;
 
     protected $allowedFields = [
+        'academic_year',
         'title',
         'description',
         'image',
@@ -30,6 +31,7 @@ class GalleryModel extends Model
     protected $updatedField  = 'updated_at';
 
     protected $validationRules = [
+        'academic_year' => 'permit_empty|max_length[9]',
         'image'      => 'required|max_length[255]',
         'is_active'  => 'required|in_list[0,1]',
         'sort_order' => 'required|integer',

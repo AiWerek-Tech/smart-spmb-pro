@@ -12,6 +12,7 @@ use App\Models\StudentPeriodicModel;
 use App\Models\StudentAchievementModel;
 use App\Models\StudentDocumentModel;
 use App\Models\JalurModel;
+use App\Services\AcademicYearService;
 
 class RegistrantController extends BaseController
 {
@@ -24,6 +25,7 @@ class RegistrantController extends BaseController
     protected StudentAchievementModel $achievementModel;
     protected StudentDocumentModel $documentModel;
     protected JalurModel $jalurModel;
+    protected AcademicYearService $academicYearService;
 
     public function __construct()
     {
@@ -36,6 +38,7 @@ class RegistrantController extends BaseController
         $this->achievementModel  = new StudentAchievementModel();
         $this->documentModel     = new StudentDocumentModel();
         $this->jalurModel        = new JalurModel();
+        $this->academicYearService = new AcademicYearService();
     }
 
     /**
@@ -53,8 +56,13 @@ class RegistrantController extends BaseController
             'search' => !empty($search) ? $search : null,
         ];
 
+        $activeYear = $this->academicYearService->activeYear();
+
         $this->registrationModel->applyFilters($filters);
-        $registrants = $this->registrationModel->whereNotIn('registrations.status', ['draft'])->findAll();
+        $registrants = $this->registrationModel
+            ->where('registrations.academic_year', $activeYear)
+            ->whereNotIn('registrations.status', ['draft'])
+            ->findAll();
 
         $jalur = $this->jalurModel->findAll();
 
@@ -65,6 +73,7 @@ class RegistrantController extends BaseController
             'jalurId'     => $jalurId,
             'status'      => $status,
             'search'      => $search,
+            'activeYear'  => $activeYear,
         ];
 
         return view('operator/registrants/index', $data);
@@ -75,7 +84,10 @@ class RegistrantController extends BaseController
      */
     public function show(int $registrationId)
     {
-        $registration = $this->registrationModel->getRegistrationWithDetails($registrationId);
+        $registration = $this->registrationModel->getRegistrationWithDetails(
+            $registrationId,
+            $this->academicYearService->activeYear()
+        );
 
         if (!$registration) {
             return redirect()->to('operator/registrants')->with('error', 'Data pendaftar tidak ditemukan.');
@@ -90,7 +102,7 @@ class RegistrantController extends BaseController
         $guardian     = $this->familyModel->findByStudentAndType($studentId, 'wali');
         $periodic     = $this->periodicModel->findByStudentId($studentId);
         $achievements = $this->achievementModel->findByStudentId($studentId);
-        $documents    = $this->documentModel->findByStudentId($studentId);
+        $documents    = $this->documentModel->findByStudentId($studentId, (string) $registration['academic_year']);
 
         $data = [
             'title'        => 'Detail Profil: ' . esc($registration['full_name']),
@@ -113,7 +125,10 @@ class RegistrantController extends BaseController
      */
     public function edit(int $registrationId)
     {
-        $registration = $this->registrationModel->getRegistrationWithDetails($registrationId);
+        $registration = $this->registrationModel->getRegistrationWithDetails(
+            $registrationId,
+            $this->academicYearService->activeYear()
+        );
 
         if (!$registration) {
             return redirect()->to('operator/registrants')->with('error', 'Data pendaftar tidak ditemukan.');
@@ -147,7 +162,9 @@ class RegistrantController extends BaseController
      */
     public function update(int $registrationId)
     {
-        $registration = $this->registrationModel->find($registrationId);
+        $registration = $this->registrationModel
+            ->where('academic_year', $this->academicYearService->activeYear())
+            ->find($registrationId);
 
         if (!$registration) {
             return redirect()->to('operator/registrants')->with('error', 'Data pendaftaran tidak ditemukan.');

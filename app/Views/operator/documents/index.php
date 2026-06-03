@@ -1,38 +1,34 @@
 <?= $this->extend('layouts/dashboard') ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in">
+<div class="admin-page-shell role-page-shell">
     <!-- Back & Top Info -->
-    <div class="col-12 mb-3">
-        <a href="<?= base_url('operator/registrants/'.$registration['id']) ?>" class="text-decoration-none">
+    <div class="role-page-header">
+        <a href="<?= base_url('operator/registrants/'.$registration['id']) ?>" class="role-back-link">
             <i class="me-1" data-lucide="arrow-left"></i> Kembali ke Profil Pendaftar
         </a>
+        <span class="badge bg-label-info p-2 rounded"><i class="me-1" data-lucide="folder"></i> Verifikasi Berkas Calon Siswa</span>
     </div>
 
     <!-- Candidate Header Card -->
-    <div class="col-12 mb-4">
-        <div class="card shadow-sm border">
-            <div class="card-body py-3">
+    <div>
+        <div class="role-summary-card">
                 <div class="row align-items-center">
                     <div class="col">
-                        <h4 class="mb-1 text-dark fw-bold"><?= esc($registration['full_name']) ?></h4>
+                        <h1 class="role-page-header__title"><?= esc($registration['full_name']) ?></h1>
                         <p class="text-muted mb-0">No. Pendaftaran: <strong class="text-primary"><?= esc($registration['registration_number']) ?></strong> | NIK: <?= esc($registration['nik']) ?> | Status Pendaftaran: 
                             <span class="badge bg-light text-primary border"><?= esc($registration['status']) ?></span>
                         </p>
                     </div>
-                    <div class="col-md-auto text-md-end mt-2 mt-md-0">
-                        <span class="badge bg-label-info p-2 rounded"><i class="me-1" data-lucide="folder"></i> Verifikasi Berkas Calon Siswa</span>
-                    </div>
                 </div>
-            </div>
         </div>
     </div>
 
     <!-- Documents List Grid -->
-    <div class="col-md-12">
+    <div>
         <div class="card shadow-sm border">
             <div class="card-header bg-white border-bottom py-3">
-                <h5 class="card-title text-primary m-0"><i class="me-2" data-lucide="folder-open"></i> Daftar Dokumen Calon Siswa</h5>
+                <h5 class="card-title m-0"><i class="me-2" data-lucide="folder-open"></i> Daftar Dokumen Calon Siswa</h5>
                 <small class="text-muted">Review dan tentukan status berkas (Setujui / Tolak).</small>
             </div>
             
@@ -61,16 +57,14 @@
                                     <tr>
                                         <td class="ps-4 fw-bold text-dark">
                                             <?php 
-                                                $labels = [
-                                                    'kk' => 'Kartu Keluarga (KK)',
-                                                    'akta' => 'Akte Kelahiran',
-                                                    'foto' => 'Pas Foto 3x4',
-                                                    'raport' => 'Raport Terakhir',
-                                                    'sertifikat' => 'Sertifikat Pendukung',
-                                                    'kip_kks' => 'KIP / KKS',
-                                                ];
-                                                $isMandatory = in_array($doc['document_type'], ['kk', 'akta', 'foto'], true);
-                                                echo $labels[$doc['document_type']] ?? esc($doc['document_type']);
+                                                $requiredTypes = [];
+                                                foreach (($requirements ?? []) as $requirement) {
+                                                    if ((int) ($requirement['is_required'] ?? 0) === 1) {
+                                                        $requiredTypes[] = $requirement['document_type'];
+                                                    }
+                                                }
+                                                $isMandatory = in_array($doc['document_type'], $requiredTypes, true);
+                                                echo ($requirementLabels ?? [])[$doc['document_type']] ?? esc($doc['document_type']);
                                             ?>
                                             <?php if ($isMandatory): ?>
                                                 <span class="text-danger small ms-1" title="Berkas Wajib">* Wajib</span>
@@ -103,7 +97,7 @@
                                             <?php endif; ?>
                                         </td>
                                         <td class="pe-4 text-center">
-                                            <div class="d-flex align-items-center justify-content-center flex-wrap">
+                                            <div class="role-table-actions">
                                                 <!-- Open File Link -->
                                                 <a href="<?= base_url('operator/documents/'.$doc['id'].'/view') ?>" class="btn btn-sm btn-outline-primary me-1 px-2" target="_blank" title="Buka Pratinjau Dokumen">
                                                     <i  data-lucide="external-link"></i> Buka File

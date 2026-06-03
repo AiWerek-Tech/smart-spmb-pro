@@ -3,7 +3,7 @@
 <?= $this->section('step_content') ?>
 <div class="p-4">
     <div class="d-flex align-items-center mb-4">
-        <h4 class="text-primary mb-0"><i  data-lucide="shield-check"></i> Langkah 5: Data Wali</h4>
+        <h4 class="wizard-step-title mb-0"><i data-lucide="shield-check"></i> Langkah 5: Data Wali</h4>
         <span class="badge bg-secondary ms-3">Opsional</span>
     </div>
     

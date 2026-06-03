@@ -3,21 +3,27 @@
 namespace App\Controllers\Operator;
 
 use App\Controllers\BaseController;
+use App\Models\JalurModel;
 use App\Models\RegistrationModel;
 use App\Models\StudentModel;
+use App\Services\AcademicYearService;
 use App\Services\DapodikService;
 
 class DapodikController extends BaseController
 {
     protected RegistrationModel $registrationModel;
     protected StudentModel $studentModel;
+    protected JalurModel $jalurModel;
     protected DapodikService $dapodikService;
+    protected AcademicYearService $academicYearService;
 
     public function __construct()
     {
         $this->registrationModel = new RegistrationModel();
         $this->studentModel      = new StudentModel();
+        $this->jalurModel        = new JalurModel();
         $this->dapodikService    = new DapodikService();
+        $this->academicYearService = new AcademicYearService();
     }
 
     /**
@@ -28,6 +34,7 @@ class DapodikController extends BaseController
         $jalurId = $this->request->getGet('jalur');
         $status = $this->request->getGet('status');
         $search = $this->request->getGet('search');
+        $activeYear = $this->academicYearService->activeYear();
 
         $filters = [
             'jalur'  => !empty($jalurId) ? (int)$jalurId : null,
@@ -37,7 +44,10 @@ class DapodikController extends BaseController
 
         // Saring pendaftar yang sudah submit
         $this->registrationModel->applyFilters($filters);
-        $registrants = $this->registrationModel->whereNotIn('registrations.status', ['draft'])->findAll();
+        $registrants = $this->registrationModel
+            ->where('registrations.academic_year', $activeYear)
+            ->whereNotIn('registrations.status', ['draft'])
+            ->findAll();
 
         $data = [
             'title'       => 'Validasi Dapodik Calon Siswa',
@@ -45,6 +55,8 @@ class DapodikController extends BaseController
             'jalurId'     => $jalurId,
             'status'      => $status,
             'search'      => $search,
+            'activeYear'  => $activeYear,
+            'jalurOptions' => $this->jalurModel->getActiveJalur(),
         ];
 
         return view('operator/dapodik/index', $data);
@@ -55,7 +67,8 @@ class DapodikController extends BaseController
      */
     public function show(int $registrationId)
     {
-        $registration = $this->registrationModel->getRegistrationWithDetails($registrationId);
+        $activeYear = $this->academicYearService->activeYear();
+        $registration = $this->registrationModel->getRegistrationWithDetails($registrationId, $activeYear);
 
         if (!$registration) {
             return redirect()->to('operator/dapodik')->with('error', 'Pendaftar tidak ditemukan.');
@@ -67,7 +80,7 @@ class DapodikController extends BaseController
         $this->dapodikService->updateDapodikStatus($studentId);
         
         // Get fresh details
-        $registration = $this->registrationModel->getRegistrationWithDetails($registrationId);
+        $registration = $this->registrationModel->getRegistrationWithDetails($registrationId, $activeYear);
         
         $missingFields = $this->dapodikService->getMissingFields($studentId);
         

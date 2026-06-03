@@ -11,6 +11,34 @@ $footerWhatsapp = preg_replace('/[^0-9]/', '', (string) $settingModel->getValue(
 $footerAccreditation = $settingModel->getValue('accreditation', 'A');
 $footerNpsn = $settingModel->getValue('npsn', '-');
 $footerDesc = $settingModel->getValue('school_description', 'Membentuk generasi cerdas, berkarakter, dan siap menghadapi tantangan global dengan sistem pendidikan inovatif.');
+$footerSocialLinks = [
+    ['key' => 'facebook_url', 'label' => 'Facebook', 'icon' => 'facebook'],
+    ['key' => 'instagram_url', 'label' => 'Instagram', 'icon' => 'instagram'],
+    ['key' => 'youtube_url', 'label' => 'YouTube', 'icon' => 'youtube'],
+    ['key' => 'tiktok_url', 'label' => 'TikTok', 'icon' => 'music-2'],
+    ['key' => 'website_url', 'label' => 'Website', 'icon' => 'globe-2'],
+    ['key' => 'email', 'label' => 'Email', 'icon' => 'mail', 'prefix' => 'mailto:'],
+    ['key' => 'whatsapp', 'label' => 'WhatsApp', 'icon' => 'message-circle', 'prefix' => 'https://wa.me/'],
+];
+$footerSocialLinks = array_values(array_filter(array_map(static function (array $item) use ($settingModel) {
+    $value = trim((string) $settingModel->getValue($item['key'], ''));
+    if ($value === '') {
+        return null;
+    }
+
+    if (($item['key'] ?? '') === 'whatsapp') {
+        $value = preg_replace('/[^0-9]/', '', $value);
+        if ($value === '') {
+            return null;
+        }
+    }
+
+    return [
+        'label' => $item['label'],
+        'icon'  => $item['icon'],
+        'url'   => ($item['prefix'] ?? '') . $value,
+    ];
+}, $footerSocialLinks)));
 $appInfo = config('AppInfo');
 
 // URL logo yang sudah diproses — digunakan di navbar, footer, favicon, og:image
@@ -208,7 +236,7 @@ $schoolLogoUrl = !empty($schoolLogo) ? base_url($schoolLogo) : '';
                 </div>
 
                 <a href="<?= base_url('/galeri') ?>" class="sp-mobile-nav-link">
-                    <i data-lucide="images"></i>
+                    <i data-lucide="image"></i>
                     <span>Galeri</span>
                     <i data-lucide="chevron-right" class="sp-mobile-nav-arrow"></i>
                 </a>
@@ -315,11 +343,15 @@ $schoolLogoUrl = !empty($schoolLogo) ? base_url($schoolLogo) : '';
                         </div>
                     </a>
                     <p class="sp-footer-desc"><?= esc($footerDesc) ?></p>
-                    <div class="sp-footer-social">
-                        <a href="#" class="footer-social-link" aria-label="Facebook"><i data-lucide="facebook"></i></a>
-                        <a href="#" class="footer-social-link" aria-label="Instagram"><i data-lucide="instagram"></i></a>
-                        <a href="#" class="footer-social-link" aria-label="YouTube"><i data-lucide="youtube"></i></a>
-                    </div>
+                    <?php if (!empty($footerSocialLinks)): ?>
+                        <div class="sp-footer-social">
+                            <?php foreach ($footerSocialLinks as $social): ?>
+                                <a href="<?= esc($social['url']) ?>" class="footer-social-link" aria-label="<?= esc($social['label']) ?>" target="_blank" rel="noopener">
+                                    <i data-lucide="<?= esc($social['icon']) ?>"></i>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Links Column -->
@@ -337,7 +369,7 @@ $schoolLogoUrl = !empty($schoolLogo) ? base_url($schoolLogo) : '';
                 <!-- Contact Column -->
                 <div class="sp-footer-contact-col">
                     <h5 class="sp-footer-heading">Hubungi Kami</h5>
-                    <div class="footer-contact-item">
+                    <div class="footer-contact-item footer-contact-item--address">
                         <div class="footer-contact-icon"><i data-lucide="map-pin"></i></div>
                         <div class="footer-contact-info">
                             <h6>Alamat</h6>
@@ -384,9 +416,9 @@ $schoolLogoUrl = !empty($schoolLogo) ? base_url($schoolLogo) : '';
                 <p class="sp-footer-copy mb-0">
                     <span>&copy; <?= date('Y') ?> <?= esc($schoolName) ?></span>
                     <span class="sp-footer-copy-separator" aria-hidden="true">|</span>
-                    <span>Smart SPMB Pro v<?= esc($appInfo->version) ?></span>
-                    <span class="sp-footer-copy-separator" aria-hidden="true">|</span>
-                    <span>Developed by <strong><?= esc($appInfo->developer) ?></strong></span>
+                    <span class="sp-footer-copy-meta">Smart SPMB Pro v<?= esc($appInfo->version) ?></span>
+                    <span class="sp-footer-copy-separator sp-footer-copy-separator--meta" aria-hidden="true">|</span>
+                    <span class="sp-footer-copy-dev">Developed by <strong><?= esc($appInfo->developer) ?></strong></span>
                 </p>
                 <div class="sp-footer-legal">
                     <a href="<?= base_url('/kebijakan-privasi') ?>">Kebijakan Privasi</a>

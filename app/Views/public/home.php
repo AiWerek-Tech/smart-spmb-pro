@@ -25,16 +25,22 @@
                         <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="<?= $index ?>" class="<?= $index === 0 ? 'active' : '' ?>" aria-current="<?= $index === 0 ? 'true' : 'false' ?>" aria-label="Slide <?= $index + 1 ?>"></button>
                     <?php endforeach; ?>
                 </div>
-                <div class="carousel-inner rounded-5 overflow-hidden shadow-lg">
+                <div class="carousel-inner">
                     <?php foreach ($banners as $index => $banner): ?>
                         <div class="carousel-item <?= $index === 0 ? 'active' : '' ?>" data-bs-interval="5000">
-                            <div class="sp-hero-card">
+                            <?php
+                            $bannerImgSrc = !empty($banner['image'])
+                                ? ((strpos($banner['image'], 'http') === 0) ? esc($banner['image'], 'url') : base_url(esc($banner['image'])))
+                                : base_url('assets/img/gallery-placeholder.svg');
+                            ?>
+                            <div class="sp-hero-card" style="--sp-hero-image: url('<?= $bannerImgSrc ?>');">
                                 <div class="sp-hero-content">
                                     <div class="sp-hero-badge glass-effect">
                                         <i data-lucide="sparkles" style="width:14px;height:14px;"></i>
                                         <span>Pendaftaran <?= esc($academicYear) ?> Dibuka</span>
                                     </div>
-                                    <h1 class="sp-hero-title"><?= esc($banner['title']) ?></h1>
+                                    <h1 class="sp-hero-title"><?= esc($schoolName) ?></h1>
+                                    <p class="sp-hero-eyebrow-title"><?= esc($banner['title']) ?></p>
                                     <p class="sp-hero-subtitle"><?= esc($banner['subtitle']) ?></p>
                                     <div class="sp-hero-actions">
                                         <?php
@@ -61,18 +67,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="sp-hero-visual">
-                                    <div class="sp-hero-mockup">
-                                        <div class="sp-hero-mockup-img">
-                                            <?php
-                                            $bannerImgSrc = !empty($banner['image'])
-                                                ? ((strpos($banner['image'], 'http') === 0) ? esc($banner['image'], 'url') : base_url(esc($banner['image'])))
-                                                : base_url('assets/img/gallery-placeholder.svg');
-                                            ?>
-                                            <img src="<?= $bannerImgSrc ?>" class="w-100 h-100 object-fit-cover" alt="<?= esc($banner['title']) ?>" loading="lazy" onerror="this.src='<?= base_url('assets/img/gallery-placeholder.svg') ?>'">
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -80,13 +74,14 @@
             </div>
         <?php else: ?>
             <!-- Default Fallback Banner -->
-            <div class="sp-hero-card">
+            <div class="sp-hero-card" style="--sp-hero-image: url('<?= base_url('assets/img/gallery-placeholder.svg') ?>');">
                 <div class="sp-hero-content">
                     <div class="sp-hero-badge glass-effect">
                         <i data-lucide="sparkles" style="width:14px;height:14px;"></i>
                         <span>Pendaftaran <?= esc($academicYear) ?> Dibuka</span>
                     </div>
-                    <h1 class="sp-hero-title">Wujudkan Masa Depan Cemerlang di <?= esc($schoolName) ?></h1>
+                    <h1 class="sp-hero-title"><?= esc($schoolName) ?></h1>
+                    <p class="sp-hero-eyebrow-title">Wujudkan Masa Depan Cemerlang</p>
                     <p class="sp-hero-subtitle">Portal pendaftaran resmi dengan sistem yang transparan, akuntabel, dan terintegrasi langsung dengan data nasional.</p>
                     <div class="sp-hero-actions">
                         <a href="<?= esc($ctaUrl) ?>" class="btn btn-light btn-lg rounded-pill px-5 fw-800 text-primary btn-pulse">
@@ -104,28 +99,6 @@
                         <div class="sp-hero-trust-item">
                             <i data-lucide="database" class="sp-hero-trust-icon"></i>
                             <span>Data Terintegrasi</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="sp-hero-visual">
-                    <div class="sp-hero-mockup">
-                        <div class="sp-hero-mockup-img">
-                             <div class="sp-mockup-ui">
-                                <div class="sp-mockup-header">
-                                    <div class="sp-mockup-dot sp-dot-red"></div>
-                                    <div class="sp-mockup-dot sp-dot-yellow"></div>
-                                    <div class="sp-mockup-dot sp-dot-green"></div>
-                                </div>
-                                <div class="sp-mockup-bg-image" style="background-image: url('<?= base_url('assets/img/gallery-placeholder.svg') ?>');"></div>
-                                <div class="sp-mockup-body">
-                                    <div class="sp-mockup-item" style="width: 100%;"></div>
-                                    <div class="sp-mockup-item" style="width: 85%;"></div>
-                                    <div class="sp-mockup-stats mt-4">
-                                        <div class="sp-mockup-stat-card"><div style="width: 70%; height: 8px; background: var(--sp-primary); border-radius: 4px;"></div></div>
-                                        <div class="sp-mockup-stat-card"><div style="width: 70%; height: 8px; background: var(--sp-primary); border-radius: 4px;"></div></div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -353,27 +326,6 @@
 </section>
 <?php endif; ?>
 
-<!-- Section 7: Statistics -->
-<section class="sp-stats-section-new" id="stats" style="padding: var(--sp-section-gap) 0;">
-    <div class="container">
-        <div class="sp-section-header text-center mb-5">
-            <h2 class="sp-section-title-sm"><?= esc($schoolName) ?> dalam Angka</h2>
-            <p class="text-muted small">Transparansi data pendaftaran untuk kepercayaan Anda.</p>
-        </div>
-        <div class="sp-stats-row">
-            <?php foreach ($stats as $index => $stat): ?>
-            <div class="stat-item animate-up" style="animation-delay: <?= $index * 0.1 ?>s;">
-                <div class="stat-icon"><i data-lucide="<?= esc($stat['icon'] ?: 'activity') ?>"></i></div>
-                <div class="stat-info">
-                    <span class="stat-number"><?= esc($stat['value']) ?></span>
-                    <span class="stat-label"><?= esc($stat['label']) ?></span>
-                </div>
-            </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
-</section>
-
 <!-- Section 7.5: School Gallery -->
 <section class="sp-gallery-section bg-light" style="padding: var(--sp-section-gap) 0;">
     <div class="container">
@@ -395,7 +347,7 @@
             <?php else: ?>
                 <div class="col-12">
                     <?= view('layouts/_empty_state', [
-                        'emptyIcon' => 'images',
+                        'emptyIcon' => 'image',
                         'emptyTitle' => 'Galeri Belum Tersedia',
                         'emptyMessage' => 'Foto dan video lingkungan sekolah akan tampil setelah dipublikasikan dari dashboard admin.'
                     ]) ?>
@@ -413,30 +365,28 @@
             <h2 class="sp-section-title-sm">Apa Kata Mereka?</h2>
             <p class="text-muted small">Ulasan jujur dari alumni dan orang tua siswa <?= esc($schoolName) ?>.</p>
         </div>
-        <div class="row g-4 justify-content-center">
+        <div class="sp-testimonial-strip" aria-label="Testimoni sekolah">
             <?php foreach ($testimonials as $testi): ?>
-            <div class="col-md-6 col-lg-4">
-                <div class="card h-100 border-0 shadow-sm rounded-4 p-4 animate-up">
-                    <div class="d-flex align-items-center gap-3 mb-3">
-                        <?php
-                        $testiPhotoSrc = !empty($testi['photo'])
-                            ? ((strpos($testi['photo'], 'http') === 0) ? esc($testi['photo'], 'url') : base_url(esc($testi['photo'])))
-                            : 'https://ui-avatars.com/api/?name=' . urlencode($testi['name']) . '&background=random&size=56';
-                        ?>
-                        <img src="<?= $testiPhotoSrc ?>" class="rounded-circle border flex-shrink-0" style="width:56px;height:56px;object-fit:cover;" alt="Foto <?= esc($testi['name']) ?>" loading="lazy" onerror="this.src='https://ui-avatars.com/api/?name=<?= urlencode($testi['name']) ?>'">
-                        <div>
-                            <h5 class="fw-800 mb-0" style="font-size: 1rem;"><?= esc($testi['name']) ?></h5>
-                            <small class="text-muted"><?= esc($testi['role']) ?></small>
-                        </div>
+            <article class="sp-testimonial-card animate-up">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <?php
+                    $testiPhotoSrc = !empty($testi['photo'])
+                        ? ((strpos($testi['photo'], 'http') === 0) ? esc($testi['photo'], 'url') : base_url(esc($testi['photo'])))
+                        : 'https://ui-avatars.com/api/?name=' . urlencode($testi['name']) . '&background=random&size=56';
+                    ?>
+                    <img src="<?= $testiPhotoSrc ?>" class="rounded-circle border flex-shrink-0" style="width:56px;height:56px;object-fit:cover;" alt="Foto <?= esc($testi['name']) ?>" loading="lazy" onerror="this.src='https://ui-avatars.com/api/?name=<?= urlencode($testi['name']) ?>'">
+                    <div>
+                        <h5 class="fw-800 mb-0" style="font-size: 1rem;"><?= esc($testi['name']) ?></h5>
+                        <small class="text-muted"><?= esc($testi['role']) ?></small>
                     </div>
-                    <div class="text-warning mb-3" aria-label="Rating <?= (int)$testi['rating'] ?> dari 5 bintang">
-                        <?php for ($i = 1; $i <= 5; $i++): ?>
-                            <i data-lucide="star" class="sp-star<?= $i <= (int)$testi['rating'] ? ' sp-star--filled' : '' ?>" style="width:14px;height:14px;"></i>
-                        <?php endfor; ?>
-                    </div>
-                    <p class="text-muted mb-0" style="font-size: 0.9rem; font-style: italic; line-height: 1.6;">"<?= esc($testi['content']) ?>"</p>
                 </div>
-            </div>
+                <div class="text-warning mb-3" aria-label="Rating <?= (int)$testi['rating'] ?> dari 5 bintang">
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                        <i data-lucide="star" class="sp-star<?= $i <= (int)$testi['rating'] ? ' sp-star--filled' : '' ?>" style="width:14px;height:14px;"></i>
+                    <?php endfor; ?>
+                </div>
+                <p class="text-muted mb-0" style="font-size: 0.9rem; font-style: italic; line-height: 1.6;">"<?= esc($testi['content']) ?>"</p>
+            </article>
             <?php endforeach; ?>
         </div>
     </div>
@@ -549,7 +499,7 @@
 <!-- Section 10: Bottom CTA -->
 <section class="sp-bottom-cta" style="padding: var(--sp-section-gap) 0; margin-bottom: 40px;">
     <div class="container">
-        <div class="card border-0 rounded-5 shadow-lg overflow-hidden animate-up sp-bottom-cta-card">
+        <div class="card border-0 shadow-lg overflow-hidden animate-up sp-bottom-cta-card">
             <div class="card-body p-5 text-center text-white">
                 <h2 class="fw-800 h1 mb-3">Siapkan Masa Depan Putra-Putri Anda Bersama <?= esc($schoolName) ?></h2>
                 <p class="opacity-90 mb-4 mx-auto" style="max-width: 600px;">Pendaftaran Tahun Ajaran <?= esc($academicYear) ?> telah dibuka. Kuota terbatas untuk setiap jalur penerimaan. Segera amankan kursi Anda.</p>

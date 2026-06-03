@@ -44,6 +44,9 @@
                 <?php if (isset($errors['email'])): ?>
                     <div class="invalid-feedback"><?= $errors['email'] ?></div>
                 <?php endif; ?>
+                <small class="text-muted d-block mt-1" style="font-size:0.75rem;">
+                    Email digunakan untuk menerima informasi pendaftaran, status verifikasi, dan hasil seleksi. Jika belum memiliki email pribadi, dapat menggunakan email orang tua/wali/keluarga.
+                </small>
             </div>
 
             <!-- Password -->

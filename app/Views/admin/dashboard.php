@@ -2,296 +2,252 @@
 
 <?= $this->section('content') ?>
 <?php
-// PHP helpers for dynamic calculations
-$totalRegistrants = (int) ($stats['total_registrants'] ?? 0);
-$acceptedCount = min((int) ($stats['total_accepted'] ?? 0), $totalRegistrants);
-$completeDocs = min((int) ($stats['complete_docs'] ?? 0), $totalRegistrants);
-$belumLengkap = max($totalRegistrants - $completeDocs, 0);
-$percentAccepted = $totalRegistrants > 0 ? ($acceptedCount / $totalRegistrants) * 100 : 0;
-$percentCompleteDocs = $totalRegistrants > 0 ? ($completeDocs / $totalRegistrants) * 100 : 0;
-$percentBelumLengkap = $totalRegistrants > 0 ? ($belumLengkap / $totalRegistrants) * 100 : 0;
+if (!function_exists('sp_admin_time_ago')) {
+    function sp_admin_time_ago(?string $datetime): string
+    {
+        if (empty($datetime)) {
+            return 'baru saja';
+        }
 
-$activityLogModel = new \App\Models\ActivityLogModel();
-$recentLogs = $activityLogModel->getRecentLogs(5);
-
-$announcementModel = new \App\Models\AnnouncementModel();
-$recentAnnouncements = $announcementModel->orderBy('created_at', 'DESC')->limit(5)->findAll();
-
-if (!function_exists('time_elapsed_string_local')) {
-    function time_elapsed_string_local($datetime, $full = false) {
-        $now = new DateTime;
+        $now = new DateTime();
         $ago = new DateTime($datetime);
         $diff = $now->diff($ago);
 
-        $diff->w = floor($diff->d / 7);
-        $diff->d -= $diff->w * 7;
-
-        $string = array(
-            'y' => 'tahun',
-            'm' => 'bulan',
-            'w' => 'minggu',
-            'd' => 'hari',
-            'h' => 'jam',
-            'i' => 'menit',
-            's' => 'detik',
-        );
-        foreach ($string as $k => &$v) {
-            if ($diff->$k) {
-                $v = $diff->$k . ' ' . $v;
-            } else {
-                unset($string[$k]);
-            }
+        if ($diff->d >= 7) {
+            return floor($diff->d / 7) . ' minggu lalu';
         }
 
-        if (!$full) $string = array_slice($string, 0, 1);
-        return $string ? implode(', ', $string) . ' yang lalu' : 'baru saja';
+        if ($diff->d > 0) {
+            return $diff->d . ' hari lalu';
+        }
+
+        if ($diff->h > 0) {
+            return $diff->h . ' jam lalu';
+        }
+
+        if ($diff->i > 0) {
+            return $diff->i . ' menit lalu';
+        }
+
+        return 'baru saja';
     }
 }
+
+$trendLabelList = json_decode($trendLabels ?? '[]', true) ?: [];
+$trendDataList = json_decode($trendData ?? '[]', true) ?: [];
+$maxFunnel = max(array_map(static fn ($item) => (int) ($item['value'] ?? 0), $funnelSteps ?? []) ?: [0]);
 ?>
 
-<div class="row animate-fade-in">
-    <!-- Header — Modern Clean Page Header -->
-    <div class="col-12 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <div>
-            <h3 class="mb-1 fw-bold text-dark" style="font-family: 'Plus Jakarta Sans', sans-serif;">Dashboard</h3>
-            <p class="text-muted mb-0">Ringkasan data Penerimaan Murid Baru (SPMB) Tahun Ajaran <strong><?= esc($academicYear) ?></strong></p>
-            <div class="d-flex align-items-center gap-2 mt-2">
-                <label class="text-muted small fw-semibold">Tahun Ajaran</label>
-                <select class="form-select form-select-sm" style="width: 140px; border-radius: 8px;" onchange="window.location.href='?year=' + this.value">
-                    <option value="2026/2027" <?= $academicYear === '2026/2027' ? 'selected' : '' ?>>2026/2027</option>
-                    <option value="2025/2026" <?= $academicYear === '2025/2026' ? 'selected' : '' ?>>2025/2026</option>
-                </select>
-            </div>
+<section class="admin-command-center" aria-labelledby="admin-dashboard-title">
+    <header class="admin-hero-panel">
+        <div class="admin-hero-panel__content">
+            <p class="admin-hero-panel__eyebrow">Tahun Ajaran <?= esc($academicYear) ?></p>
+            <h1 id="admin-dashboard-title">Dashboard SPMB</h1>
+            <p>Command center untuk memantau pendaftar, verifikasi dokumen, seleksi, kuota, dan kesiapan Dapodik.</p>
         </div>
-        <div>
-            <a href="<?= base_url('operator/export/excel') ?>" class="btn btn-primary d-inline-flex align-items-center">
-                <i data-lucide="download" class="me-2" style="width: 16px; height: 16px;"></i> Ekspor Data
+        <div class="admin-hero-panel__actions" aria-label="Aksi cepat dashboard">
+            <a href="<?= base_url('operator/registrants?status=submitted') ?>" class="btn btn-primary">
+                <i data-lucide="file-check-2" class="me-2"></i>Verifikasi
+            </a>
+            <a href="<?= base_url('admin/seleksi') ?>" class="btn btn-outline-primary">
+                <i data-lucide="award" class="me-2"></i>Seleksi
             </a>
         </div>
+    </header>
+
+    <div class="admin-summary-grid" aria-label="Ringkasan eksekutif">
+        <?php foreach (($summaryCards ?? []) as $card): ?>
+            <?= view('components/stat_card', $card) ?>
+        <?php endforeach; ?>
     </div>
 
-    <!-- Statistics Cards — Premium SaaS Cards -->
-    <div class="col-sm-6 col-lg-3 mb-4">
-        <div class="card stat-card stat-card-primary h-100">
-            <div class="card-body d-flex flex-column justify-content-between">
+    <div class="admin-dashboard-grid">
+        <section class="admin-panel admin-panel--priority" aria-labelledby="priority-task-title">
+            <div class="admin-panel__header">
                 <div>
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="stat-label">Total Pendaftar</span>
-                        <div class="stat-icon stat-icon-primary">
-                            <i data-lucide="users"></i>
-                        </div>
-                    </div>
-                    <h3 class="stat-value mb-1"><?= number_format($totalRegistrants, 0, ',', '.') ?></h3>
+                    <p class="admin-panel__kicker">Prioritas hari ini</p>
+                    <h2 id="priority-task-title">Tugas Mendesak</h2>
                 </div>
-                <div class="mt-2">
-                    <span class="text-muted small">Pendaftar aktif pada tahun ajaran ini</span>
-                </div>
+                <a href="<?= base_url('operator/registrants') ?>" class="admin-panel__link">Lihat antrian</a>
             </div>
-        </div>
-    </div>
 
-    <div class="col-sm-6 col-lg-3 mb-4">
-        <div class="card stat-card stat-card-success h-100">
-            <div class="card-body d-flex flex-column justify-content-between">
+            <?php if (empty($priorityTasks)): ?>
+                <?= view('components/empty_state', ['icon' => 'check-circle-2', 'title' => 'Tidak ada tugas mendesak', 'text' => 'Semua proses utama sedang terkendali.']) ?>
+            <?php else: ?>
+                <div class="admin-task-list">
+                    <?php foreach ($priorityTasks as $task): ?>
+                        <a href="<?= esc($task['url'] ?? '#') ?>" class="admin-task-item admin-task-item--<?= esc($task['tone'] ?? 'primary') ?>">
+                            <span class="admin-task-item__icon" aria-hidden="true"><i data-lucide="<?= esc($task['icon'] ?? 'circle') ?>"></i></span>
+                            <span class="admin-task-item__copy">
+                                <strong><?= number_format((int) ($task['value'] ?? 0), 0, ',', '.') ?></strong>
+                                <span><?= esc($task['label'] ?? '') ?></span>
+                            </span>
+                            <i data-lucide="chevron-right" class="admin-task-item__arrow" aria-hidden="true"></i>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </section>
+
+        <section class="admin-panel" aria-labelledby="funnel-title">
+            <div class="admin-panel__header">
                 <div>
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="stat-label">Diterima</span>
-                        <div class="stat-icon stat-icon-success">
-                            <i data-lucide="user-check"></i>
-                        </div>
-                    </div>
-                    <h3 class="stat-value mb-1" style="color: var(--sp-success);"><?= number_format($acceptedCount, 0, ',', '.') ?></h3>
-                </div>
-                <div class="mt-2">
-                    <span class="fw-semibold text-dark small">
-                        <?= number_format($percentAccepted, 1) ?>%
-                    </span>
-                    <span class="text-muted small ms-1">dari total pendaftar</span>
+                    <p class="admin-panel__kicker">Admission funnel</p>
+                    <h2 id="funnel-title">Pergerakan Pendaftar</h2>
                 </div>
             </div>
-        </div>
+
+            <div class="admin-funnel" role="list">
+                <?php foreach (($funnelSteps ?? []) as $step): ?>
+                    <?php
+                        $stepValue = (int) ($step['value'] ?? 0);
+                        $stepPercent = $maxFunnel > 0 ? max(($stepValue / $maxFunnel) * 100, 8) : 8;
+                    ?>
+                    <div class="admin-funnel__step" role="listitem">
+                        <div class="admin-funnel__meta">
+                            <span><?= esc($step['label'] ?? '') ?></span>
+                            <strong><?= number_format($stepValue, 0, ',', '.') ?></strong>
+                        </div>
+                        <div class="admin-funnel__bar" aria-hidden="true">
+                            <span style="width: <?= esc((string) $stepPercent) ?>%"></span>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </section>
     </div>
 
-    <div class="col-sm-6 col-lg-3 mb-4">
-        <div class="card stat-card stat-card-info h-100">
-            <div class="card-body d-flex flex-column justify-content-between">
+    <div class="admin-dashboard-grid admin-dashboard-grid--wide">
+        <section class="admin-panel" aria-labelledby="quota-title">
+            <div class="admin-panel__header">
                 <div>
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="stat-label">Berkas Lengkap</span>
-                        <div class="stat-icon stat-icon-info">
-                            <i data-lucide="file-check"></i>
-                        </div>
-                    </div>
-                    <h3 class="stat-value mb-1" style="color: var(--sp-info);"><?= number_format($completeDocs, 0, ',', '.') ?></h3>
+                    <p class="admin-panel__kicker">Kuota jalur</p>
+                    <h2 id="quota-title">Kapasitas Penerimaan</h2>
                 </div>
-                <div class="mt-2">
-                    <span class="fw-semibold text-dark small">
-                        <?= number_format($percentCompleteDocs, 1) ?>%
-                    </span>
-                    <span class="text-muted small ms-1">dokumen wajib disetujui</span>
-                </div>
+                <a href="<?= base_url('admin/jalur') ?>" class="admin-panel__link">Kelola jalur</a>
             </div>
-        </div>
-    </div>
 
-    <div class="col-sm-6 col-lg-3 mb-4">
-        <div class="card stat-card stat-card-warning h-100">
-            <div class="card-body d-flex flex-column justify-content-between">
-                <div>
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="stat-label">Belum Lengkap</span>
-                        <div class="stat-icon stat-icon-warning">
-                            <i data-lucide="alert-circle"></i>
-                        </div>
-                    </div>
-                    <h3 class="stat-value mb-1" style="color: var(--sp-warning);"><?= number_format($belumLengkap, 0, ',', '.') ?></h3>
-                </div>
-                <div class="mt-2">
-                    <span class="fw-semibold text-dark small">
-                        <?= number_format($percentBelumLengkap, 1) ?>%
-                    </span>
-                    <span class="text-muted small ms-1">dari total pendaftar</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Trend Registration (ApexCharts) -->
-    <div class="col-lg-8 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex align-items-center justify-content-between">
-                <div>
-                    <h5 class="card-title m-0">Grafik Pendaftaran <span class="text-muted fw-normal" style="font-size: 0.85rem;">(30 Hari Terakhir)</span></h5>
-                </div>
-                <span class="badge bg-label-secondary">30 hari terakhir</span>
-            </div>
-            <div class="card-body">
-                <?php if (empty(json_decode($trendLabels))): ?>
-                    <div class="empty-state">
-                        <div class="empty-state-icon">
-                            <i data-lucide="trending-up"></i>
-                        </div>
-                        <p class="empty-state-title">Belum Ada Data</p>
-                        <p class="empty-state-text">Belum ada data pendaftaran yang disubmit untuk tahun ajaran ini.</p>
-                    </div>
-                <?php else: ?>
-                    <div style="height: 300px; position: relative;">
-                        <div id="registrationTrendChart"></div>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-
-    <!-- Jalur & Kuota Distribution -->
-    <div class="col-lg-4 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title m-0">Kuota Jalur Pendaftaran</h5>
-                <a href="<?= base_url('admin/jalur') ?>" class="text-primary small fw-semibold">Lihat Semua</a>
-            </div>
-            <div class="card-body">
-                <?php if (empty($jalurStats)): ?>
-                    <div class="empty-state py-4">
-                        <div class="empty-state-icon" style="width: 50px; height: 50px;">
-                            <i data-lucide="git-fork"></i>
-                        </div>
-                        <p class="empty-state-title small mt-2">Tidak Ada Jalur</p>
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($jalurStats as $j): ?>
-                        <?php 
-                            $quota = (int) $j['quota'];
-                            $count = (int) $j['registrant_count'];
-                            $percent = $quota > 0 ? min(($count / $quota) * 100, 100) : 0;
-                            $barClass = 'bg-primary';
-                            if ($percent >= 90) {
-                                $barClass = 'bg-danger';
-                            } elseif ($percent >= 70) {
-                                $barClass = 'bg-warning';
-                            }
-                        ?>
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="fw-semibold text-dark small"><?= esc($j['name']) ?></span>
-                                <span class="text-muted small"><?= $count ?> / <?= $quota ?></span>
+            <?php if (empty($quotaUsage)): ?>
+                <?= view('components/empty_state', ['icon' => 'git-fork', 'title' => 'Jalur belum tersedia', 'text' => 'Tambahkan jalur pendaftaran agar kuota bisa dipantau.']) ?>
+            <?php else: ?>
+                <div class="admin-quota-list">
+                    <?php foreach ($quotaUsage as $quota): ?>
+                        <div class="admin-quota-item admin-quota-item--<?= esc($quota['status'] ?? 'success') ?>">
+                            <div class="admin-quota-item__top">
+                                <strong><?= esc($quota['name'] ?? 'Jalur') ?></strong>
+                                <span><?= number_format((int) ($quota['used'] ?? 0), 0, ',', '.') ?> / <?= number_format((int) ($quota['quota'] ?? 0), 0, ',', '.') ?></span>
                             </div>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar <?= $barClass ?>" role="progressbar" style="width: <?= $percent ?>%;"></div>
+                            <div class="admin-quota-item__bar" aria-hidden="true">
+                                <span style="width: <?= esc((string) ($quota['percent'] ?? 0)) ?>%"></span>
                             </div>
+                            <p><?= number_format((int) ($quota['remaining'] ?? 0), 0, ',', '.') ?> kursi tersisa</p>
                         </div>
                     <?php endforeach; ?>
-                <?php endif; ?>
+                </div>
+            <?php endif; ?>
+        </section>
+
+        <section class="admin-panel" aria-labelledby="trend-title">
+            <div class="admin-panel__header">
+                <div>
+                    <p class="admin-panel__kicker">30 hari terakhir</p>
+                    <h2 id="trend-title">Tren Pendaftaran</h2>
+                </div>
             </div>
-        </div>
+
+            <?php if (empty($trendLabelList)): ?>
+                <?= view('components/empty_state', ['icon' => 'trending-up', 'title' => 'Belum ada tren', 'text' => 'Data tren muncul setelah pendaftar melakukan submit.']) ?>
+            <?php else: ?>
+                <div class="admin-chart-frame">
+                    <div id="registrationTrendChart"></div>
+                </div>
+            <?php endif; ?>
+        </section>
     </div>
 
-    <!-- Row 2: Recent Logs & Announcements -->
-    <div class="col-md-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title m-0">Aktivitas Terbaru</h5>
+    <div class="admin-dashboard-grid admin-dashboard-grid--queue">
+        <section class="admin-panel" aria-labelledby="queue-title">
+            <div class="admin-panel__header">
+                <div>
+                    <p class="admin-panel__kicker">Antrian kerja</p>
+                    <h2 id="queue-title">Pendaftar Perlu Aksi</h2>
+                </div>
+                <a href="<?= base_url('operator/registrants') ?>" class="admin-panel__link">Semua pendaftar</a>
             </div>
-            <div class="card-body">
-                <?php if (empty($recentLogs)): ?>
-                    <p class="text-muted small text-center my-3">Belum ada aktivitas tercatat.</p>
-                <?php else: ?>
-                    <div class="timeline">
-                        <?php foreach ($recentLogs as $log): ?>
-                            <div class="d-flex align-items-start mb-3 pb-2 border-bottom border-light">
-                                <div class="badge-center bg-light text-primary me-3 flex-shrink-0" style="width: 32px; height: 32px; border-radius: 50%;">
-                                    <i data-lucide="activity" style="width: 14px; height: 14px;"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="text-dark small fw-semibold mb-1"><?= esc($log['action']) ?></div>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted" style="font-size: 0.75rem;"><?= esc($log['user_name'] ?? 'Sistem') ?> (<?= esc($log['user_role'] ?? 'system') ?>)</span>
-                                        <span class="text-muted" style="font-size: 0.7rem;"><?= time_elapsed_string_local($log['created_at']) ?></span>
-                                    </div>
-                                </div>
+
+            <?php if (empty($verificationQueue)): ?>
+                <?= view('components/empty_state', ['icon' => 'file-check-2', 'title' => 'Antrian kosong', 'text' => 'Belum ada pendaftar yang menunggu tindakan.']) ?>
+            <?php else: ?>
+                <div class="admin-queue-list">
+                    <?php foreach ($verificationQueue as $item): ?>
+                        <article class="admin-queue-card">
+                            <div class="admin-queue-card__main">
+                                <strong><?= esc($item['full_name'] ?? 'Pendaftar') ?></strong>
+                                <span><?= esc($item['registration_number'] ?? '-') ?> &middot; <?= esc($item['jalur_name'] ?? 'Jalur') ?></span>
                             </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+                            <div class="admin-queue-card__status">
+                                <?= view('components/status_badge', ['status' => $item['status'] ?? 'submitted']) ?>
+                                <?php if (!empty($item['is_dapodik_ready'])): ?>
+                                    <?= view('components/status_badge', ['status' => 'dapodik_ready']) ?>
+                                <?php endif; ?>
+                            </div>
+                            <a href="<?= base_url('operator/documents/' . (int) ($item['id'] ?? 0)) ?>" class="btn btn-sm btn-outline-primary">
+                                Tinjau
+                            </a>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </section>
+
+        <aside class="admin-panel" aria-labelledby="quick-actions-title">
+            <div class="admin-panel__header">
+                <div>
+                    <p class="admin-panel__kicker">Shortcut</p>
+                    <h2 id="quick-actions-title">Quick Actions</h2>
+                </div>
             </div>
-        </div>
+
+            <div class="admin-action-grid">
+                <?php foreach (($quickActions ?? []) as $action): ?>
+                    <a href="<?= esc($action['url'] ?? '#') ?>" class="admin-action">
+                        <span aria-hidden="true"><i data-lucide="<?= esc($action['icon'] ?? 'circle') ?>"></i></span>
+                        <strong><?= esc($action['label'] ?? '') ?></strong>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        </aside>
     </div>
 
-    <div class="col-md-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title m-0">Pengumuman Terbaru</h5>
-                <a href="<?= base_url('admin/announcements') ?>" class="text-primary small fw-semibold">Lihat Semua</a>
-            </div>
-            <div class="card-body">
-                <?php if (empty($recentAnnouncements)): ?>
-                    <p class="text-muted small text-center my-3">Tidak ada pengumuman.</p>
-                <?php else: ?>
-                    <div class="announcement-list">
-                        <?php foreach ($recentAnnouncements as $ann): ?>
-                            <div class="d-flex align-items-start mb-3 pb-2 border-bottom border-light">
-                                <div class="badge-center bg-light text-primary me-3 flex-shrink-0" style="width: 32px; height: 32px; border-radius: 50%;">
-                                    <i data-lucide="megaphone" style="width: 14px; height: 14px;"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="text-dark small fw-semibold mb-1"><?= esc($ann['title']) ?></div>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted" style="font-size: 0.75rem;">Status: <span class="badge bg-light text-dark border py-0 px-2"><?= esc($ann['status']) ?></span></span>
-                                        <span class="text-muted" style="font-size: 0.7rem;"><?= date('d M Y', strtotime($ann['created_at'])) ?></span>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+    <section class="admin-panel" aria-labelledby="activity-title">
+        <div class="admin-panel__header">
+            <div>
+                <p class="admin-panel__kicker">Audit ringan</p>
+                <h2 id="activity-title">Aktivitas Terbaru</h2>
             </div>
         </div>
-    </div>
-</div>
+
+        <?php if (empty($activityItems)): ?>
+            <?= view('components/empty_state', ['icon' => 'activity', 'title' => 'Belum ada aktivitas', 'text' => 'Aktivitas admin akan tampil di sini.']) ?>
+        <?php else: ?>
+            <div class="admin-activity-list">
+                <?php foreach ($activityItems as $activity): ?>
+                    <article class="admin-activity-item">
+                        <span class="admin-activity-item__icon" aria-hidden="true"><i data-lucide="activity"></i></span>
+                        <div>
+                            <strong><?= esc($activity['action'] ?? 'Aktivitas sistem') ?></strong>
+                            <p><?= esc($activity['user_name'] ?? 'Sistem') ?> &middot; <?= sp_admin_time_ago($activity['created_at'] ?? null) ?></p>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </section>
+</section>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<?php if (!empty(json_decode($trendLabels))): ?>
+<?php if (!empty($trendLabelList)): ?>
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -301,81 +257,42 @@ if (!function_exists('time_elapsed_string_local')) {
         }
 
         const chartPrimary = (window.SpTheme && SpTheme.getThemePrimary()) || getComputedStyle(document.documentElement).getPropertyValue('--sp-primary').trim();
+        const isDark = document.body.classList.contains('dark-mode');
 
-        // Initialize ApexCharts Line Graph
-        const options = {
+        const chart = new ApexCharts(chartEl, {
             chart: {
                 type: 'area',
-                height: 300,
+                height: 280,
                 toolbar: { show: false },
-                fontFamily: 'Plus Jakarta Sans, sans-serif'
-            },
-            stroke: {
-                curve: 'smooth',
-                width: 3,
-                colors: [chartPrimary]
-            },
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shadeIntensity: 1,
-                    opacityFrom: 0.35,
-                    opacityTo: 0.02,
-                    stops: [0, 90, 100]
-                }
+                fontFamily: 'Plus Jakarta Sans, sans-serif',
+                sparkline: { enabled: false }
             },
             series: [{
-                name: 'Pendaftar Masuk',
-                data: <?= $trendData ?>
+                name: 'Pendaftar',
+                data: <?= json_encode(array_map('intval', $trendDataList)) ?>
             }],
             xaxis: {
-                categories: <?= $trendLabels ?>,
-                labels: {
-                    style: {
-                        colors: '#64748b',
-                        fontSize: '11px'
-                    }
-                },
+                categories: <?= json_encode($trendLabelList) ?>,
+                labels: { style: { colors: 'var(--sp-text-muted)' } },
                 axisBorder: { show: false },
                 axisTicks: { show: false }
             },
             yaxis: {
-                labels: {
-                    style: {
-                        colors: '#64748b',
-                        fontSize: '11px'
-                    }
-                }
+                labels: { style: { colors: 'var(--sp-text-muted)' } }
             },
-            grid: {
-                borderColor: 'rgba(100, 116, 139, 0.06)',
-                strokeDashArray: 4
-            },
+            stroke: { curve: 'smooth', width: 3, colors: [chartPrimary] },
             colors: [chartPrimary],
+            fill: {
+                type: 'gradient',
+                gradient: { shadeIntensity: 1, opacityFrom: 0.28, opacityTo: 0.02, stops: [0, 90, 100] }
+            },
+            grid: { borderColor: 'rgba(148, 163, 184, 0.18)', strokeDashArray: 4 },
             dataLabels: { enabled: false },
-            tooltip: {
-                theme: (window.SpTheme && SpTheme.isDarkMode()) ? 'dark' : (localStorage.getItem('theme') === 'dark' ? 'dark' : 'light'),
-                x: { format: 'dd MMM yyyy' }
-            }
-        };
-        
-        const chart = new ApexCharts(chartEl, options);
+            tooltip: { theme: isDark ? 'dark' : 'light' }
+        });
+
         chart.render();
         window.registrationTrendChart = chart;
-
-        document.addEventListener('theme-color-change', function() {
-            const color = window.SpTheme ? SpTheme.getThemePrimary() : chartPrimary;
-            chart.updateOptions({
-                colors: [color],
-                stroke: { colors: [color] },
-            });
-        });
-
-        document.addEventListener('dark-mode-change', function() {
-            chart.updateOptions({
-                tooltip: { theme: (window.SpTheme && SpTheme.isDarkMode()) ? 'dark' : 'light' },
-            });
-        });
     });
 </script>
 <?php endif; ?>

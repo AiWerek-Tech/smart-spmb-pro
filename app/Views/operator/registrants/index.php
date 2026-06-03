@@ -51,18 +51,18 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in">
+<div class="admin-page-shell role-page-shell">
     <!-- Header Page -->
-    <div class="col-12 mb-4 d-flex justify-content-between align-items-center">
+    <div class="role-page-header">
         <div>
-            <h4 class="mb-0 text-primary">Kelola Calon Peserta</h4>
-            <p class="text-muted mb-0">Kelola berkas, edit profil, dan validasi kelengkapan berkas Dapodik calon murid baru.</p>
+            <h1 class="role-page-header__title">Kelola Calon Peserta</h1>
+            <p class="role-page-header__subtitle">Kelola berkas, edit profil, dan validasi kelengkapan berkas Dapodik calon murid baru.</p>
         </div>
     </div>
 
     <!-- Filters Card -->
-    <div class="col-12 mb-4">
-        <div class="card shadow-sm border">
+    <div>
+        <div class="card shadow-sm border admin-filter-panel">
             <div class="card-body p-3">
                 <form method="GET" action="<?= base_url('operator/registrants') ?>" class="row g-3">
                     <div class="col-md-3">
@@ -88,7 +88,7 @@
                         <label for="search" class="form-label small fw-bold">Cari Nama / No Pendaftaran</label>
                         <input type="text" name="search" id="search" class="form-control" placeholder="Nama, NIK, NISN..." value="<?= esc($search) ?>">
                     </div>
-                    <div class="col-md-3 d-flex align-items-end registrant-filter-actions">
+                    <div class="col-md-3 role-filter-actions registrant-filter-actions">
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="me-2" data-lucide="search"></i> Saring
                         </button>
@@ -102,12 +102,12 @@
     </div>
 
     <!-- Registrants Table Card -->
-    <div class="col-12">
+    <div>
         <div class="registrant-mobile-list">
             <?php if (empty($registrants)): ?>
                 <div class="sp-empty-state">
                     <div class="sp-empty-state-icon">
-                        <i data-lucide="user-slash"></i>
+                        <i data-lucide="user-x"></i>
                     </div>
                     <p class="sp-empty-state-title">Tidak Ada Pendaftar</p>
                     <p class="sp-empty-state-text">Tidak ada calon peserta yang sesuai dengan filter saat ini.</p>
@@ -141,7 +141,7 @@
                             <div>
                                 <div class="fw-bold text-primary small"><?= esc($r['registration_number']) ?></div>
                                 <h5 class="mb-1 mt-1"><?= esc($r['full_name']) ?></h5>
-                                <div class="text-muted small">NIK <?= esc($r['nik']) ?> · NISN <?= esc($r['nisn'] ?: '-') ?></div>
+                                <div class="text-muted small">NIK <?= esc($r['nik']) ?> | NISN <?= esc($r['nisn'] ?: '-') ?></div>
                             </div>
                             <span class="badge <?= $statusClass ?> rounded-pill px-3 py-1"><?= esc($statusLabel) ?></span>
                         </div>
@@ -196,7 +196,7 @@
                             <?php if (empty($registrants)): ?>
                                 <tr>
                                     <td colspan="6" class="text-center py-5 text-muted">
-                                        <i class="fs-1 mb-3" data-lucide="user-slash"></i>
+                                        <i class="fs-1 mb-3" data-lucide="user-x"></i>
                                         <p class="mb-0">Tidak ada pendaftar yang ditemukan.</p>
                                     </td>
                                 </tr>
@@ -240,7 +240,7 @@
                                             <?php endif; ?>
                                         </td>
                                         <td class="pe-4 text-center">
-                                            <div class="d-flex align-items-center justify-content-center">
+                                            <div class="role-table-actions">
                                                 <!-- Detail button -->
                                                 <a href="<?= base_url('operator/registrants/'.$r['id']) ?>" class="btn btn-sm btn-outline-primary me-1 px-2" title="Detail Profil Siswa">
                                                     <i class="me-1" data-lucide="eye"></i> Detail

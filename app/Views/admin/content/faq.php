@@ -1,21 +1,22 @@
 <?= $this->extend('layouts/dashboard') ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in">
-    <!-- Header Page -->
-    <div class="col-12 mb-4">
+<section class="admin-page-shell animate-fade-in" aria-labelledby="admin-faq-title">
+    <header class="admin-page-header">
         <div>
-            <h4 class="mb-0 text-primary">Kelola FAQ (Tanya Jawab)</h4>
-            <p class="text-muted mb-0">Kelola daftar pertanyaan yang sering diajukan pendaftar beserta jawabannya.</p>
+            <p class="admin-panel__kicker">Konten Publik</p>
+            <h1 id="admin-faq-title">FAQ</h1>
+            <p class="admin-page-subtitle">Kelola daftar pertanyaan yang sering diajukan pendaftar beserta jawabannya.</p>
         </div>
-    </div>
+    </header>
 
+    <div class="row g-3">
     <!-- LEFT SIDE: FAQ List Table -->
-    <div class="col-lg-8 mb-4">
-        <div class="card shadow-sm border">
+    <div class="col-lg-8">
+        <div class="card admin-secondary-panel shadow-sm border">
             <div class="card-header bg-white border-bottom py-3">
-                <h5 class="card-title text-primary"><i class="me-2" data-lucide="list-ol"></i> Daftar FAQ</h5>
-                <small class="text-muted">Diurutkan berdasarkan urutan tampilan (kecil ke besar).</small>
+                <h2 class="admin-section-title text-primary"><i class="me-2" data-lucide="list-ol"></i> Daftar FAQ</h2>
+                <p class="admin-section-subtitle">Diurutkan berdasarkan urutan tampilan kecil ke besar.</p>
             </div>
             
             <div class="card-body p-0">
@@ -85,11 +86,11 @@
     </div>
 
     <!-- RIGHT SIDE: Add FAQ Form -->
-    <div class="col-lg-4 mb-4">
-        <div class="card shadow-sm border">
+    <div class="col-lg-4">
+        <div class="card admin-secondary-panel shadow-sm border">
             <div class="card-header bg-white border-bottom py-3">
-                <h5 class="card-title text-primary"><i class="me-2" data-lucide="plus"></i> Tambah FAQ Baru</h5>
-                <small class="text-muted">Masukkan data tanya jawab baru.</small>
+                <h2 class="admin-section-title text-primary"><i class="me-2" data-lucide="plus"></i> Tambah FAQ Baru</h2>
+                <p class="admin-section-subtitle">Masukkan data tanya jawab baru.</p>
             </div>
             
             <div class="card-body">
@@ -132,7 +133,8 @@
             </div>
         </div>
     </div>
-</div>
+    </div>
+</section>
 
 <!-- ================= EDIT FAQ MODAL ================= -->
 <div class="modal fade" id="editFaqModal" tabindex="-1" aria-labelledby="editFaqModalLabel" aria-hidden="true">

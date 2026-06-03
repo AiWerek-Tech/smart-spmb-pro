@@ -1,19 +1,26 @@
 <?= $this->extend('layouts/dashboard') ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in justify-content-center">
-    <div class="col-md-10 col-lg-8">
-        <!-- Back button -->
-        <div class="mb-3">
-            <a href="<?= base_url('admin/announcements') ?>" class="text-decoration-none">
-                <i class="me-1" data-lucide="arrow-left"></i> Kembali ke Pengumuman
+<section class="admin-page-shell animate-fade-in" aria-labelledby="admin-announcement-create-title">
+    <header class="admin-page-header">
+        <div>
+            <p class="admin-panel__kicker">Konten Publik</p>
+            <h1 id="admin-announcement-create-title">Buat Pengumuman Baru</h1>
+            <p class="admin-page-subtitle">Tuliskan judul dan pengumuman resmi untuk calon pendaftar.</p>
+        </div>
+        <div class="admin-page-actions">
+            <a href="<?= base_url('admin/announcements') ?>" class="btn btn-outline-secondary">
+                <i class="me-1" data-lucide="arrow-left"></i> Kembali
             </a>
         </div>
+    </header>
 
-        <div class="card shadow-sm border">
+    <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <div class="card admin-secondary-panel shadow-sm border">
             <div class="card-header bg-white border-bottom py-3">
-                <h5 class="card-title text-primary"><i class="me-2" data-lucide="bullhorn"></i> Buat Pengumuman Baru</h5>
-                <small class="text-muted">Tuliskan judul dan pengumuman resmi di bawah ini.</small>
+                <h2 class="admin-section-title text-primary"><i class="me-2" data-lucide="bullhorn"></i> Form Pengumuman</h2>
+                <p class="admin-section-subtitle">Isi konten, tag, thumbnail, dan status publikasi.</p>
             </div>
             
             <div class="card-body">
@@ -95,5 +102,6 @@
             </div>
         </div>
     </div>
-</div>
+    </div>
+</section>
 <?= $this->endSection() ?>

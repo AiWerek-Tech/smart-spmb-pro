@@ -13,6 +13,8 @@ use App\Models\TestimonialModel;
 use App\Models\GalleryModel;
 use App\Models\StatisticModel;
 use App\Models\GelombangModel;
+use App\Services\AcademicYearService;
+use App\Services\FeeService;
 
 /**
  * HomeController — Halaman beranda/homepage publik.
@@ -29,6 +31,8 @@ class HomeController extends BaseController
     protected GalleryModel $galleryModel;
     protected StatisticModel $statisticModel;
     protected GelombangModel $gelombangModel;
+    protected AcademicYearService $academicYearService;
+    protected FeeService $feeService;
 
     public function __construct()
     {
@@ -42,6 +46,8 @@ class HomeController extends BaseController
         $this->galleryModel       = new GalleryModel();
         $this->statisticModel     = new StatisticModel();
         $this->gelombangModel     = new GelombangModel();
+        $this->academicYearService = new AcademicYearService();
+        $this->feeService          = new FeeService();
     }
 
     public function index()
@@ -51,7 +57,7 @@ class HomeController extends BaseController
         
         $schoolName      = $schoolSettings['school_name'] ?? 'SMP Nusantara Mandiri';
         $schoolTagline   = $schoolSettings['tagline'] ?? 'Sekolah Berkarakter & Berprestasi';
-        $academicYear    = $schoolSettings['academic_year'] ?? '2026/2027';
+        $academicYear    = $this->academicYearService->activeYear();
         $schoolPhone     = $schoolSettings['phone'] ?? '081234567890';
         $schoolEmail     = $schoolSettings['email'] ?? 'info@smpnusantara.sch.id';
         $schoolWhatsapp  = $schoolSettings['whatsapp'] ?? $schoolPhone;
@@ -60,7 +66,7 @@ class HomeController extends BaseController
         $banners = $this->bannerModel->where('is_active', 1)->orderBy('sort_order', 'ASC')->findAll();
         
         // 3. Ambil Jalur Penerimaan dengan jumlah pendaftar sekaligus (hindari N+1 query)
-        $jalurs = $this->jalurModel->getJalurWithRegistrantCount();
+        $jalurs = $this->jalurModel->getJalurWithRegistrantCount($academicYear);
         // Filter hanya yang aktif dan urutkan
         $jalurs = array_filter($jalurs, fn($j) => $j['is_active'] == 1);
         usort($jalurs, fn($a, $b) => ($a['sort_order'] ?? 0) <=> ($b['sort_order'] ?? 0));
@@ -69,9 +75,18 @@ class HomeController extends BaseController
         // 4. Ambil Statistik. Nilai inti dihitung dari database, metadata tetap bisa diatur admin.
         $manualStats = $this->statisticModel->where('is_active', 1)->orderBy('sort_order', 'ASC')->findAll();
         
-        $totalRegistrations = $this->registrationModel->whereNotIn('status', ['draft'])->countAllResults();
-        $totalAccepted      = $this->registrationModel->where('status', 'accepted')->countAllResults();
-        $totalVerified      = $this->registrationModel->whereIn('status', ['verified', 'accepted'])->countAllResults();
+        $totalRegistrations = $this->registrationModel
+            ->where('academic_year', $academicYear)
+            ->whereNotIn('status', ['draft'])
+            ->countAllResults();
+        $totalAccepted = $this->registrationModel
+            ->where('academic_year', $academicYear)
+            ->where('status', 'accepted')
+            ->countAllResults();
+        $totalVerified = $this->registrationModel
+            ->where('academic_year', $academicYear)
+            ->whereIn('status', ['verified', 'accepted'])
+            ->countAllResults();
 
         $stats = $this->buildHomepageStats(
             $manualStats,
@@ -94,22 +109,30 @@ class HomeController extends BaseController
         // 6. Ambil Pengumuman/Berita
         $announcements = $this->announcementModel->where('status', 'published')->orderBy('published_at', 'DESC')->limit(3)->findAll();
 
+        $feeSummary = $this->feeService->homepageSummary();
+
         // 7. Ambil FAQ
         $faqs = $this->faqModel->where('is_active', 1)->orderBy('sort_order', 'ASC')->limit(5)->findAll();
+        $faqs = $this->mergePaymentFaq($faqs, $feeSummary);
 
         // 8. Ambil Gallery
-        $gallery = $this->galleryModel->where('is_active', 1)->orderBy('sort_order', 'ASC')->limit(6)->findAll();
+        $gallery = $this->galleryModel
+            ->where('academic_year', $academicYear)
+            ->where('is_active', 1)
+            ->orderBy('sort_order', 'ASC')
+            ->limit(6)
+            ->findAll();
         $campusTitle = $this->settingModel->getValue('campus_title', 'Lingkungan Belajar');
         $campusDescription = $this->settingModel->getValue('campus_description', 'Informasi lingkungan sekolah belum dikonfigurasi.');
 
-        $spmbSchedule = $this->buildSpmbSchedule();
+        $spmbSchedule = $this->buildSpmbSchedule($academicYear);
 
         // 9. Ambil Testimonials (limit 6 untuk performa)
         $testimonials = $this->testimonialModel->where('is_active', 1)->orderBy('id', 'DESC')->limit(6)->findAll();
 
         // 10. CTA Logic
         $loggedIn = session()->has('user_id');
-        $role     = session()->get('user_role') ?? 'pendaftar';
+        $role     = session()->get('user_base_role') ?? session()->get('user_role') ?? 'pendaftar';
         $ctaUrl   = $loggedIn ? base_url($role . '/dashboard') : base_url('auth/register');
         $ctaText  = $loggedIn ? 'Dashboard Saya' : 'Mulai Pendaftaran';
 
@@ -128,6 +151,7 @@ class HomeController extends BaseController
             'totalRegistrations' => $totalRegistrations,
             'announcements'      => $announcements,
             'faqs'               => $faqs,
+            'feeSummary'         => $feeSummary,
             'gallery'            => $gallery,
             'campusTitle'        => $campusTitle,
             'campusDescription'  => $campusDescription,
@@ -141,7 +165,10 @@ class HomeController extends BaseController
 
     public function stats()
     {
-        $totalRegistrations = $this->registrationModel->whereNotIn('status', ['draft'])->countAllResults();
+        $totalRegistrations = $this->registrationModel
+            ->where('academic_year', $this->academicYearService->activeYear())
+            ->whereNotIn('status', ['draft'])
+            ->countAllResults();
         return $this->response->setJSON([
             'total_registrations' => $totalRegistrations,
             'status'              => 'success'
@@ -202,10 +229,10 @@ class HomeController extends BaseController
         return array_slice($stats, 0, 4);
     }
 
-    private function buildSpmbSchedule(): array
+    private function buildSpmbSchedule(string $academicYear): array
     {
         $schedule = [];
-        $gelombang = $this->gelombangModel->getGelombangWithJalur();
+        $gelombang = $this->gelombangModel->getGelombangWithJalur($academicYear);
 
         foreach ($gelombang as $item) {
             $schedule[] = [
@@ -256,6 +283,23 @@ class HomeController extends BaseController
         }
 
         return $schedule;
+    }
+
+    private function mergePaymentFaq(array $faqs, array $feeSummary): array
+    {
+        $paymentFaq = [
+            'question' => 'Apakah pendaftaran ini dikenakan biaya?',
+            'answer'   => $feeSummary['payment_faq_answer'],
+        ];
+
+        $filtered = array_values(array_filter($faqs, static function (array $faq): bool {
+            $question = strtolower((string) ($faq['question'] ?? ''));
+            return !str_contains($question, 'biaya') && !str_contains($question, 'pembayaran');
+        }));
+
+        array_unshift($filtered, $paymentFaq);
+
+        return array_slice($filtered, 0, 5);
     }
 
     private function dateRange(?string $start, ?string $end): string

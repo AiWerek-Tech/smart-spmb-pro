@@ -163,9 +163,22 @@
 <!-- Biaya Pendaftaran Section -->
 <section class="sp-section-alt" id="biaya">
     <div class="container">
-        <h2 class="sp-section-title animate-fade-up">Informasi Biaya Pendidikan</h2>
+        <h2 class="sp-section-title animate-fade-up"><?= esc($feeSummary['title'] ?? 'Informasi Biaya Pendidikan') ?></h2>
+        <?php if (!empty($feeSummary['description'])): ?>
+            <p class="text-center text-muted mx-auto mb-4" style="max-width: 720px;"><?= esc($feeSummary['description']) ?></p>
+        <?php endif; ?>
         <div class="row g-4 justify-content-center">
-            <?php if (!empty($fees)): ?>
+            <?php if (!empty($feeSummary['is_free'])): ?>
+                <div class="col-lg-5 col-md-8 animate-fade-up delay-1">
+                    <div class="glass-panel p-4 p-lg-5 rounded-4 h-100 hover-lift border-0 shadow-sm text-center">
+                        <div class="bg-success bg-opacity-10 text-success p-3 rounded-3 d-inline-flex mb-3">
+                            <i data-lucide="badge-check" style="width:28px;height:28px;"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2">Pendaftaran Gratis</h5>
+                        <p class="text-muted small mb-0" style="line-height: 1.7;"><?= esc($feeSummary['description'] ?? 'Pendaftaran tidak dipungut biaya.') ?></p>
+                    </div>
+                </div>
+            <?php elseif (!empty($fees)): ?>
                 <?php foreach ($fees as $index => $fee): ?>
                     <div class="col-lg-4 col-md-6 animate-fade-up delay-<?= ($index % 3) + 1 ?>">
                         <div class="glass-panel p-4 p-lg-5 rounded-4 h-100 hover-lift border-0 shadow-sm d-flex flex-column">

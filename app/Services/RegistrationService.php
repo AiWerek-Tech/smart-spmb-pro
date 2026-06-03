@@ -47,6 +47,8 @@ class RegistrationService
     protected BaseConnection $db;
     protected ValidationService $validationService;
     protected DapodikService $dapodikService;
+    protected AcademicYearService $academicYearService;
+    protected RegistrationGateService $registrationGateService;
     private static array $generatedSequences = [];
 
     public function __construct()
@@ -64,6 +66,8 @@ class RegistrationService
         $this->db                  = \Config\Database::connect();
         $this->validationService   = new ValidationService();
         $this->dapodikService      = new DapodikService();
+        $this->academicYearService = new AcademicYearService();
+        $this->registrationGateService = new RegistrationGateService();
         self::$generatedSequences  = [];
     }
 
@@ -95,7 +99,7 @@ class RegistrationService
         $step5 = $this->getDraftFamilyData($studentId, 'wali'); // Data Wali
         $step6 = $this->periodicModel->findByStudentId($studentId) ?? []; // Data Periodik
         $step7 = $this->achievementModel->findByStudentId($studentId) ?? []; // Prestasi
-        $step8 = $this->documentModel->findByStudentId($studentId) ?? []; // Dokumen
+        $step8 = $this->documentModel->findByStudentId($studentId, $this->academicYearService->activeYear()) ?? []; // Dokumen
 
         return [
             'step_1' => $step1,
@@ -439,20 +443,17 @@ class RegistrationService
      */
     protected function saveStep8(int $studentId, array $data): array
     {
-        // Validasi dokumen wajib ada
-        $requiredDocs = ['kk', 'akta', 'foto'];
-        $uploadedDocs = $this->documentModel->findByStudentId($studentId) ?? [];
-        $uploadedTypes = array_column($uploadedDocs, 'document_type');
+        $academicYear = $this->academicYearService->activeYear();
+        $documentRequirementService = new DocumentRequirementService();
+        $missingDocuments = $documentRequirementService->missingRequiredDocuments($studentId, $academicYear);
 
-        $errors = [];
-        foreach ($requiredDocs as $docType) {
-            if (! in_array($docType, $uploadedTypes, true)) {
-                $errors['documents'] = 'Dokumen wajib belum lengkap: ' . implode(', ', $requiredDocs);
-                break;
-            }
+        if ($missingDocuments !== []) {
+            return [
+                'documents' => 'Dokumen wajib belum lengkap: ' . implode(', ', $missingDocuments),
+            ];
         }
 
-        return $errors;
+        return [];
     }
 
     // -------------------------------------------------------------------------
@@ -490,8 +491,22 @@ class RegistrationService
                 throw new \Exception('Jalur pendaftaran tidak aktif.');
             }
 
+            $academicYear = $this->academicYearService->activeYear();
+
+            $existingRegistration = $this->registrationModel->findByUserId($userId, $academicYear);
+            if ($existingRegistration !== null) {
+                throw new \Exception('Anda sudah memiliki pendaftaran untuk tahun pelajaran aktif.');
+            }
+
+            $gate = $this->registrationGateService->status($jalurId, $academicYear, $gelombangId);
+            if (! $gate['is_open']) {
+                throw new \Exception($gate['message']);
+            }
+            $gelombangId = $gelombangId ?? $gate['gelombang_id'];
+
             $currentCount = $this->registrationModel
                 ->where('jalur_id', $jalurId)
+                ->where('academic_year', $academicYear)
                 ->where('status !=', 'rejected')
                 ->countAllResults();
 
@@ -499,8 +514,12 @@ class RegistrationService
                 throw new \Exception('Kuota jalur telah penuh.');
             }
 
-            // Generate nomor pendaftaran unik
-            $academicYear = date('Y');
+            $missingDocuments = (new \App\Services\DocumentRequirementService())->missingRequiredDocuments($studentId, $academicYear, $jalurId);
+            if ($missingDocuments !== []) {
+                throw new \Exception('Dokumen wajib untuk jalur yang dipilih belum lengkap: ' . implode(', ', $missingDocuments));
+            }
+
+            // Generate nomor pendaftaran unik berdasarkan tahun pelajaran aktif.
             $registrationNumber = $this->generateRegistrationNumber($academicYear);
 
             // Buat registration record
@@ -517,6 +536,11 @@ class RegistrationService
 
             if (! $registrationId) {
                 throw new \Exception('Gagal membuat registration record.');
+            }
+
+            $invoiceResult = (new BillingService())->generateInvoiceForRegistration((int) $registrationId);
+            if (! $invoiceResult['success']) {
+                throw new \Exception($invoiceResult['message'] ?? 'Gagal membuat invoice pendaftaran.');
             }
 
             $this->db->transCommit();
@@ -596,7 +620,8 @@ class RegistrationService
                 throw new \Exception('Urutan nomor pendaftaran melebihi batas maksimal 4 digit.');
             }
 
-            $registrationNumber = sprintf('SPMB-%s-%04d', $academicYear, $nextSequence);
+            $yearCode = preg_replace('/\D+/', '', $academicYear) ?: date('Y');
+            $registrationNumber = sprintf('SPMB-%s-%04d', $yearCode, $nextSequence);
 
             if (! $hasActiveTransaction) {
                 $this->db->transCommit();
@@ -614,7 +639,8 @@ class RegistrationService
             }
 
             // Fallback ke nomor numerik acak jika gagal untuk tetap mematuhi format 4 digit angka
-            return 'SPMB-' . $academicYear . '-' . sprintf('%04d', rand(1, 9999));
+            $yearCode = preg_replace('/\D+/', '', $academicYear) ?: date('Y');
+            return 'SPMB-' . $yearCode . '-' . sprintf('%04d', rand(1, 9999));
         }
     }
 

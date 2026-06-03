@@ -131,7 +131,7 @@
         </tr>
         <tr>
             <td class="label">Tahun Ajaran</td>
-            <td class="value"><?= esc($registration['academic_year']) ?> / <?= esc($registration['academic_year'] + 1) ?></td>
+            <td class="value"><?= esc($registration['academic_year']) ?></td>
         </tr>
         <tr>
             <td class="label">Tanggal Pendaftaran</td>

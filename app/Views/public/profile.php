@@ -181,7 +181,7 @@
             <?php else: ?>
                 <div class="col-12">
                     <?= view('layouts/_empty_state', [
-                        'emptyIcon' => 'images',
+                        'emptyIcon' => 'image',
                         'emptyTitle' => 'Galeri Belum Tersedia',
                         'emptyMessage' => 'Foto dan video sekolah akan tampil setelah dipublikasikan dari dashboard admin.'
                     ]) ?>

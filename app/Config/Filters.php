@@ -5,6 +5,7 @@ namespace Config;
 use App\Filters\ActivityLogFilter;
 use App\Filters\AuthFilter;
 use App\Filters\CsrfFilter;
+use App\Filters\PermissionFilter;
 use App\Filters\RoleFilter;
 use CodeIgniter\Config\BaseConfig;
 use CodeIgniter\Filters\CSRF;
@@ -32,6 +33,7 @@ class Filters extends BaseConfig
         // Filter kustom aplikasi
         'auth'          => AuthFilter::class,
         'role'          => RoleFilter::class,
+        'permission'    => PermissionFilter::class,
         'csrfcheck'     => CsrfFilter::class,
         'activitylog'   => ActivityLogFilter::class,
     ];

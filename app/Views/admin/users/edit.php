@@ -1,19 +1,26 @@
 <?= $this->extend('layouts/dashboard') ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <!-- Back button -->
-        <div class="mb-3">
-            <a href="<?= base_url('admin/users') ?>" class="text-decoration-none">
-                <i class="me-1" data-lucide="arrow-left"></i> Kembali ke Daftar Pengguna
+<section class="admin-page-shell animate-fade-in" aria-labelledby="admin-user-edit-title">
+    <header class="admin-page-header">
+        <div>
+            <p class="admin-panel__kicker">Manajemen Akun</p>
+            <h1 id="admin-user-edit-title">Edit Data Pengguna</h1>
+            <p class="admin-page-subtitle">Perbarui profil pengguna, role tambahan, dan izin efektif akun.</p>
+        </div>
+        <div class="admin-page-actions">
+            <a href="<?= base_url('admin/users') ?>" class="btn btn-outline-secondary">
+                <i class="me-1" data-lucide="arrow-left"></i> Kembali
             </a>
         </div>
+    </header>
 
-        <div class="card shadow-sm">
+<div class="row justify-content-center g-3">
+    <div class="col-md-8 col-lg-6">
+        <div class="card admin-secondary-panel shadow-sm">
             <div class="card-header bg-white border-bottom py-3">
-                <h5 class="card-title text-primary"><i class="me-2" data-lucide="user-edit"></i> Edit Data Pengguna</h5>
-                <small class="text-muted">Perbarui data profil pengguna.</small>
+                <h2 class="admin-section-title text-primary"><i class="me-2" data-lucide="user-edit"></i> Form Pengguna</h2>
+                <p class="admin-section-subtitle">Perbarui data profil pengguna.</p>
             </div>
             
             <div class="card-body">
@@ -55,9 +62,11 @@
                         <div class="input-group">
                             <span class="input-group-text bg-light text-muted"><i  data-lucide="user-tag"></i></span>
                             <select class="form-select select2" id="role" name="role" required>
-                                <option value="admin" <?= old('role', $user['role']) === 'admin' ? 'selected' : '' ?>>Admin</option>
-                                <option value="operator" <?= old('role', $user['role']) === 'operator' ? 'selected' : '' ?>>Operator</option>
-                                <option value="pendaftar" <?= old('role', $user['role']) === 'pendaftar' ? 'selected' : '' ?>>Pendaftar (Siswa)</option>
+                                <?php foreach (($roles ?? []) as $role): ?>
+                                    <option value="<?= esc($role['slug']) ?>" <?= old('role', $user['role']) === $role['slug'] ? 'selected' : '' ?>>
+                                        <?= esc($role['name']) ?> (<?= esc(ucfirst($role['base_role'])) ?>)
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                     </div>
@@ -107,5 +116,81 @@
             </div>
         </div>
     </div>
+    <div class="col-md-8 col-lg-4">
+        <div class="card admin-secondary-panel shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h2 class="admin-section-title text-primary mb-1"><i class="me-2" data-lucide="shield-check"></i> Role Tambahan</h2>
+                <p class="admin-section-subtitle">Role efektif digabung dari role utama dan assignment aktif.</p>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="<?= base_url('admin/users/'.$user['id'].'/roles/assign') ?>" class="mb-3">
+                    <?= csrf_field() ?>
+                    <label class="form-label fw-bold small" for="role_id">Assign Role</label>
+                    <select class="form-select mb-2" id="role_id" name="role_id" required>
+                        <option value="">Pilih role aktif</option>
+                        <?php foreach (($roles ?? []) as $role): ?>
+                            <option value="<?= esc($role['id']) ?>"><?= esc($role['name']) ?> (<?= esc($role['slug']) ?>)</option>
+                        <?php endforeach; ?>
+                    </select>
+                    <label class="form-label fw-bold small" for="expires_at">Kedaluwarsa</label>
+                    <input type="date" class="form-control mb-3" id="expires_at" name="expires_at">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="me-1" data-lucide="plus"></i> Assign Role
+                    </button>
+                </form>
+
+                <div class="d-grid gap-2">
+                    <?php foreach (($assignedRoles ?? []) as $assignedRole): ?>
+                        <?php $isPrimaryRole = ($assignedRole['name'] ?? '') === ($user['role'] ?? ''); ?>
+                        <div class="border rounded p-2">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div>
+                                    <div class="fw-semibold"><?= esc($assignedRole['display_name'] ?? $assignedRole['name']) ?></div>
+                                    <div class="small text-muted">
+                                        <?= $isPrimaryRole ? 'Role utama' : 'Role tambahan' ?>
+                                        <?php if (! empty($assignedRole['expires_at'])): ?>
+                                            &middot; sampai <?= date('d M Y', strtotime($assignedRole['expires_at'])) ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <?php if (! $isPrimaryRole): ?>
+                                    <form method="POST" action="<?= base_url('admin/users/'.$user['id'].'/roles/'.($assignedRole['id'] ?? 0).'/revoke') ?>" class="m-0">
+                                        <?= csrf_field() ?>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Cabut role">
+                                            <i data-lucide="x" style="width:14px;height:14px;"></i>
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+
+                    <?php if (empty($assignedRoles)): ?>
+                        <div class="text-muted small border rounded p-3">Belum ada assignment role tambahan.</div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="card admin-secondary-panel shadow-sm">
+            <div class="card-header bg-white border-bottom py-3">
+                <h2 class="admin-section-title text-primary mb-1"><i class="me-2" data-lucide="key-round"></i> Permission Efektif</h2>
+                <p class="admin-section-subtitle">Gabungan seluruh permission aktif user.</p>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-1">
+                    <?php foreach (array_slice(($effectivePermissions ?? []), 0, 40) as $permission): ?>
+                        <span class="badge bg-label-secondary"><?= esc($permission) ?></span>
+                    <?php endforeach; ?>
+                </div>
+                <?php if (count($effectivePermissions ?? []) > 40): ?>
+                    <div class="small text-muted mt-2">+<?= count($effectivePermissions) - 40 ?> permission lainnya.</div>
+                <?php elseif (empty($effectivePermissions)): ?>
+                    <div class="small text-muted">User belum memiliki permission aktif.</div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
 </div>
+</section>
 <?= $this->endSection() ?>

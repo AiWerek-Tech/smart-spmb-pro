@@ -3,15 +3,24 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Models\RoleModel;
 use App\Models\UserModel;
+use App\Models\UserRoleModel;
+use App\Services\RbacService;
 
 class UserController extends BaseController
 {
     protected UserModel $userModel;
+    protected RoleModel $roleModel;
+    protected UserRoleModel $userRoleModel;
+    protected RbacService $rbacService;
 
     public function __construct()
     {
         $this->userModel = new UserModel();
+        $this->roleModel = new RoleModel();
+        $this->userRoleModel = new UserRoleModel();
+        $this->rbacService = new RbacService();
     }
 
     /**
@@ -26,10 +35,12 @@ class UserController extends BaseController
         $statusVal = $status !== null && $status !== '' ? (int)$status : null;
 
         $users = $this->userModel->getUsers($roleVal, $statusVal);
+        $roles = $this->roleModel->activeOrdered();
 
         $data = [
             'title'  => 'Kelola Pengguna',
             'users'  => $users,
+            'roles'  => $roles,
             'role'   => $role,
             'status' => $status,
         ];
@@ -44,6 +55,7 @@ class UserController extends BaseController
     {
         return view('admin/users/create', [
             'title' => 'Tambah Pengguna Baru',
+            'roles' => $this->roleModel->activeOrdered(),
         ]);
     }
 
@@ -55,7 +67,7 @@ class UserController extends BaseController
         $rules = [
             'name'            => 'required|min_length[3]|max_length[100]',
             'email'           => 'required|valid_email|max_length[150]',
-            'role'            => 'required|in_list[admin,operator,pendaftar]',
+            'role'            => 'required|max_length[50]',
             'password'        => 'required|min_length[8]',
             'confirm_password'=> 'required|matches[password]',
         ];
@@ -69,13 +81,18 @@ class UserController extends BaseController
             return redirect()->back()->withInput()->with('error', 'Email sudah terdaftar. Silakan gunakan email lain.');
         }
 
+        $role = (string) $this->request->getPost('role');
+        if (!$this->roleModel->isActiveSlug($role)) {
+            return redirect()->back()->withInput()->with('error', 'Peran yang dipilih tidak aktif atau tidak ditemukan.');
+        }
+
         $password = $this->request->getPost('password');
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
         $userId = $this->userModel->insert([
             'name'      => $this->request->getPost('name'),
             'email'     => $email,
-            'role'      => $this->request->getPost('role'),
+            'role'      => $role,
             'password'  => $hashedPassword,
             'is_active' => $this->request->getPost('is_active') !== null ? 1 : 0,
         ]);
@@ -84,7 +101,7 @@ class UserController extends BaseController
             return redirect()->back()->withInput()->with('error', 'Gagal menyimpan pengguna.');
         }
 
-        // Activity log could be logged here if needed
+        $this->syncPrimaryRole((int) $userId, $role, null);
 
         return redirect()->to('admin/users')->with('success', 'Pengguna baru berhasil ditambahkan.');
     }
@@ -101,8 +118,11 @@ class UserController extends BaseController
         }
 
         return view('admin/users/edit', [
-            'title' => 'Edit Pengguna',
-            'user'  => $user,
+            'title'                => 'Edit Pengguna',
+            'user'                 => $user,
+            'roles'                => $this->roleModel->activeOrdered(),
+            'assignedRoles'        => $this->userRoleModel->getAllRolesForUser($id),
+            'effectivePermissions' => service('rbacEngine')->getUserPermissions($id),
         ]);
     }
 
@@ -120,7 +140,7 @@ class UserController extends BaseController
         $rules = [
             'name' => 'required|min_length[3]|max_length[100]',
             'email'=> 'required|valid_email|max_length[150]',
-            'role' => 'required|in_list[admin,operator,pendaftar]',
+            'role' => 'required|max_length[50]',
         ];
 
         $password = $this->request->getPost('password');
@@ -138,10 +158,16 @@ class UserController extends BaseController
             return redirect()->back()->withInput()->with('error', 'Email sudah terdaftar pada pengguna lain.');
         }
 
+        $previousRole = (string) $user['role'];
+        $role = (string) $this->request->getPost('role');
+        if (!$this->roleModel->isActiveSlug($role)) {
+            return redirect()->back()->withInput()->with('error', 'Peran yang dipilih tidak aktif atau tidak ditemukan.');
+        }
+
         $updateData = [
             'name'      => $this->request->getPost('name'),
             'email'     => $email,
-            'role'      => $this->request->getPost('role'),
+            'role'      => $role,
             'is_active' => $this->request->getPost('is_active') !== null ? 1 : 0,
         ];
 
@@ -152,6 +178,9 @@ class UserController extends BaseController
         if (!$this->userModel->update($id, $updateData)) {
             return redirect()->back()->withInput()->with('error', 'Gagal memperbarui data pengguna.');
         }
+
+        $this->syncPrimaryRole($id, $role, $previousRole);
+        service('rbacEngine')->invalidateUser($id);
 
         return redirect()->to('admin/users')->with('success', 'Data pengguna berhasil diperbarui.');
     }
@@ -191,5 +220,62 @@ class UserController extends BaseController
         }
 
         return redirect()->to('admin/users')->with('error', 'Gagal menghapus pengguna.');
+    }
+
+    public function assignRole(int $id)
+    {
+        $roleId = (int) $this->request->getPost('role_id');
+        $expiresAt = $this->request->getPost('expires_at');
+        $expiresAt = $expiresAt ? date('Y-m-d 23:59:59', strtotime((string) $expiresAt)) : null;
+
+        $result = $this->rbacService->assignRole($id, $roleId, (int) session()->get('user_id'), $expiresAt);
+
+        return redirect()->to('admin/users/'.$id.'/edit')->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    public function revokeRole(int $id, int $roleId)
+    {
+        $result = $this->rbacService->revokeRole($id, $roleId);
+
+        return redirect()->to('admin/users/'.$id.'/edit')->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    private function syncPrimaryRole(int $userId, string $roleSlug, ?string $previousRoleSlug): void
+    {
+        $db = \Config\Database::connect();
+        if (! $db->tableExists('roles') || ! $db->tableExists('user_roles')) {
+            return;
+        }
+
+        if ($previousRoleSlug !== null && $previousRoleSlug !== $roleSlug) {
+            $previousRole = $db->table('roles')->select('id')->where('slug', $previousRoleSlug)->get()->getRowArray();
+            if ($previousRole) {
+                $db->table('user_roles')
+                    ->where('user_id', $userId)
+                    ->where('role_id', $previousRole['id'])
+                    ->where('assigned_by IS NULL', null, false)
+                    ->delete();
+            }
+        }
+
+        $role = $db->table('roles')->select('id')->where('slug', $roleSlug)->get()->getRowArray();
+        if (! $role) {
+            return;
+        }
+
+        $exists = $db->table('user_roles')
+            ->where('user_id', $userId)
+            ->where('role_id', $role['id'])
+            ->countAllResults();
+
+        if ($exists === 0) {
+            $db->table('user_roles')->insert([
+                'user_id'     => $userId,
+                'role_id'     => (int) $role['id'],
+                'assigned_by' => null,
+                'assigned_at' => date('Y-m-d H:i:s'),
+                'expires_at'  => null,
+            ]);
+        }
     }
 }

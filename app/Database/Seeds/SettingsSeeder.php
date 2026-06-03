@@ -199,6 +199,12 @@ class SettingsSeeder extends Seeder
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ],
+            [
+                'key'        => 'school_operational_mode',
+                'value'      => 'small',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ],
         ];
 
         // Use INSERT IGNORE or check existing to avoid duplicates

@@ -18,7 +18,7 @@
                 <h2 class="sp-section-title text-start ms-0 mb-4"><?= esc($campusTitle) ?></h2>
                 <p class="text-muted" style="font-size:1.05rem;line-height:1.9;"><?= nl2br(esc($campusDescription)) ?></p>
                 <a href="<?= base_url('/galeri') ?>" class="btn btn-primary rounded-pill px-4 fw-bold mt-3">
-                    <i data-lucide="images" class="me-2" style="width:18px;height:18px;"></i>
+                    <i data-lucide="image" class="me-2" style="width:18px;height:18px;"></i>
                     Lihat Galeri Lengkap
                 </a>
             </div>
@@ -64,7 +64,7 @@
             <?php else: ?>
                 <div class="col-12">
                     <?= view('layouts/_empty_state', [
-                        'emptyIcon' => 'images',
+                        'emptyIcon' => 'image',
                         'emptyTitle' => 'Dokumentasi Belum Tersedia',
                         'emptyMessage' => 'Foto dan video lingkungan sekolah akan tampil setelah dipublikasikan dari dashboard admin.'
                     ]) ?>

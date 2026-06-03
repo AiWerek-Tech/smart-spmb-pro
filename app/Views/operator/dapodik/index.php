@@ -1,28 +1,34 @@
 <?= $this->extend('layouts/dashboard') ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in">
+<div class="admin-page-shell role-page-shell">
     <!-- Header Page -->
-    <div class="col-12 mb-4">
+    <div class="role-page-header">
         <div>
-            <h4 class="mb-0 text-primary">Validasi & Kesiapan Dapodik</h4>
-            <p class="text-muted mb-0">Cek status kelengkapan 11 data F-PD wajib untuk sinkronisasi sistem Dapodik sekolah.</p>
+            <div>
+                <h1 class="role-page-header__title">Validasi & Kesiapan Dapodik</h1>
+                <p class="role-page-header__subtitle">Cek status kelengkapan 11 data F-PD wajib untuk sinkronisasi sistem Dapodik sekolah.</p>
+            </div>
+        </div>
+        <div class="role-page-actions">
+            <span class="sp-status-pill sp-status-pill-info">Tahun Pelajaran <?= esc($activeYear ?? '') ?></span>
         </div>
     </div>
 
     <!-- Filters Card -->
-    <div class="col-12 mb-4">
-        <div class="card shadow-sm border">
+    <div>
+        <div class="card shadow-sm border admin-filter-panel">
             <div class="card-body p-3">
                 <form method="GET" action="<?= base_url('operator/dapodik') ?>" class="row g-3">
                     <div class="col-md-3">
                         <label for="jalur" class="form-label small fw-bold">Jalur Pendaftaran</label>
                         <select name="jalur" id="jalur" class="form-select select2">
                             <option value="">Semua Jalur</option>
-                            <option value="1" <?= $jalurId == '1' ? 'selected' : '' ?>>Zonasi</option>
-                            <option value="2" <?= $jalurId == '2' ? 'selected' : '' ?>>Afirmasi</option>
-                            <option value="3" <?= $jalurId == '3' ? 'selected' : '' ?>>Prestasi</option>
-                            <option value="4" <?= $jalurId == '4' ? 'selected' : '' ?>>Perpindahan Tugas</option>
+                            <?php foreach (($jalurOptions ?? []) as $jalur): ?>
+                                <option value="<?= esc($jalur['id']) ?>" <?= (string) $jalurId === (string) $jalur['id'] ? 'selected' : '' ?>>
+                                    <?= esc($jalur['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -37,7 +43,7 @@
                         <label for="search" class="form-label small fw-bold">Cari Nama / No Pendaftaran</label>
                         <input type="text" name="search" id="search" class="form-control" placeholder="Cari nama, NIK..." value="<?= esc($search) ?>">
                     </div>
-                    <div class="col-md-3 d-flex align-items-end">
+                    <div class="col-md-3 role-filter-actions">
                         <button type="submit" class="btn btn-primary w-100 me-2">
                             <i class="me-2" data-lucide="search"></i> Saring
                         </button>
@@ -51,7 +57,7 @@
     </div>
 
     <!-- Dapodik List Card -->
-    <div class="col-12">
+    <div>
         <div class="card shadow-sm border">
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -70,7 +76,7 @@
                             <?php if (empty($registrants)): ?>
                                 <tr>
                                     <td colspan="6" class="text-center py-5 text-muted">
-                                        <i class="fs-1 mb-3" data-lucide="user-slash"></i>
+                                        <i class="fs-1 mb-3" data-lucide="user-x"></i>
                                         <p class="mb-0">Tidak ada pendaftar yang ditemukan.</p>
                                     </td>
                                 </tr>
@@ -112,7 +118,7 @@
                                             <?php endif; ?>
                                         </td>
                                         <td class="pe-4 text-center">
-                                            <div class="d-flex align-items-center justify-content-center">
+                                            <div class="role-table-actions">
                                                 <!-- Review validity report button -->
                                                 <a href="<?= base_url('operator/dapodik/'.$r['id']) ?>" class="btn btn-sm btn-outline-primary me-1 px-3" title="Periksa Rincian Data">
                                                     <i class="me-1" data-lucide="clipboard-check"></i> Periksa Rincian

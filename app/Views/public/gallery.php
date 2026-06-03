@@ -4,7 +4,7 @@
 <div class="sp-page-header">
     <div class="container animate-fade-up">
         <h1 class="fw-bold">
-            <i data-lucide="images" style="width:28px;height:28px;" class="me-2"></i>
+            <i data-lucide="image" style="width:28px;height:28px;" class="me-2"></i>
             Galeri Sekolah
         </h1>
         <p class="opacity-90">Dokumentasi foto dan video kegiatan, fasilitas, dan lingkungan sekolah.</p>
@@ -27,7 +27,7 @@
             </div>
         <?php else: ?>
             <?= view('layouts/_empty_state', [
-                'emptyIcon' => 'images',
+                'emptyIcon' => 'image',
                 'emptyTitle' => 'Galeri Belum Tersedia',
                 'emptyMessage' => 'Belum ada item galeri yang dipublikasikan.'
             ]) ?>

@@ -1,22 +1,28 @@
 <?= $this->extend('layouts/dashboard') ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in">
-    <div class="col-12 mb-4">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h4 class="mb-0 text-primary">Manajemen Testimoni</h4>
-                <p class="text-muted mb-0">Kelola ulasan dari alumni atau orang tua siswa untuk membangun kepercayaan.</p>
-            </div>
+<section class="admin-page-shell animate-fade-in" aria-labelledby="admin-testimonials-title">
+    <header class="admin-page-header">
+        <div>
+            <p class="admin-panel__kicker">Konten Publik</p>
+            <h1 id="admin-testimonials-title">Testimoni</h1>
+            <p class="admin-page-subtitle">Kelola ulasan dari alumni atau orang tua siswa untuk membangun kepercayaan.</p>
+        </div>
+        <div class="admin-page-actions">
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTestiModal">
                 <i class="me-2" data-lucide="plus"></i> Tambah Testimoni
             </button>
         </div>
-    </div>
+    </header>
 
-    <div class="col-12">
-        <div class="card shadow-sm border">
-            <div class="table-responsive">
+    <section class="admin-secondary-panel" aria-labelledby="testimonials-table-title">
+        <div class="admin-secondary-panel__header">
+            <div>
+                <h2 class="admin-section-title" id="testimonials-table-title">Daftar Testimoni</h2>
+                <p class="admin-section-subtitle">Atur rating, status, dan narasi yang tampil di halaman publik.</p>
+            </div>
+        </div>
+            <div class="table-responsive admin-table-shell">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light">
                         <tr>
@@ -136,9 +142,8 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
-</div>
+    </section>
+</section>
 
 <!-- Add Modal -->
 <div class="modal fade" id="addTestiModal" tabindex="-1">

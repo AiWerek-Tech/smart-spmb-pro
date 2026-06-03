@@ -5,16 +5,19 @@ namespace App\Controllers\Operator;
 use App\Controllers\BaseController;
 use App\Models\RegistrationModel;
 use App\Models\StudentDocumentModel;
+use App\Services\DocumentRequirementService;
 
 class DocumentController extends BaseController
 {
     protected RegistrationModel $registrationModel;
     protected StudentDocumentModel $documentModel;
+    protected DocumentRequirementService $documentRequirementService;
 
     public function __construct()
     {
         $this->registrationModel = new RegistrationModel();
         $this->documentModel     = new StudentDocumentModel();
+        $this->documentRequirementService = new DocumentRequirementService();
     }
 
     /**
@@ -28,12 +31,21 @@ class DocumentController extends BaseController
             return redirect()->to('operator/registrants')->with('error', 'Data pendaftar tidak ditemukan.');
         }
 
-        $documents = $this->documentModel->findByStudentId((int)$registration['student_id']);
+        $documents = $this->documentModel->findByStudentId(
+            (int) $registration['student_id'],
+            (string) $registration['academic_year']
+        );
+        $requirements = $this->documentRequirementService->requirements(
+            (string) $registration['academic_year'],
+            isset($registration['jalur_id']) ? (int) $registration['jalur_id'] : null
+        );
 
         $data = [
-            'title'        => 'Verifikasi Dokumen: ' . esc($registration['full_name']),
-            'registration' => $registration,
-            'documents'    => $documents,
+            'title'             => 'Verifikasi Dokumen: ' . esc($registration['full_name']),
+            'registration'      => $registration,
+            'documents'         => $documents,
+            'requirements'      => $requirements,
+            'requirementLabels' => $this->documentRequirementService->labels((string) $registration['academic_year'], isset($registration['jalur_id']) ? (int) $registration['jalur_id'] : null),
         ];
 
         return view('operator/documents/index', $data);
@@ -63,7 +75,11 @@ class DocumentController extends BaseController
         $rejectionReason = $this->request->getPost('rejection_reason');
         $doc = $this->documentModel->find($docId);
 
-        if (!$doc || (int) $doc['student_id'] !== (int) $registration['student_id']) {
+        if (
+            !$doc
+            || (int) $doc['student_id'] !== (int) $registration['student_id']
+            || (string) ($doc['academic_year'] ?? '') !== (string) $registration['academic_year']
+        ) {
             return redirect()->back()->with('error', 'Dokumen tidak sesuai dengan data pendaftar yang sedang diverifikasi.');
         }
 
@@ -78,13 +94,17 @@ class DocumentController extends BaseController
             
             // Cek apakah seluruh berkas wajib telah terverifikasi dan ubah status pendaftaran ke verified jika ya
             $studentId = (int)$registration['student_id'];
-            $allDocs = $this->documentModel->findByStudentId($studentId);
+            $allDocs = $this->documentModel->findByStudentId($studentId, (string) $registration['academic_year']);
+            $requiredTypes = $this->documentRequirementService->requiredTypes(
+                (string) $registration['academic_year'],
+                isset($registration['jalur_id']) ? (int) $registration['jalur_id'] : null
+            );
             
             $allApproved = true;
             $requiredUploaded = 0;
             
             foreach ($allDocs as $doc) {
-                if (in_array($doc['document_type'], ['kk', 'akta', 'foto'], true)) {
+                if (in_array($doc['document_type'], $requiredTypes, true)) {
                     $requiredUploaded++;
                     if ($doc['status'] !== 'approved') {
                         $allApproved = false;
@@ -92,8 +112,7 @@ class DocumentController extends BaseController
                 }
             }
 
-            // Jika seluruh 3 berkas wajib (KK, akta, foto) disetujui, ubah status pendaftaran ke verified otomatis
-            if ($requiredUploaded === 3 && $allApproved) {
+            if ($requiredUploaded === count($requiredTypes) && $allApproved) {
                 $this->registrationModel->updateStatus($registrationId, 'verified');
             } else {
                 // Jika ada berkas wajib yang ditolak atau di-revert, kembalikan ke submitted
@@ -111,14 +130,7 @@ class DocumentController extends BaseController
                     $contact = $contactModel->findByStudentId($studentId);
                     if ($contact && !empty($contact['phone'])) {
                         $whatsappService = new \App\Services\WhatsappService();
-                        $docTypeNames = [
-                            'kk' => 'Kartu Keluarga',
-                            'akta' => 'Akta Kelahiran',
-                            'foto' => 'Pas Foto',
-                            'raport' => 'Raport',
-                            'sertifikat' => 'Sertifikat Prestasi',
-                            'kip_kks' => 'Kartu KIP/KKS'
-                        ];
+                        $docTypeNames = $this->documentRequirementService->labels((string) $registration['academic_year'], isset($registration['jalur_id']) ? (int) $registration['jalur_id'] : null);
                         $docName = $docTypeNames[$doc['document_type'] ?? ''] ?? 'Dokumen';
                         
                         if ($status === 'approved') {

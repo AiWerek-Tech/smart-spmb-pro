@@ -1,22 +1,28 @@
 <?= $this->extend('layouts/dashboard') ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in">
-    <div class="col-12 mb-4">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h4 class="mb-0 text-primary">Manajemen Statistik Sekolah</h4>
-                <p class="text-muted mb-0">Kelola angka-angka penting yang ditampilkan di beranda (misal: Jumlah Guru, Alumni, dsb).</p>
-            </div>
+<section class="admin-page-shell animate-fade-in" aria-labelledby="admin-statistics-title">
+    <header class="admin-page-header">
+        <div>
+            <p class="admin-panel__kicker">Konten Publik</p>
+            <h1 id="admin-statistics-title">Statistik</h1>
+            <p class="admin-page-subtitle">Kelola angka-angka penting yang ditampilkan di beranda seperti jumlah guru, alumni, dan capaian sekolah.</p>
+        </div>
+        <div class="admin-page-actions">
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStatModal">
                 <i class="me-2" data-lucide="plus"></i> Tambah Statistik
             </button>
         </div>
-    </div>
+    </header>
 
-    <div class="col-12">
-        <div class="card shadow-sm border">
-            <div class="table-responsive">
+    <section class="admin-secondary-panel" aria-labelledby="statistics-table-title">
+        <div class="admin-secondary-panel__header">
+            <div>
+                <h2 class="admin-section-title" id="statistics-table-title">Daftar Statistik</h2>
+                <p class="admin-section-subtitle">Atur angka manual, ikon, urutan, dan status tampil.</p>
+            </div>
+        </div>
+            <div class="table-responsive admin-table-shell">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light">
                         <tr>
@@ -118,9 +124,8 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
-</div>
+    </section>
+</section>
 
 <!-- Add Modal -->
 <div class="modal fade" id="addStatModal" tabindex="-1">

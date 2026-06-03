@@ -40,9 +40,29 @@ class RegistrationModel extends Model
     /**
      * Ambil pendaftaran berdasarkan user_id.
      */
-    public function findByUserId(int $userId): ?array
+    public function findByUserId(int $userId, ?string $academicYear = null): ?array
     {
-        return $this->where('user_id', $userId)->first();
+        $query = $this->where('user_id', $userId);
+
+        if ($academicYear !== null && $academicYear !== '') {
+            $query->where('academic_year', $academicYear);
+        }
+
+        return $query->orderBy('id', 'DESC')->first();
+    }
+
+    /**
+     * Ambil pendaftaran berdasarkan student_id.
+     */
+    public function findByStudentId(int $studentId, ?string $academicYear = null): ?array
+    {
+        $query = $this->where('student_id', $studentId);
+
+        if ($academicYear !== null && $academicYear !== '') {
+            $query->where('academic_year', $academicYear);
+        }
+
+        return $query->orderBy('id', 'DESC')->first();
     }
 
     /**
@@ -56,9 +76,9 @@ class RegistrationModel extends Model
     /**
      * Ambil pendaftaran beserta data siswa dan jalur.
      */
-    public function getRegistrationWithDetails(int $registrationId): ?array
+    public function getRegistrationWithDetails(int $registrationId, ?string $academicYear = null): ?array
     {
-        return $this->select(
+        $query = $this->select(
                         'registrations.*, ' .
                         'students.full_name, students.nik, students.nisn, students.birth_date, students.birth_place, ' .
                         'students.gender, students.religion, students.citizenship, students.family_status, ' .
@@ -70,8 +90,13 @@ class RegistrationModel extends Model
                     ->join('students', 'students.id = registrations.student_id')
                     ->join('jalur', 'jalur.id = registrations.jalur_id')
                     ->join('users', 'users.id = registrations.user_id')
-                    ->where('registrations.id', $registrationId)
-                    ->first();
+                    ->where('registrations.id', $registrationId);
+
+        if ($academicYear !== null && $academicYear !== '') {
+            $query->where('registrations.academic_year', $academicYear);
+        }
+
+        return $query->first();
     }
 
     /**
@@ -131,57 +156,85 @@ class RegistrationModel extends Model
     /**
      * Hitung total pendaftar (bukan draft).
      */
-    public function countSubmitted(): int
+    public function countSubmitted(?string $academicYear = null): int
     {
-        return $this->whereNotIn('status', ['draft'])->countAllResults();
+        $query = $this->whereNotIn('status', ['draft']);
+
+        if ($academicYear !== null && $academicYear !== '') {
+            $query->where('academic_year', $academicYear);
+        }
+
+        return $query->countAllResults();
     }
 
     /**
      * Hitung total pendaftar yang diterima.
      */
-    public function countAccepted(): int
+    public function countAccepted(?string $academicYear = null): int
     {
-        return $this->where('status', 'accepted')->countAllResults();
+        $query = $this->where('status', 'accepted');
+
+        if ($academicYear !== null && $academicYear !== '') {
+            $query->where('academic_year', $academicYear);
+        }
+
+        return $query->countAllResults();
     }
 
     /**
      * Hitung pendaftar non-draft yang seluruh dokumen wajibnya sudah disetujui.
      */
-    public function countCompleteRequiredDocuments(): int
+    public function countCompleteRequiredDocuments(?string $academicYear = null): int
     {
-        $requiredTypes = StudentDocumentModel::REQUIRED_TYPES;
-        $placeholders = implode(',', array_fill(0, count($requiredTypes), '?'));
+        $query = $this->select('id, student_id, jalur_id, academic_year')
+            ->whereNotIn('status', ['draft']);
 
-        $sql = "
-            SELECT COUNT(*) AS total
-            FROM (
-                SELECT registrations.id
-                FROM registrations
-                INNER JOIN student_documents
-                    ON student_documents.student_id = registrations.student_id
-                WHERE registrations.status != ?
-                    AND student_documents.status = ?
-                    AND student_documents.document_type IN ({$placeholders})
-                GROUP BY registrations.id
-                HAVING COUNT(DISTINCT student_documents.document_type) = ?
-            ) AS complete_registrations
-        ";
+        if ($academicYear !== null && $academicYear !== '') {
+            $query->where('academic_year', $academicYear);
+        }
 
-        $params = array_merge(['draft', 'approved'], $requiredTypes, [count($requiredTypes)]);
-        $row = $this->db->query($sql, $params)->getRowArray();
+        $registrations = $query->findAll();
+        $documentRequirementService = new \App\Services\DocumentRequirementService();
+        $documentModel = new StudentDocumentModel();
+        $complete = 0;
 
-        return (int) ($row['total'] ?? 0);
+        foreach ($registrations as $registration) {
+            $year = (string) ($registration['academic_year'] ?? $academicYear ?? '');
+            $jalurId = isset($registration['jalur_id']) ? (int) $registration['jalur_id'] : null;
+            $requiredTypes = $documentRequirementService->requiredTypes($year, $jalurId);
+
+            if ($requiredTypes === []) {
+                continue;
+            }
+
+            $approvedCount = $documentModel
+                ->where('student_id', (int) $registration['student_id'])
+                ->where('academic_year', $year)
+                ->where('status', 'approved')
+                ->whereIn('document_type', $requiredTypes)
+                ->countAllResults();
+
+            if ($approvedCount === count($requiredTypes)) {
+                $complete++;
+            }
+        }
+
+        return $complete;
     }
 
     /**
      * Hitung pendaftar per jalur.
      */
-    public function countPerJalur(): array
+    public function countPerJalur(?string $academicYear = null): array
     {
-        return $this->select('jalur_id, COUNT(*) AS total')
-                    ->whereNotIn('status', ['draft'])
-                    ->groupBy('jalur_id')
-                    ->findAll();
+        $query = $this->select('jalur_id, COUNT(*) AS total')
+            ->whereNotIn('status', ['draft']);
+
+        if ($academicYear !== null && $academicYear !== '') {
+            $query->where('academic_year', $academicYear);
+        }
+
+        return $query->groupBy('jalur_id')->findAll();
     }
 
     /**

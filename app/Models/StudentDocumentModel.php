@@ -15,6 +15,7 @@ class StudentDocumentModel extends Model
 
     protected $allowedFields = [
         'student_id',
+        'academic_year',
         'document_type',
         'file_name',
         'file_path',
@@ -30,15 +31,16 @@ class StudentDocumentModel extends Model
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
 
-    /** Tipe dokumen wajib */
+    /** Tipe dokumen wajib bawaan saat requirement builder belum dikonfigurasi. */
     public const REQUIRED_TYPES = ['kk', 'akta', 'foto'];
 
-    /** Tipe dokumen opsional */
+    /** Tipe dokumen opsional bawaan saat requirement builder belum dikonfigurasi. */
     public const OPTIONAL_TYPES = ['raport', 'sertifikat', 'kip_kks'];
 
     protected $validationRules = [
         'student_id'    => 'required|integer',
-        'document_type' => 'required|in_list[kk,akta,foto,raport,sertifikat,kip_kks]',
+        'academic_year' => 'required|max_length[9]',
+        'document_type' => 'required|alpha_dash|max_length[60]',
         'file_name'     => 'required|max_length[255]',
         'file_path'     => 'required|max_length[500]',
         'file_size'     => 'required|integer',
@@ -49,31 +51,44 @@ class StudentDocumentModel extends Model
     /**
      * Ambil semua dokumen berdasarkan student_id.
      */
-    public function findByStudentId(int $studentId): array
+    public function findByStudentId(int $studentId, ?string $academicYear = null): array
     {
-        return $this->where('student_id', $studentId)
-                    ->orderBy('document_type', 'ASC')
-                    ->findAll();
+        $query = $this->where('student_id', $studentId);
+
+        if ($academicYear !== null && $academicYear !== '') {
+            $query->where('academic_year', $academicYear);
+        }
+
+        return $query->orderBy('document_type', 'ASC')->findAll();
     }
 
     /**
      * Ambil dokumen berdasarkan student_id dan tipe dokumen.
      */
-    public function findByStudentAndType(int $studentId, string $documentType): ?array
+    public function findByStudentAndType(int $studentId, string $documentType, ?string $academicYear = null): ?array
     {
-        return $this->where('student_id', $studentId)
-                    ->where('document_type', $documentType)
-                    ->first();
+        $query = $this->where('student_id', $studentId)
+            ->where('document_type', $documentType);
+
+        if ($academicYear !== null && $academicYear !== '') {
+            $query->where('academic_year', $academicYear);
+        }
+
+        return $query->first();
     }
 
     /**
      * Cek apakah semua dokumen wajib sudah diunggah.
      */
-    public function hasAllRequiredDocuments(int $studentId): bool
+    public function hasAllRequiredDocuments(int $studentId, ?string $academicYear = null): bool
     {
-        $uploadedTypes = $this->select('document_type')
-                              ->where('student_id', $studentId)
-                              ->findAll();
+        $query = $this->select('document_type')->where('student_id', $studentId);
+
+        if ($academicYear !== null && $academicYear !== '') {
+            $query->where('academic_year', $academicYear);
+        }
+
+        $uploadedTypes = $query->findAll();
 
         $uploadedTypeList = array_column($uploadedTypes, 'document_type');
 
@@ -89,11 +104,15 @@ class StudentDocumentModel extends Model
     /**
      * Ambil daftar dokumen wajib yang belum diunggah.
      */
-    public function getMissingRequiredDocuments(int $studentId): array
+    public function getMissingRequiredDocuments(int $studentId, ?string $academicYear = null): array
     {
-        $uploadedTypes = $this->select('document_type')
-                              ->where('student_id', $studentId)
-                              ->findAll();
+        $query = $this->select('document_type')->where('student_id', $studentId);
+
+        if ($academicYear !== null && $academicYear !== '') {
+            $query->where('academic_year', $academicYear);
+        }
+
+        $uploadedTypes = $query->findAll();
 
         $uploadedTypeList = array_column($uploadedTypes, 'document_type');
 
@@ -123,8 +142,14 @@ class StudentDocumentModel extends Model
     /**
      * Hitung jumlah dokumen yang sudah diverifikasi (approved).
      */
-    public function countVerified(): int
+    public function countVerified(?string $academicYear = null): int
     {
-        return $this->where('status', 'approved')->countAllResults();
+        $query = $this->where('status', 'approved');
+
+        if ($academicYear !== null && $academicYear !== '') {
+            $query->where('academic_year', $academicYear);
+        }
+
+        return $query->countAllResults();
     }
 }

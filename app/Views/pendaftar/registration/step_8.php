@@ -36,7 +36,7 @@
 
 <?= $this->section('step_content') ?>
 <div class="p-4">
-    <h4 class="mb-4 text-primary"><i  data-lucide="file-up"></i> Langkah 8: Unggah Dokumen & Finalisasi</h4>
+    <h4 class="wizard-step-title"><i data-lucide="file-up"></i> Langkah 8: Unggah Dokumen & Finalisasi</h4>
     
     <?php
     // Index documents by type
@@ -45,25 +45,56 @@
         $docs[$doc['document_type']] = $doc;
     }
     
-    $requiredTypes = [
-        'kk' => 'Kartu Keluarga (KK)',
-        'akta' => 'Akta Kelahiran',
-        'foto' => 'Pas Foto 3x4'
-    ];
+    $requirementsByType = [];
+    foreach (($requirements ?? []) as $requirement) {
+        $requirementsByType[$requirement['document_type']] = $requirement;
+    }
+
+    $uploadRequirementsByType = [];
+    foreach (($uploadRequirements ?? $requirements ?? []) as $requirement) {
+        $uploadRequirementsByType[$requirement['document_type']] = $requirement;
+    }
+
+    $requiredTypes = [];
+    foreach (($requirements ?? []) as $requirement) {
+        if ((int) ($requirement['is_required'] ?? 0) === 1) {
+            $requiredTypes[$requirement['document_type']] = $requirement['label'];
+        }
+    }
     
-    $isComplete = isset($docs['kk']) && isset($docs['akta']) && isset($docs['foto']);
+    $isComplete = true;
+    foreach (array_keys($requiredTypes) as $type) {
+        if (!isset($docs[$type])) {
+            $isComplete = false;
+            break;
+        }
+    }
     ?>
 
-    <!-- 1. Required Documents Section -->
+    <!-- 1. Documents Section -->
     <div class="mb-5">
-        <h5 class="fw-bold mb-3 text-secondary"><i  data-lucide="info"></i> 1. Dokumen Wajib (Harus Diunggah)</h5>
+        <h5 class="role-subsection-title"><i data-lucide="info"></i> 1. Dokumen Pendaftaran</h5>
         <div class="row">
-            <?php foreach ($requiredTypes as $type => $label): ?>
+            <?php foreach ($uploadRequirementsByType as $type => $requirementMeta): ?>
+                <?php
+                    $label = $requirementMeta['label'] ?? $type;
+                    $isRequired = isset($requiredTypes[$type]);
+                    $isRequiredInAnyJalur = (int) ($requirementMeta['is_required'] ?? 0) === 1;
+                ?>
                 <div class="col-md-4 mb-3">
                     <div class="doc-upload-card p-3 h-100 d-flex flex-column justify-content-between">
                         <div>
-                            <h6 class="fw-bold mb-1"><?= $label ?></h6>
-                            <small class="text-muted d-block mb-3">Maksimal 2 MB (Format: JPG, JPEG, PNG)</small>
+                            <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                                <h6 class="fw-bold mb-0"><?= esc($label) ?></h6>
+                                <?php if ($isRequired): ?>
+                                    <span class="badge bg-danger">Wajib</span>
+                                <?php elseif ($isRequiredInAnyJalur): ?>
+                                    <span class="badge bg-warning text-dark">Wajib Jalur</span>
+                                <?php else: ?>
+                                    <span class="badge bg-light text-secondary">Opsional</span>
+                                <?php endif; ?>
+                            </div>
+                            <small class="text-muted d-block mb-3">Maksimal <?= number_format(((int) ($requirementMeta['max_size_kb'] ?? 2048)) / 1024, 1) ?> MB (<?= esc(strtoupper($requirementMeta['allowed_extensions'] ?? 'jpg,jpeg,png')) ?>)</small>
                         </div>
                         
                         <div>
@@ -94,10 +125,10 @@
                             <?php else: ?>
                                 <!-- Not Uploaded State -->
                                 <div class="text-center p-3 border border-dashed rounded mb-2 bg-light">
-                                    <i class="text-muted mb-2" data-lucide="2x"></i>
+                                    <i class="text-muted mb-2" data-lucide="file-x" style="width:32px;height:32px;"></i>
                                     <span class="d-block text-muted" style="font-size: 0.8rem;">Belum ada file</span>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-primary w-100 trigger-upload-btn" data-type="<?= $type ?>">
+                                <button type="button" class="btn btn-sm btn-primary w-100 trigger-upload-btn" data-type="<?= esc($type) ?>">
                                     <i  data-lucide="upload"></i> Unggah File
                                 </button>
                             <?php endif; ?>
@@ -112,14 +143,14 @@
     <form id="docUploadForm" style="display: none;" enctype="multipart/form-data">
         <?= csrf_field() ?>
         <input type="hidden" name="document_type" id="upload_doc_type">
-        <input type="file" name="document_file" id="upload_file_input" accept="image/jpeg,image/png,image/jpg">
+        <input type="file" name="document_file" id="upload_file_input">
     </form>
 
     <hr class="my-4">
 
     <!-- 2. Pathway & Finalization Section -->
     <div class="mb-4">
-        <h5 class="fw-bold mb-3 text-secondary"><i  data-lucide="clipboard-check"></i> 2. Jalur Pendaftaran & Finalisasi</h5>
+        <h5 class="role-subsection-title"><i data-lucide="clipboard-check"></i> 2. Jalur Pendaftaran & Finalisasi</h5>
         
         <?php if ($isComplete): ?>
             <form id="stepForm8" method="POST">
@@ -137,7 +168,7 @@
                                 <input type="radio" name="jalur_id" value="<?= $jalur['id'] ?>" class="d-none jalur-radio" required>
                                 <div class="jalur-card p-3 h-100">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <h6 class="fw-bold mb-0 text-primary"><?= esc($jalur['name']) ?></h6>
+                                        <h6 class="fw-bold mb-0"><?= esc($jalur['name']) ?></h6>
                                         <span class="badge bg-info">Kuota: <?= esc($jalur['quota']) ?></span>
                                     </div>
                                     <p class="text-muted mb-0" style="font-size: 0.85rem;"><?= esc($jalur['description']) ?></p>
@@ -149,7 +180,7 @@
             </form>
         <?php else: ?>
             <div class="alert alert-danger">
-                <i  data-lucide="lock"></i> <strong>Form Terkunci:</strong> Harap lengkapi dan unggah seluruh berkas dokumen wajib di atas (Kartu Keluarga, Akta Kelahiran, dan Pas Foto) untuk membuka form pemilihan Jalur Pendaftaran dan melakukan finalisasi pendaftaran.
+                <i  data-lucide="lock"></i> <strong>Form Terkunci:</strong> Harap lengkapi dan unggah seluruh berkas dokumen wajib sesuai konfigurasi tahun pelajaran <?= esc($academicYear ?? '') ?> untuk membuka form pemilihan Jalur Pendaftaran dan melakukan finalisasi pendaftaran.
             </div>
         <?php endif; ?>
     </div>

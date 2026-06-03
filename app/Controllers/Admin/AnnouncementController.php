@@ -6,18 +6,24 @@ use App\Controllers\BaseController;
 use App\Models\AnnouncementModel;
 use App\Models\RegistrationModel;
 use App\Models\JalurModel;
+use App\Services\AcademicYearService;
+use App\Services\UploadDirectoryService;
 
 class AnnouncementController extends BaseController
 {
     protected AnnouncementModel $announcementModel;
     protected RegistrationModel $registrationModel;
     protected JalurModel $jalurModel;
+    protected AcademicYearService $academicYearService;
+    protected UploadDirectoryService $uploadDirectoryService;
 
     public function __construct()
     {
         $this->announcementModel = new AnnouncementModel();
         $this->registrationModel = new RegistrationModel();
         $this->jalurModel        = new JalurModel();
+        $this->academicYearService = new AcademicYearService();
+        $this->uploadDirectoryService = new UploadDirectoryService($this->academicYearService);
     }
 
     // -------------------------------------------------------------------------
@@ -85,9 +91,10 @@ class AnnouncementController extends BaseController
 
         // Proses upload gambar jika ada
         if ($imageFile !== null && $imageFile->isValid() && !$imageFile->hasMoved()) {
+            $directory = $this->uploadDirectoryService->publicDirectory('announcements');
             $newName = $imageFile->getRandomName();
-            if ($imageFile->move(FCPATH . 'uploads/images/', $newName)) {
-                $insertData['image'] = 'uploads/images/' . $newName;
+            if ($imageFile->move($directory['absolute'], $newName)) {
+                $insertData['image'] = $directory['relative'] . $newName;
             }
         }
 
@@ -164,13 +171,14 @@ class AnnouncementController extends BaseController
 
         // Proses upload gambar baru jika ada
         if ($imageFile !== null && $imageFile->isValid() && !$imageFile->hasMoved()) {
+            $directory = $this->uploadDirectoryService->publicDirectory('announcements');
             $newName = $imageFile->getRandomName();
-            if ($imageFile->move(FCPATH . 'uploads/images/', $newName)) {
+            if ($imageFile->move($directory['absolute'], $newName)) {
                 // Hapus gambar lama jika ada
                 if (!empty($announcement['image']) && file_exists(FCPATH . $announcement['image'])) {
                     @unlink(FCPATH . $announcement['image']);
                 }
-                $updateData['image'] = 'uploads/images/' . $newName;
+                $updateData['image'] = $directory['relative'] . $newName;
             }
         }
 
@@ -238,9 +246,14 @@ class AnnouncementController extends BaseController
             'search' => !empty($search) ? $search : null,
         ];
 
-        // Saring pendaftar yang sudah submit (bukan draft)
+        $activeYear = $this->academicYearService->activeYear();
+
+        // Saring pendaftar yang sudah submit (bukan draft) pada tahun pelajaran aktif.
         $this->registrationModel->applyFilters($filters);
-        $registrants = $this->registrationModel->whereNotIn('registrations.status', ['draft'])->findAll();
+        $registrants = $this->registrationModel
+            ->where('registrations.academic_year', $activeYear)
+            ->whereNotIn('registrations.status', ['draft'])
+            ->findAll();
         
         $jalur = $this->jalurModel->findAll();
 
@@ -251,6 +264,7 @@ class AnnouncementController extends BaseController
             'jalurId'     => $jalurId,
             'status'      => $status,
             'search'      => $search,
+            'activeYear'  => $activeYear,
         ];
 
         return view('admin/announcements/seleksi', $data);
@@ -277,9 +291,14 @@ class AnnouncementController extends BaseController
         $status = $this->request->getPost('status');
 
         // Jika pendaftar diterima, pastikan kuota jalur pendaftaran masih mencukupi
-        if ($status === 'accepted') {
-            if (!$this->jalurModel->hasAvailableQuota((int)$registration['jalur_id'])) {
-                $jalur = $this->jalurModel->find($registration['jalur_id']);
+        if ($status === 'accepted' && ($registration['status'] ?? '') !== 'accepted') {
+            $acceptedCount = $this->registrationModel
+                ->where('academic_year', $registration['academic_year'])
+                ->where('jalur_id', (int) $registration['jalur_id'])
+                ->where('status', 'accepted')
+                ->countAllResults();
+            $jalur = $this->jalurModel->find($registration['jalur_id']);
+            if ($jalur && $acceptedCount >= (int) $jalur['quota']) {
                 return redirect()->back()->with('error', 'Gagal menerima peserta! Kuota jalur ' . esc($jalur['name']) . ' sudah penuh (' . esc($jalur['quota']) . ' peserta).');
             }
         }

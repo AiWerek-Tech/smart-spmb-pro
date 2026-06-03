@@ -1,20 +1,21 @@
 <?= $this->extend('layouts/dashboard') ?>
 
 <?= $this->section('content') ?>
-<div class="row animate-fade-in">
+<div class="admin-page-shell role-page-shell">
     <!-- Header Page -->
-    <div class="col-12 mb-4">
+    <div class="role-page-header">
         <div>
-            <h4 class="mb-0 text-primary">Berkas & Dokumen Pendukung</h4>
-            <p class="text-muted mb-0">Unggah berkas Kartu Keluarga, Akta Lahir, dan Pas Foto untuk syarat verifikasi pendaftaran.</p>
+            <h1 class="role-page-header__title">Berkas & Dokumen Pendukung</h1>
+            <p class="role-page-header__subtitle">Unggah berkas sesuai syarat dokumen tahun pelajaran <?= esc($academicYear ?? '') ?>.</p>
         </div>
     </div>
 
     <!-- LEFT COLUMN: File Upload Form -->
-    <div class="col-lg-5 mb-4">
+    <div class="row g-3">
+    <div class="col-lg-5">
         <div class="card shadow-sm border">
             <div class="card-header bg-white border-bottom py-3">
-                <h5 class="card-title text-primary m-0"><i class="me-2" data-lucide="upload"></i> Unggah Berkas Baru</h5>
+                <h5 class="card-title m-0"><i class="me-2" data-lucide="upload"></i> Unggah Berkas Baru</h5>
                 <small class="text-muted">Pilih jenis berkas dan file gambar/PDF yang akan diunggah.</small>
             </div>
             
@@ -27,12 +28,11 @@
                         <label for="document_type" class="form-label fw-bold small">Jenis Dokumen <span class="text-danger">*</span></label>
                         <select class="form-select select2" name="document_type" id="document_type" required>
                             <option value="" disabled selected>Pilih jenis berkas...</option>
-                            <option value="kk" <?= old('document_type') === 'kk' ? 'selected' : '' ?>>Kartu Keluarga (KK) *Wajib</option>
-                            <option value="akta" <?= old('document_type') === 'akta' ? 'selected' : '' ?>>Akte Kelahiran *Wajib</option>
-                            <option value="foto" <?= old('document_type') === 'foto' ? 'selected' : '' ?>>Pas Foto 3x4 Calon Siswa *Wajib</option>
-                            <option value="raport" <?= old('document_type') === 'raport' ? 'selected' : '' ?>>Raport Terakhir (Opsional)</option>
-                            <option value="sertifikat" <?= old('document_type') === 'sertifikat' ? 'selected' : '' ?>>Sertifikat Prestasi (Opsional)</option>
-                            <option value="kip_kks" <?= old('document_type') === 'kip_kks' ? 'selected' : '' ?>>KIP / KKS Pendukung (Opsional)</option>
+                            <?php foreach (($requirements ?? []) as $requirement): ?>
+                                <option value="<?= esc($requirement['document_type']) ?>" <?= old('document_type') === $requirement['document_type'] ? 'selected' : '' ?>>
+                                    <?= esc($requirement['label']) ?> <?= (int) $requirement['is_required'] ? '*Wajib' : '(Opsional)' ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
@@ -41,9 +41,7 @@
                         <label for="document_file" class="form-label fw-bold small">Pilih File Berkas <span class="text-danger">*</span></label>
                         <input class="form-control" type="file" id="document_file" name="document_file" required>
                         <small class="text-muted d-block mt-2">
-                            - Ukuran file maksimal **2 MB**.<br>
-                            - Format KK/Akte/Foto: **JPG, PNG**.<br>
-                            - Format Raport/Sertifikat: **PDF, JPG, PNG**.
+                            Format dan batas ukuran mengikuti jenis dokumen yang dipilih oleh admin.
                         </small>
                     </div>
 
@@ -59,11 +57,11 @@
     </div>
 
     <!-- RIGHT COLUMN: Uploaded Documents Checklist -->
-    <div class="col-lg-7 mb-4">
+    <div class="col-lg-7">
         <div class="card shadow-sm border">
             <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
                 <div>
-                    <h5 class="card-title text-primary m-0"><i class="me-2" data-lucide="folder"></i> Berkas Saya</h5>
+                    <h5 class="card-title m-0"><i class="me-2" data-lucide="folder"></i> Berkas Saya</h5>
                     <small class="text-muted">Status verifikasi berkas yang telah Anda unggah.</small>
                 </div>
                 <span class="badge bg-label-primary rounded"><?= count($documents) ?> File Terunggah</span>
@@ -84,14 +82,10 @@
                                     <div>
                                         <h6 class="text-dark fw-bold mb-1">
                                             <?php 
-                                                $labels = [
-                                                    'kk' => 'Kartu Keluarga (KK)',
-                                                    'akta' => 'Akte Kelahiran',
-                                                    'foto' => 'Pas Foto 3x4 Calon Siswa',
-                                                    'raport' => 'Raport Terakhir',
-                                                    'sertifikat' => 'Sertifikat Prestasi',
-                                                    'kip_kks' => 'KIP / KKS Pendukung',
-                                                ];
+                                                $labels = [];
+                                                foreach (($requirements ?? []) as $requirement) {
+                                                    $labels[$requirement['document_type']] = $requirement['label'];
+                                                }
                                                 echo $labels[$doc['document_type']] ?? esc($doc['document_type']);
                                             ?>
                                         </h6>
@@ -156,6 +150,7 @@
                 </div>
             </div>
         </div>
+    </div>
     </div>
 </div>
 <?= $this->endSection() ?>

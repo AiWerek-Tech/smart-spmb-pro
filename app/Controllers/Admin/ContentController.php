@@ -10,6 +10,8 @@ use App\Models\TestimonialModel;
 use App\Models\GalleryModel;
 use App\Models\StatisticModel;
 use App\Models\TeacherModel;
+use App\Services\AcademicYearService;
+use App\Services\UploadDirectoryService;
 
 class ContentController extends BaseController
 {
@@ -20,6 +22,8 @@ class ContentController extends BaseController
     protected GalleryModel $galleryModel;
     protected StatisticModel $statisticModel;
     protected TeacherModel $teacherModel;
+    protected AcademicYearService $academicYearService;
+    protected UploadDirectoryService $uploadDirectoryService;
 
     public function __construct()
     {
@@ -30,6 +34,8 @@ class ContentController extends BaseController
         $this->galleryModel     = new GalleryModel();
         $this->statisticModel   = new StatisticModel();
         $this->teacherModel     = new TeacherModel();
+        $this->academicYearService = new AcademicYearService();
+        $this->uploadDirectoryService = new UploadDirectoryService($this->academicYearService);
     }
 
     /**
@@ -58,17 +64,43 @@ class ContentController extends BaseController
         ];
 
         $settings = array_merge($defaults, $settings);
-        $gallery  = $this->galleryModel->orderBy('sort_order', 'ASC')->findAll();
-        $teachers = $this->teacherModel->orderBy('sort_order', 'ASC')->orderBy('name', 'ASC')->findAll();
-
         $data = [
             'title'    => 'Pengelolaan Profil & Galeri',
             'settings' => $settings,
-            'gallery'  => $gallery,
-            'teachers' => $teachers,
+            'activeYear' => $this->academicYearService->activeYear(),
         ];
 
         return view('admin/content/index', $data);
+    }
+
+    public function teachers()
+    {
+        $activeYear = $this->academicYearService->activeYear();
+
+        return view('admin/content/teachers', [
+            'title' => 'Tenaga Pendidik',
+            'activeYear' => $activeYear,
+            'teachers' => $this->teacherModel
+                ->where('academic_year', $activeYear)
+                ->orderBy('sort_order', 'ASC')
+                ->orderBy('name', 'ASC')
+                ->findAll(),
+        ]);
+    }
+
+    public function gallery()
+    {
+        $activeYear = $this->academicYearService->activeYear();
+
+        return view('admin/content/gallery', [
+            'title' => 'Galeri Sekolah',
+            'activeYear' => $activeYear,
+            'gallery' => $this->galleryModel
+                ->where('academic_year', $activeYear)
+                ->orderBy('sort_order', 'ASC')
+                ->orderBy('created_at', 'DESC')
+                ->findAll(),
+        ]);
     }
 
     /**
@@ -108,14 +140,10 @@ class ContentController extends BaseController
             $oldBrochure = (string) $this->settingModel->getValue('brochure_file', '');
             $this->deleteLocalPublicFile($oldBrochure);
 
-            $uploadPath = FCPATH . 'uploads/brochures/';
-            if (!is_dir($uploadPath)) {
-                mkdir($uploadPath, 0775, true);
-            }
-
+            $directory = $this->uploadDirectoryService->publicDirectory('brochures');
             $newName = 'brosur-spmb-' . date('YmdHis') . '.' . $brochureFile->getExtension();
-            $brochureFile->move($uploadPath, $newName);
-            $contentData['brochure_file'] = 'uploads/brochures/' . $newName;
+            $brochureFile->move($directory['absolute'], $newName);
+            $contentData['brochure_file'] = $directory['relative'] . $newName;
         }
 
         if ($this->request->getPost('tagline') !== null) {
@@ -160,8 +188,9 @@ class ContentController extends BaseController
 
         if ($imageFile && $imageFile->isValid() && !$imageFile->hasMoved()) {
             $newName = $imageFile->getRandomName();
-            if ($imageFile->move(FCPATH . 'uploads/gallery/', $newName)) {
-                $filePath = 'uploads/gallery/' . $newName;
+            $directory = $this->uploadDirectoryService->publicDirectory('gallery');
+            if ($imageFile->move($directory['absolute'], $newName)) {
+                $filePath = $directory['relative'] . $newName;
             }
         } elseif ($mediaType === 'video') {
             $thumbnail = $this->youtubeThumbnail((string) $this->request->getPost('video_url'));
@@ -178,18 +207,19 @@ class ContentController extends BaseController
             'media_type'     => $mediaType,
             'video_url'      => $mediaType === 'video' ? $this->youtubeEmbedUrl((string) $this->request->getPost('video_url')) : null,
             'video_provider' => $mediaType === 'video' ? 'youtube' : null,
+            'academic_year'  => $this->academicYearService->activeYear(),
             'is_active'      => $this->request->getPost('is_active') ? 1 : 0,
             'sort_order'     => (int) $this->request->getPost('sort_order'),
         ]);
 
-        return redirect()->to('admin/content')->with('success', 'Item galeri berhasil ditambahkan.');
+        return redirect()->to('admin/gallery')->with('success', 'Item galeri berhasil ditambahkan.');
     }
 
     public function galleryUpdate(int $id)
     {
         $item = $this->galleryModel->find($id);
         if (!$item) {
-            return redirect()->to('admin/content')->with('error', 'Item galeri tidak ditemukan.');
+            return redirect()->to('admin/gallery')->with('error', 'Item galeri tidak ditemukan.');
         }
 
         $mediaType = $this->request->getPost('media_type') === 'video' ? 'video' : 'photo';
@@ -227,15 +257,16 @@ class ContentController extends BaseController
         if ($imageFile && $imageFile->isValid() && !$imageFile->hasMoved()) {
             $this->deleteLocalPublicFile($item['image'] ?? '');
             $newName = $imageFile->getRandomName();
-            $imageFile->move(FCPATH . 'uploads/gallery/', $newName);
-            $updateData['image'] = 'uploads/gallery/' . $newName;
+            $directory = $this->uploadDirectoryService->publicDirectory('gallery', $item['academic_year'] ?? null);
+            $imageFile->move($directory['absolute'], $newName);
+            $updateData['image'] = $directory['relative'] . $newName;
         } elseif ($mediaType === 'video' && empty($item['image'])) {
             $updateData['image'] = $this->youtubeThumbnail((string) $this->request->getPost('video_url')) ?? 'assets/img/gallery-placeholder.svg';
         }
 
         $this->galleryModel->update($id, $updateData);
 
-        return redirect()->to('admin/content')->with('success', 'Item galeri berhasil diperbarui.');
+        return redirect()->to('admin/gallery')->with('success', 'Item galeri berhasil diperbarui.');
     }
 
     /**
@@ -245,16 +276,16 @@ class ContentController extends BaseController
     {
         $item = $this->galleryModel->find($id);
         if (!$item) {
-            return redirect()->to('admin/content')->with('error', 'Foto galeri tidak ditemukan.');
+            return redirect()->to('admin/gallery')->with('error', 'Foto galeri tidak ditemukan.');
         }
 
         $this->deleteLocalPublicFile($item['image'] ?? '');
 
         if ($this->galleryModel->delete($id)) {
-            return redirect()->to('admin/content')->with('success', 'Foto galeri berhasil dihapus.');
+            return redirect()->to('admin/gallery')->with('success', 'Foto galeri berhasil dihapus.');
         }
 
-        return redirect()->to('admin/content')->with('error', 'Gagal menghapus data galeri.');
+        return redirect()->to('admin/gallery')->with('error', 'Gagal menghapus data galeri.');
     }
 
     public function teacherStore()
@@ -273,16 +304,14 @@ class ContentController extends BaseController
         $photoPath = null;
         $photo = $this->request->getFile('teacher_photo');
         if ($photo && $photo->isValid() && !$photo->hasMoved()) {
-            $uploadPath = FCPATH . 'uploads/teachers/';
-            if (!is_dir($uploadPath)) {
-                mkdir($uploadPath, 0775, true);
-            }
+            $directory = $this->uploadDirectoryService->publicDirectory('teachers');
             $newName = $photo->getRandomName();
-            $photo->move($uploadPath, $newName);
-            $photoPath = 'uploads/teachers/' . $newName;
+            $photo->move($directory['absolute'], $newName);
+            $photoPath = $directory['relative'] . $newName;
         }
 
         $this->teacherModel->insert([
+            'academic_year' => $this->academicYearService->activeYear(),
             'name'       => $this->request->getPost('name'),
             'role'       => $this->request->getPost('role'),
             'photo'      => $photoPath,
@@ -290,14 +319,14 @@ class ContentController extends BaseController
             'sort_order' => (int) $this->request->getPost('sort_order'),
         ]);
 
-        return redirect()->to('admin/content')->with('success', 'Data guru berhasil ditambahkan.');
+        return redirect()->to('admin/teachers')->with('success', 'Data guru berhasil ditambahkan.');
     }
 
     public function teacherUpdate(int $id)
     {
         $teacher = $this->teacherModel->find($id);
         if (!$teacher) {
-            return redirect()->to('admin/content')->with('error', 'Data guru tidak ditemukan.');
+            return redirect()->to('admin/teachers')->with('error', 'Data guru tidak ditemukan.');
         }
 
         $rules = [
@@ -321,31 +350,28 @@ class ContentController extends BaseController
         $photo = $this->request->getFile('teacher_photo');
         if ($photo && $photo->isValid() && !$photo->hasMoved()) {
             $this->deleteLocalPublicFile($teacher['photo'] ?? '');
-            $uploadPath = FCPATH . 'uploads/teachers/';
-            if (!is_dir($uploadPath)) {
-                mkdir($uploadPath, 0775, true);
-            }
+            $directory = $this->uploadDirectoryService->publicDirectory('teachers', $teacher['academic_year'] ?? null);
             $newName = $photo->getRandomName();
-            $photo->move($uploadPath, $newName);
-            $updateData['photo'] = 'uploads/teachers/' . $newName;
+            $photo->move($directory['absolute'], $newName);
+            $updateData['photo'] = $directory['relative'] . $newName;
         }
 
         $this->teacherModel->update($id, $updateData);
 
-        return redirect()->to('admin/content')->with('success', 'Data guru berhasil diperbarui.');
+        return redirect()->to('admin/teachers')->with('success', 'Data guru berhasil diperbarui.');
     }
 
     public function teacherDelete(int $id)
     {
         $teacher = $this->teacherModel->find($id);
         if (!$teacher) {
-            return redirect()->to('admin/content')->with('error', 'Data guru tidak ditemukan.');
+            return redirect()->to('admin/teachers')->with('error', 'Data guru tidak ditemukan.');
         }
 
         $this->deleteLocalPublicFile($teacher['photo'] ?? '');
         $this->teacherModel->delete($id);
 
-        return redirect()->to('admin/content')->with('success', 'Data guru berhasil dihapus.');
+        return redirect()->to('admin/teachers')->with('success', 'Data guru berhasil dihapus.');
     }
 
     // --- BANNER MANAGEMENT ---
@@ -370,13 +396,14 @@ class ContentController extends BaseController
         }
 
         $img = $this->request->getFile('banner_img');
+        $directory = $this->uploadDirectoryService->publicDirectory('banners');
         $newName = $img->getRandomName();
-        $img->move(FCPATH . 'uploads/banners/', $newName);
+        $img->move($directory['absolute'], $newName);
 
         $this->bannerModel->insert([
             'title'      => $this->request->getPost('title'),
             'subtitle'   => $this->request->getPost('subtitle'),
-            'image'      => 'uploads/banners/' . $newName,
+            'image'      => $directory['relative'] . $newName,
             'cta_text'   => $this->request->getPost('cta_text'),
             'cta_url'    => $this->request->getPost('cta_url'),
             'is_active'  => $this->request->getPost('is_active') ? 1 : 0,
@@ -406,9 +433,10 @@ class ContentController extends BaseController
         $img = $this->request->getFile('banner_img');
         if ($img && $img->isValid()) {
             if (file_exists(FCPATH . $banner['image'])) unlink(FCPATH . $banner['image']);
+            $directory = $this->uploadDirectoryService->publicDirectory('banners');
             $newName = $img->getRandomName();
-            $img->move(FCPATH . 'uploads/banners/', $newName);
-            $updateData['image'] = 'uploads/banners/' . $newName;
+            $img->move($directory['absolute'], $newName);
+            $updateData['image'] = $directory['relative'] . $newName;
         }
 
         $this->bannerModel->update($id, $updateData);
@@ -446,9 +474,10 @@ class ContentController extends BaseController
         $photoPath = null;
         $img = $this->request->getFile('photo');
         if ($img && $img->isValid()) {
+            $directory = $this->uploadDirectoryService->publicDirectory('testimonials');
             $newName = $img->getRandomName();
-            $img->move(FCPATH . 'uploads/testimonials/', $newName);
-            $photoPath = 'uploads/testimonials/' . $newName;
+            $img->move($directory['absolute'], $newName);
+            $photoPath = $directory['relative'] . $newName;
         }
 
         $this->testimonialModel->insert([
@@ -482,9 +511,10 @@ class ContentController extends BaseController
         $img = $this->request->getFile('photo');
         if ($img && $img->isValid()) {
             if ($testi['photo'] && file_exists(FCPATH . $testi['photo'])) unlink(FCPATH . $testi['photo']);
+            $directory = $this->uploadDirectoryService->publicDirectory('testimonials');
             $newName = $img->getRandomName();
-            $img->move(FCPATH . 'uploads/testimonials/', $newName);
-            $updateData['photo'] = 'uploads/testimonials/' . $newName;
+            $img->move($directory['absolute'], $newName);
+            $updateData['photo'] = $directory['relative'] . $newName;
         }
 
         $this->testimonialModel->update($id, $updateData);

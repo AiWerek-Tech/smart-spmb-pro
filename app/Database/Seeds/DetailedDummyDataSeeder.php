@@ -210,6 +210,7 @@ class DetailedDummyDataSeeder extends Seeder
         ];
 
         $regCounter = 1;
+        $candidateUserIds = [];
 
         foreach ($candidates as $cand) {
             // A. Create User
@@ -223,6 +224,7 @@ class DetailedDummyDataSeeder extends Seeder
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
             $userId = $this->db->insertID();
+            $candidateUserIds[$cand['email']] = $userId;
 
             // B. Create Student Profile
             $this->db->table('students')->insert([
@@ -429,6 +431,7 @@ class DetailedDummyDataSeeder extends Seeder
 
                     $this->db->table('student_documents')->insert([
                         'student_id'       => $studentId,
+                        'academic_year'    => '2026/2027',
                         'document_type'    => $type,
                         'file_name'        => $fileName,
                         'file_path'        => $filePath,
@@ -451,20 +454,20 @@ class DetailedDummyDataSeeder extends Seeder
             ['user_id' => $adminId, 'action' => 'backup', 'entity_type' => 'system', 'entity_id' => null, 'desc' => 'Admin membuat cadangan data database sistem.'],
             ['user_id' => $adminId, 'action' => 'edit_data', 'entity_type' => 'settings', 'entity_id' => 1, 'desc' => 'Admin memperbarui nama sekolah pada pengaturan.'],
             ['user_id' => $operator1Id, 'action' => 'login', 'entity_type' => null, 'entity_id' => null, 'desc' => 'Operator Utama login ke sistem.'],
-            ['user_id' => 4, 'action' => 'login', 'entity_type' => null, 'entity_id' => null, 'desc' => 'Calon Siswa Budi Santoso login ke panel.'],
-            ['user_id' => 4, 'action' => 'edit_data', 'entity_type' => 'students', 'entity_id' => 1, 'desc' => 'Budi Santoso menyelesaikan Langkah 1 Identitas.'],
-            ['user_id' => 4, 'action' => 'edit_data', 'entity_type' => 'students', 'entity_id' => 1, 'desc' => 'Budi Santoso menyelesaikan Langkah 2 s.d 7 Wizard.'],
-            ['user_id' => 4, 'action' => 'edit_data', 'entity_type' => 'documents', 'entity_id' => 1, 'desc' => 'Budi Santoso berhasil mengunggah berkas Kartu Keluarga.'],
-            ['user_id' => 4, 'action' => 'edit_data', 'entity_type' => 'documents', 'entity_id' => 2, 'desc' => 'Budi Santoso berhasil mengunggah berkas Akta Kelahiran.'],
-            ['user_id' => 4, 'action' => 'edit_data', 'entity_type' => 'documents', 'entity_id' => 3, 'desc' => 'Budi Santoso berhasil mengunggah berkas Pas Foto.'],
-            ['user_id' => 4, 'action' => 'edit_data', 'entity_type' => 'registrations', 'entity_id' => 1, 'desc' => 'Budi Santoso melakukan finalisasi berkas pendaftaran (Submit).'],
+            ['user_id' => $candidateUserIds['siswa1@gmail.com'] ?? null, 'action' => 'login', 'entity_type' => null, 'entity_id' => null, 'desc' => 'Calon Siswa Budi Santoso login ke panel.'],
+            ['user_id' => $candidateUserIds['siswa1@gmail.com'] ?? null, 'action' => 'edit_data', 'entity_type' => 'students', 'entity_id' => 1, 'desc' => 'Budi Santoso menyelesaikan Langkah 1 Identitas.'],
+            ['user_id' => $candidateUserIds['siswa1@gmail.com'] ?? null, 'action' => 'edit_data', 'entity_type' => 'students', 'entity_id' => 1, 'desc' => 'Budi Santoso menyelesaikan Langkah 2 s.d 7 Wizard.'],
+            ['user_id' => $candidateUserIds['siswa1@gmail.com'] ?? null, 'action' => 'edit_data', 'entity_type' => 'documents', 'entity_id' => 1, 'desc' => 'Budi Santoso berhasil mengunggah berkas Kartu Keluarga.'],
+            ['user_id' => $candidateUserIds['siswa1@gmail.com'] ?? null, 'action' => 'edit_data', 'entity_type' => 'documents', 'entity_id' => 2, 'desc' => 'Budi Santoso berhasil mengunggah berkas Akta Kelahiran.'],
+            ['user_id' => $candidateUserIds['siswa1@gmail.com'] ?? null, 'action' => 'edit_data', 'entity_type' => 'documents', 'entity_id' => 3, 'desc' => 'Budi Santoso berhasil mengunggah berkas Pas Foto.'],
+            ['user_id' => $candidateUserIds['siswa1@gmail.com'] ?? null, 'action' => 'edit_data', 'entity_type' => 'registrations', 'entity_id' => 1, 'desc' => 'Budi Santoso melakukan finalisasi berkas pendaftaran (Submit).'],
             ['user_id' => $operator1Id, 'action' => 'verify_document', 'entity_type' => 'documents', 'entity_id' => 1, 'desc' => 'Operator menyetujui berkas Kartu Keluarga Budi Santoso.'],
             ['user_id' => $operator1Id, 'action' => 'verify_document', 'entity_type' => 'documents', 'entity_id' => 2, 'desc' => 'Operator menyetujui berkas Akta Kelahiran Budi Santoso.'],
             ['user_id' => $operator1Id, 'action' => 'verify_document', 'entity_type' => 'documents', 'entity_id' => 3, 'desc' => 'Operator menyetujui berkas Pas Foto Budi Santoso.'],
             ['user_id' => $operator1Id, 'action' => 'edit_data', 'entity_type' => 'registrations', 'entity_id' => 1, 'desc' => 'Sistem otomatis mengubah status pendaftaran Budi Santoso ke VERIFIED.'],
             ['user_id' => $adminId, 'action' => 'edit_data', 'entity_type' => 'registrations', 'entity_id' => 1, 'desc' => 'Panitia mengubah status pendaftaran Budi Santoso ke LULUS (Accepted).'],
-            ['user_id' => 5, 'action' => 'login', 'entity_type' => null, 'entity_id' => null, 'desc' => 'Siti Aminah login ke panel.'],
-            ['user_id' => 5, 'action' => 'edit_data', 'entity_type' => 'registrations', 'entity_id' => 2, 'desc' => 'Siti Aminah melakukan finalisasi berkas pendaftaran.'],
+            ['user_id' => $candidateUserIds['siswa2@gmail.com'] ?? null, 'action' => 'login', 'entity_type' => null, 'entity_id' => null, 'desc' => 'Siti Aminah login ke panel.'],
+            ['user_id' => $candidateUserIds['siswa2@gmail.com'] ?? null, 'action' => 'edit_data', 'entity_type' => 'registrations', 'entity_id' => 2, 'desc' => 'Siti Aminah melakukan finalisasi berkas pendaftaran.'],
             ['user_id' => $operator1Id, 'action' => 'verify_document', 'entity_type' => 'documents', 'entity_id' => 13, 'desc' => 'Operator menolak berkas Kartu Keluarga Rina Wijaya.'],
             ['user_id' => $operator1Id, 'action' => 'export', 'entity_type' => 'registrations', 'entity_id' => null, 'desc' => 'Operator mengekspor daftar pendaftar ke format Excel.'],
         ];
