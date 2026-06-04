@@ -1,5 +1,12 @@
 <?= $this->extend('pendaftar/registration/wizard_layout') ?>
 
+<?php
+$settingModel = new \App\Models\SettingModel();
+$schoolLat = (float)($settingModel->getValue('maps_lat') ?: -6.2150);
+$schoolLng = (float)($settingModel->getValue('maps_lng') ?: 106.8500);
+$schoolName = $settingModel->getValue('school_name', 'Smart SPMB Pro');
+?>
+
 <?= $this->section('additional_css') ?>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <style>
@@ -314,10 +321,10 @@
         });
 
         // --- 2. Leaflet Map & Distance Zonasi Calculator ---
-        let lat = parseFloat($('#latitude').val()) || -6.2088;
-        let lng = parseFloat($('#longitude').val()) || 106.8456;
-        const schoolLat = -6.2150;
-        const schoolLng = 106.8500;
+        const schoolLat = <?= $schoolLat ?>;
+        const schoolLng = <?= $schoolLng ?>;
+        let lat = parseFloat($('#latitude').val()) || schoolLat;
+        let lng = parseFloat($('#longitude').val()) || schoolLng;
 
         const map = L.map('map').setView([lat, lng], 14);
 
@@ -339,7 +346,7 @@
                 shadowSize: [41, 41]
             })
         }).addTo(map);
-        schoolMarker.bindPopup("<b>SMA Smart SPMB Pro</b><br>Lokasi Sekolah").openPopup();
+        schoolMarker.bindPopup("<b><?= esc($schoolName) ?></b><br>Lokasi Sekolah").openPopup();
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371; // km
