@@ -94,14 +94,9 @@ class DocumentController extends BaseController
         $allowedExtensions = implode(',', $this->documentRequirementService->extensionList($definition));
         $maxSizeKb = (int) ($definition['max_size_kb'] ?? 2048);
 
-        $rules = [
-            'document_type' => 'required|alpha_dash|max_length[60]',
-            'document_file' => 'uploaded[document_file]|ext_in[document_file,' . $allowedExtensions . ']|max_size[document_file,' . $maxSizeKb . ']',
-        ];
-
-        if (!$this->validate($rules)) {
-            $validationErrors = $this->validator->getErrors();
-            $errorMsg = reset($validationErrors) ?: 'Ukuran file melebihi batas maksimal atau format file tidak diizinkan untuk jenis dokumen ini.';
+        // Manual validation to bypass CI4 FileRules calling getMimeType internally
+        if (empty($docType) || !preg_match('/^[a-zA-Z0-9_-]+$/', $docType) || strlen($docType) > 60) {
+            $errorMsg = 'Jenis dokumen tidak valid.';
             if ($this->request->isAJAX()) {
                 return $this->response->setJSON(['success' => false, 'message' => $errorMsg, 'csrf_token' => csrf_hash()]);
             }
@@ -109,28 +104,56 @@ class DocumentController extends BaseController
         }
 
         $file = $this->request->getFile('document_file');
-        if ($file->isValid() && !$file->hasMoved()) {
-            $mimeType = '';
-            try {
-                $tempPath = $file->getTempName();
-                if (!empty($tempPath) && file_exists($tempPath)) {
-                    $mimeType = $file->getMimeType();
-                }
-            } catch (\Throwable $e) {
-                log_message('warning', 'Failed to get server mime type: ' . $e->getMessage());
+        if (!$file || !$file->isValid() || $file->hasMoved()) {
+            $errorMsg = 'File tidak terunggah dengan benar atau tidak valid.';
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['success' => false, 'message' => $errorMsg, 'csrf_token' => csrf_hash()]);
             }
+            return redirect()->back()->withInput()->with('error', $errorMsg);
+        }
 
-            if (empty($mimeType)) {
-                $mimeType = $file->getClientMimeType();
+        // Check file size
+        $fileSize = $file->getSize(); // in bytes
+        if ($fileSize > $maxSizeKb * 1024) {
+            $errorMsg = 'Ukuran file melebihi batas maksimal (' . number_format($maxSizeKb / 1024, 1) . ' MB).';
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['success' => false, 'message' => $errorMsg, 'csrf_token' => csrf_hash()]);
             }
+            return redirect()->back()->withInput()->with('error', $errorMsg);
+        }
 
-            if (!$this->isAllowedDocumentMime($this->documentRequirementService->extensionList($definition), (string) $mimeType)) {
-                $errorMsg = 'Format file tidak sesuai dengan isi dokumen yang diunggah.';
-                if ($this->request->isAJAX()) {
-                    return $this->response->setJSON(['success' => false, 'message' => $errorMsg, 'csrf_token' => csrf_hash()]);
-                }
-                return redirect()->back()->withInput()->with('error', $errorMsg);
+        // Check extension
+        $clientExtension = strtolower($file->getClientExtension() ?: pathinfo($file->getClientName(), PATHINFO_EXTENSION));
+        $allowedExtArray = $this->documentRequirementService->extensionList($definition);
+        if (!in_array($clientExtension, $allowedExtArray, true)) {
+            $errorMsg = 'Format file tidak diizinkan. Format yang diperbolehkan: ' . implode(', ', $allowedExtArray);
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['success' => false, 'message' => $errorMsg, 'csrf_token' => csrf_hash()]);
             }
+            return redirect()->back()->withInput()->with('error', $errorMsg);
+        }
+
+        $mimeType = '';
+        try {
+            $tempPath = $file->getTempName();
+            if (!empty($tempPath) && file_exists($tempPath)) {
+                $mimeType = $file->getMimeType();
+            }
+        } catch (\Throwable $e) {
+            log_message('warning', 'Failed to get server mime type: ' . $e->getMessage());
+        }
+
+        if (empty($mimeType)) {
+            $mimeType = $file->getClientMimeType();
+        }
+
+        if (!$this->isAllowedDocumentMime($allowedExtArray, (string) $mimeType)) {
+            $errorMsg = 'Format file tidak sesuai dengan isi dokumen yang diunggah.';
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['success' => false, 'message' => $errorMsg, 'csrf_token' => csrf_hash()]);
+            }
+            return redirect()->back()->withInput()->with('error', $errorMsg);
+        }
 
             $newName = $file->getRandomName();
 
