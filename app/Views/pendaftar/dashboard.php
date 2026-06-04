@@ -23,7 +23,7 @@ $footerWhatsapp = preg_replace('/[^0-9]/', '', (string)$settingModel->getValue('
     <div class="col-md-8">
         <!-- 1. DRAFT STATE -->
         <?php if (empty($registration)): ?>
-            <div class="card h-100" style="border-left: 4px solid var(--sp-warning);">
+            <div class="card shadow-sm border" style="border-left: 4px solid var(--sp-warning);">
                 <div class="card-header bg-transparent py-3">
                     <h5 class="card-title text-warning m-0 d-flex align-items-center">
                         <i data-lucide="edit-3" class="me-2" style="width: 20px; height: 20px;"></i> Pendaftaran Belum Selesai
@@ -103,7 +103,7 @@ $footerWhatsapp = preg_replace('/[^0-9]/', '', (string)$settingModel->getValue('
 
         <!-- 2. SUBMITTED STATE -->
         <?php elseif ($registration['status'] === 'submitted'): ?>
-            <div class="card h-100" style="border-left: 4px solid var(--sp-primary);">
+            <div class="card shadow-sm border" style="border-left: 4px solid var(--sp-primary);">
                 <div class="card-header bg-transparent py-3">
                     <h5 class="card-title m-0 d-flex align-items-center">
                         <i data-lucide="clock" class="me-2" style="width: 20px; height: 20px;"></i> Berkas Sedang Direview
@@ -133,7 +133,7 @@ $footerWhatsapp = preg_replace('/[^0-9]/', '', (string)$settingModel->getValue('
 
         <!-- 3. VERIFIED STATE -->
         <?php elseif ($registration['status'] === 'verified'): ?>
-            <div class="card h-100" style="border-left: 4px solid var(--sp-info);">
+            <div class="card shadow-sm border" style="border-left: 4px solid var(--sp-info);">
                 <div class="card-header bg-transparent py-3">
                     <h5 class="card-title text-info m-0 d-flex align-items-center">
                         <i data-lucide="check-square" class="me-2" style="width: 20px; height: 20px;"></i> Berkas Lolos Verifikasi
@@ -166,7 +166,7 @@ $footerWhatsapp = preg_replace('/[^0-9]/', '', (string)$settingModel->getValue('
 
         <!-- 4. ACCEPTED STATE -->
         <?php elseif ($registration['status'] === 'accepted'): ?>
-            <div class="card h-100 bg-success bg-opacity-5" style="border-left: 4px solid var(--sp-success);">
+            <div class="card shadow-sm border bg-success bg-opacity-5" style="border-left: 4px solid var(--sp-success);">
                 <div class="card-header bg-transparent py-3">
                     <h5 class="card-title text-success m-0 d-flex align-items-center">
                         <i data-lucide="award" class="me-2" style="width: 20px; height: 20px;"></i> Selamat! Anda Diterima
@@ -202,7 +202,7 @@ $footerWhatsapp = preg_replace('/[^0-9]/', '', (string)$settingModel->getValue('
 
         <!-- 5. REJECTED STATE -->
         <?php else: ?>
-            <div class="card h-100 bg-danger bg-opacity-5" style="border-left: 4px solid var(--sp-danger);">
+            <div class="card shadow-sm border bg-danger bg-opacity-5" style="border-left: 4px solid var(--sp-danger);">
                 <div class="card-header bg-transparent py-3">
                     <h5 class="card-title text-danger m-0 d-flex align-items-center">
                         <i data-lucide="x-circle" class="me-2" style="width: 20px; height: 20px;"></i> Hasil Seleksi
