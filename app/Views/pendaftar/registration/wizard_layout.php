@@ -438,6 +438,13 @@ $registrationGate = $registrationGate ?? ['is_open' => true, 'status' => 'unconf
         function themePrimaryColor() {
             return window.SpTheme ? SpTheme.getThemePrimary() : getComputedStyle(document.documentElement).getPropertyValue('--sp-primary').trim();
         }
+
+        function updateCsrfToken(newToken) {
+            if (!newToken) return;
+            document.querySelectorAll('input[name="csrf_token"]').forEach(input => {
+                input.value = newToken;
+            });
+        }
         
         // Initialize Lucide icons
         if (typeof lucide !== 'undefined') {
@@ -679,6 +686,9 @@ $registrationGate = $registrationGate ?? ['is_open' => true, 'status' => 'unconf
                     body: formData
                 });
                 const result = await response.json();
+                if (result.csrf_token) {
+                    updateCsrfToken(result.csrf_token);
+                }
                 return result.success === true;
             } catch (error) {
                 console.error('Silent save failed:', error);
@@ -701,6 +711,9 @@ $registrationGate = $registrationGate ?? ['is_open' => true, 'status' => 'unconf
                 });
 
                 const result = await response.json();
+                if (result.csrf_token) {
+                    updateCsrfToken(result.csrf_token);
+                }
 
                 if (!result.success) {
                     await swalFire({
@@ -748,8 +761,8 @@ $registrationGate = $registrationGate ?? ['is_open' => true, 'status' => 'unconf
                 cancelButtonColor: '#64748b',
                 confirmButtonText: 'Ya, Kirim Sekarang!',
                 cancelButtonText: 'Batal'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
+            }).then(async (sweetResult) => {
+                if (sweetResult.isConfirmed) {
                     Swal.fire({
                         title: 'Memproses Pendaftaran...',
                         allowOutsideClick: false,
@@ -757,6 +770,10 @@ $registrationGate = $registrationGate ?? ['is_open' => true, 'status' => 'unconf
                             Swal.showLoading();
                         }
                     });
+
+                    // Get latest CSRF hash from form input
+                    const csrfInput = document.querySelector('input[name="csrf_token"]');
+                    const csrfHash = csrfInput ? csrfInput.value : '<?= csrf_hash() ?>';
 
                     try {
                         const response = await fetch('<?= base_url('/pendaftar/daftar/submit') ?>', {
@@ -766,11 +783,14 @@ $registrationGate = $registrationGate ?? ['is_open' => true, 'status' => 'unconf
                             },
                             body: new URLSearchParams({
                                 'jalur_id': jalurId,
-                                '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                                '<?= csrf_token() ?>': csrfHash
                             })
                         });
 
                         const result = await response.json();
+                        if (result.csrf_token) {
+                            updateCsrfToken(result.csrf_token);
+                        }
 
                         if (!result.success) {
                             swalFire({

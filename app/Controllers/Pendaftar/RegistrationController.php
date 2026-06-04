@@ -132,7 +132,7 @@ class RegistrationController extends BaseController
 
         // Validasi step number
         if ($step < 1 || $step > 8) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Step tidak valid'])->setStatusCode(400);
+            return $this->response->setJSON(['success' => false, 'message' => 'Step tidak valid', 'csrf_token' => csrf_hash()])->setStatusCode(400);
         }
 
         if (! $gate['is_open']) {
@@ -140,6 +140,7 @@ class RegistrationController extends BaseController
                 'success' => false,
                 'message' => $gate['message'],
                 'errors'  => ['schedule' => $gate['message']],
+                'csrf_token' => csrf_hash(),
             ])->setStatusCode(403);
         }
 
@@ -149,6 +150,7 @@ class RegistrationController extends BaseController
                 'success' => false,
                 'message' => $paymentGate['message'],
                 'errors'  => ['payment' => $paymentGate['message']],
+                'csrf_token' => csrf_hash(),
             ])->setStatusCode(403);
         }
 
@@ -164,12 +166,14 @@ class RegistrationController extends BaseController
                 'success' => false,
                 'message' => $result['message'],
                 'errors'  => $result['errors'] ?? [],
+                'csrf_token' => csrf_hash(),
             ])->setStatusCode(422);
         }
 
         return $this->response->setJSON([
             'success' => true,
             'message' => $result['message'] ?? "Step {$step} berhasil disimpan",
+            'csrf_token' => csrf_hash(),
         ]);
     }
 
@@ -191,6 +195,7 @@ class RegistrationController extends BaseController
             return $this->response->setJSON([
                 'success' => false,
                 'message' => 'Jalur pendaftaran harus dipilih',
+                'csrf_token' => csrf_hash(),
             ])->setStatusCode(422);
         }
 
@@ -199,6 +204,7 @@ class RegistrationController extends BaseController
             return $this->response->setJSON([
                 'success' => false,
                 'message' => $gate['message'],
+                'csrf_token' => csrf_hash(),
             ])->setStatusCode(403);
         }
 
@@ -217,6 +223,7 @@ class RegistrationController extends BaseController
                 'success' => false,
                 'message' => 'Semua langkah harus diselesaikan terlebih dahulu',
                 'incompleteSteps' => $incompleteSteps,
+                'csrf_token' => csrf_hash(),
             ])->setStatusCode(422);
         }
 
@@ -227,6 +234,7 @@ class RegistrationController extends BaseController
             return $this->response->setJSON([
                 'success' => false,
                 'message' => $result['message'] ?? 'Pendaftaran gagal diproses',
+                'csrf_token' => csrf_hash(),
             ])->setStatusCode(400);
         }
 
@@ -257,6 +265,7 @@ class RegistrationController extends BaseController
             'success' => true,
             'message' => 'Pendaftaran berhasil disimpan',
             'registrationNumber' => $result['registration_number'] ?? null,
+            'csrf_token' => csrf_hash(),
         ]);
     }
 
