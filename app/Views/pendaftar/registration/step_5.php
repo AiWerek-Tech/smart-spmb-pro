@@ -1,6 +1,13 @@
 <?= $this->extend('pendaftar/registration/wizard_layout') ?>
 
 <?= $this->section('step_content') ?>
+<?php
+$standardOccupations = $dapodikValues['pekerjaan'] ?? [];
+$currentOccupation = $stepData['occupation'] ?? '';
+$isOtherOccupation = !empty($currentOccupation) && !in_array($currentOccupation, array_diff($standardOccupations, ['Lainnya']), true);
+$selectedOccupation = $isOtherOccupation ? 'Lainnya' : $currentOccupation;
+$occupationOtherVal = $isOtherOccupation ? $currentOccupation : '';
+?>
 <div class="p-4">
     <div class="d-flex align-items-center mb-4">
         <h4 class="wizard-step-title mb-0"><i data-lucide="shield-check"></i> Langkah 5: Data Wali</h4>
@@ -8,11 +15,18 @@
     </div>
     
     <div class="alert alert-info mb-4">
-        <i  data-lucide="info"></i> Bagian ini <strong>hanya diisi</strong> jika calon siswa tinggal/dibiayai oleh Wali (selain orang tua kandung). Jika tidak ada, silakan langsung klik <strong>Lanjut</strong>.
+        <i data-lucide="info"></i> Bagian ini <strong>hanya diisi</strong> jika calon siswa tinggal/dibiayai oleh Wali (selain orang tua kandung). Jika tidak ada, silakan langsung klik <strong>Lanjut</strong>.
     </div>
 
     <form id="stepForm5" method="POST">
         <?= csrf_field() ?>
+        
+        <div class="alert alert-info d-flex align-items-center mb-4">
+            <i data-lucide="info" class="me-2" style="width: 20px; height: 20px;"></i>
+            <div>
+                Data harus sesuai dengan <strong>Kartu Keluarga (KK)</strong> terbaru jika menggunakan Wali.
+            </div>
+        </div>
         
         <div class="row">
             <!-- Nama Wali -->
@@ -67,7 +81,7 @@
                 <select class="form-select" id="occupation" name="occupation">
                     <option value="">-- Pilih Pekerjaan --</option>
                     <?php foreach ($dapodikValues['pekerjaan'] as $job): ?>
-                        <option value="<?= esc($job) ?>" <?= ($stepData['occupation'] ?? '') === $job ? 'selected' : '' ?>><?= esc($job) ?></option>
+                        <option value="<?= esc($job) ?>" <?= $selectedOccupation === $job ? 'selected' : '' ?>><?= esc($job) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -81,6 +95,14 @@
                         <option value="<?= esc($inc) ?>" <?= ($stepData['income'] ?? '') === $inc ? 'selected' : '' ?>><?= esc($inc) ?></option>
                     <?php endforeach; ?>
                 </select>
+            </div>
+        </div>
+
+        <!-- Pekerjaan Lainnya (Manual Input) -->
+        <div class="row" id="occupation_other_group" style="<?= $selectedOccupation === 'Lainnya' ? '' : 'display: none;' ?>">
+            <div class="col-md-12 form-group">
+                <label for="occupation_other" class="form-label">Sebutkan Pekerjaan Secara Detail</label>
+                <input type="text" class="form-control" id="occupation_other" name="occupation_other" value="<?= esc($occupationOtherVal) ?>" placeholder="Sebutkan pekerjaan Wali secara manual">
             </div>
         </div>
 
@@ -102,5 +124,33 @@
         maxDate: "today",
         locale: "id"
     });
+
+    const occupationSelect = document.getElementById('occupation');
+    const occupationOtherGroup = document.getElementById('occupation_other_group');
+    const occupationOtherInput = document.getElementById('occupation_other');
+    const fullNameInput = document.getElementById('full_name');
+
+    function toggleOccupationOther() {
+        if (occupationSelect.value === 'Lainnya') {
+            occupationOtherGroup.style.display = 'flex';
+            // Only require occupation_other if the Wali full name is filled in
+            if (fullNameInput && fullNameInput.value.trim() !== '') {
+                occupationOtherInput.setAttribute('required', 'required');
+            } else {
+                occupationOtherInput.removeAttribute('required');
+            }
+        } else {
+            occupationOtherGroup.style.display = 'none';
+            occupationOtherInput.removeAttribute('required');
+        }
+    }
+
+    if (occupationSelect && occupationOtherGroup && occupationOtherInput) {
+        occupationSelect.addEventListener('change', toggleOccupationOther);
+        if (fullNameInput) {
+            fullNameInput.addEventListener('input', toggleOccupationOther);
+        }
+        toggleOccupationOther();
+    }
 </script>
 <?= $this->endSection() ?>

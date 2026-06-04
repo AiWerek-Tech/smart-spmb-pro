@@ -166,21 +166,21 @@ class AuthService
             ];
         }
 
-        // Cek keunikan email (Req 6.5)
-        if ($this->userModel->emailExists($email)) {
+        // Cek keunikan email jika diisi (Req 6.5)
+        if (!empty($email) && $this->userModel->emailExists($email)) {
             return [
                 'success' => false,
                 'user_id' => null,
                 'message' => 'Email sudah terdaftar. Gunakan email lain atau masuk.',
             ];
         }
-
+ 
         // Hash password dengan bcrypt (Req 25.3)
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-
+ 
         $userId = $this->userModel->insert([
             'name'      => $name,
-            'email'     => $email,
+            'email'     => !empty($email) ? $email : null,
             'password'  => $hashedPassword,
             'role'      => 'pendaftar',
             'is_active' => 1,

@@ -385,19 +385,30 @@ $registrationGate = $registrationGate ?? ['is_open' => true, 'status' => 'unconf
             </div>
 
             <!-- Footer Navigation -->
-            <div class="wizard-footer">
+            <div class="wizard-footer align-items-center">
                 <button type="button" class="btn btn-outline-secondary wizard-nav-btn align-items-center" id="homeBtn">
                     <i data-lucide="home" class="me-2" style="width: 16px; height: 16px;"></i> Beranda
                 </button>
                 <button type="button" class="btn btn-secondary wizard-nav-btn align-items-center" id="prevBtn" style="display: none;">
                     <i data-lucide="arrow-left" class="me-2" style="width: 16px; height: 16px;"></i> Kembali
                 </button>
+                
+                <!-- Status Draft Indikator -->
+                <div class="d-flex align-items-center ms-3 text-muted small" id="draftStatus">
+                    <i data-lucide="cloud-check" class="me-1 text-success" style="width:14px;height:14px;"></i> Draft tersimpan
+                </div>
+
                 <button type="button" class="btn btn-primary wizard-nav-btn align-items-center ms-auto" id="nextBtn">
                     Lanjut <i data-lucide="arrow-right" class="ms-2" style="width: 16px; height: 16px;"></i>
                 </button>
                 <button type="button" class="btn btn-success wizard-nav-btn align-items-center ms-auto" id="submitBtn" style="display: none;">
                     <i data-lucide="check" class="me-2" style="width: 16px; height: 16px;"></i> Selesai & Submit
                 </button>
+            </div>
+
+            <!-- Footer Copyright -->
+            <div class="text-center py-3 mt-2 border-top">
+                <small class="text-muted">&copy; <?= date('Y') ?> <?= esc($settingModel->getValue('school_name', 'Smart SPMB Pro')) ?> — Sistem Penerimaan Murid Baru</small>
             </div>
         </div>
     </div>
@@ -414,6 +425,10 @@ $registrationGate = $registrationGate ?? ['is_open' => true, 'status' => 'unconf
     <script>
         // Initialize current step based on PHP variable
         let currentStep = <?= $step ?? 1 ?>;
+        const userId = <?= (int)session()->get('user_id') ?>;
+        const draftKey = `spmb_draft_step_${currentStep}_user_${userId}`;
+        const draftTimestampKey = `spmb_draft_step_${currentStep}_user_${userId}_ts`;
+        let isDirty = false;
 
         function swalFire(options) {
             const themed = window.SpTheme ? SpTheme.mergeSwalOptions(options) : Object.assign({ confirmButtonColor: '#6366f1', cancelButtonColor: '#64748b' }, options);
@@ -477,7 +492,7 @@ $registrationGate = $registrationGate ?? ['is_open' => true, 'status' => 'unconf
                 }
             }
 
-            window.location.href = '<?= base_url('/') ?>';
+            window.location.href = '<?= base_url('/pendaftar/dashboard') ?>';
         });
 
         // Next button (saves step via AJAX, then redirects to next step page)
@@ -495,6 +510,7 @@ $registrationGate = $registrationGate ?? ['is_open' => true, 'status' => 'unconf
 
                 saveCurrentStep().then(success => {
                     if (success) {
+                        clearLocalDraft();
                         Swal.close();
                         window.location.href = `<?= base_url('/pendaftar/daftar/step/') ?>${currentStep + 1}`;
                     }
@@ -506,6 +522,169 @@ $registrationGate = $registrationGate ?? ['is_open' => true, 'status' => 'unconf
         document.getElementById('submitBtn')?.addEventListener('click', function() {
             submitRegistration();
         });
+
+        // Local Storage Draft Logic
+        const formEl = document.getElementById(`stepForm${currentStep}`);
+        if (formEl) {
+            $(formEl).on('input change', function() {
+                isDirty = true;
+                saveToLocalStorage();
+            });
+            checkForLocalDraft();
+        }
+
+        function saveToLocalStorage() {
+            if (!formEl) return;
+            const data = {};
+            const formData = new FormData(formEl);
+            for (const [key, value] of formData.entries()) {
+                const input = formEl.querySelector(`[name="${key}"]`);
+                if (input && input.type !== 'file' && input.type !== 'password') {
+                    data[key] = value;
+                }
+            }
+            localStorage.setItem(draftKey, JSON.stringify(data));
+            localStorage.setItem(draftTimestampKey, Date.now().toString());
+            updateDraftStatus('local');
+        }
+
+        function getLocalDraft() {
+            const dataStr = localStorage.getItem(draftKey);
+            const tsStr = localStorage.getItem(draftTimestampKey);
+            if (dataStr && tsStr) {
+                return {
+                    data: JSON.parse(dataStr),
+                    timestamp: parseInt(tsStr, 10)
+                };
+            }
+            return null;
+        }
+
+        function clearLocalDraft() {
+            localStorage.removeItem(draftKey);
+            localStorage.removeItem(draftTimestampKey);
+        }
+
+        function checkForLocalDraft() {
+            const draft = getLocalDraft();
+            if (!draft) return;
+
+            const ageMs = Date.now() - draft.timestamp;
+            if (ageMs > 24 * 60 * 60 * 1000) {
+                clearLocalDraft();
+                return;
+            }
+
+            let hasNewerData = false;
+            for (const [key, val] of Object.entries(draft.data)) {
+                const currentInput = $(formEl).find(`[name="${key}"]`);
+                if (currentInput.length > 0) {
+                    const currentVal = currentInput.val();
+                    if (val && !currentVal) {
+                        hasNewerData = true;
+                        break;
+                    }
+                }
+            }
+
+            if (hasNewerData) {
+                swalFire({
+                    icon: 'info',
+                    title: 'Pulihkan Draft?',
+                    text: 'Ditemukan draf pengisian sebelumnya yang belum tersimpan di server. Apakah Anda ingin memulihkannya?',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Pulihkan',
+                    cancelButtonText: 'Mulai Baru',
+                    confirmButtonColor: themePrimaryColor(),
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        restoreLocalDraft(draft.data);
+                    } else {
+                        clearLocalDraft();
+                    }
+                });
+            }
+        }
+
+        function restoreLocalDraft(data) {
+            for (const [key, val] of Object.entries(data)) {
+                const input = formEl.querySelector(`[name="${key}"]`);
+                if (!input) continue;
+
+                if (input.type === 'checkbox') {
+                    input.checked = (val === '1' || val === 'on' || val === true);
+                } else if (input.type === 'radio') {
+                    const radio = formEl.querySelector(`[name="${key}"][value="${val}"]`);
+                    if (radio) radio.checked = true;
+                } else {
+                    $(input).val(val).trigger('change');
+                }
+            }
+            isDirty = true;
+            swalFire({
+                icon: 'success',
+                title: 'Draft Dipulihkan',
+                text: 'Data draft lokal berhasil dimasukkan ke form.',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+
+        function updateDraftStatus(state) {
+            const statusEl = document.getElementById('draftStatus');
+            if (!statusEl) return;
+
+            let html = '';
+            if (state === 'saved') {
+                html = '<i data-lucide="cloud-check" class="me-1 text-success" style="width:14px;height:14px;"></i> Draft tersimpan';
+            } else if (state === 'saving') {
+                html = '<span class="spinner-border spinner-border-sm me-1 text-primary" role="status" style="width:12px;height:12px;"></span> Menyimpan...';
+            } else if (state === 'local') {
+                html = '<i data-lucide="database" class="me-1 text-warning" style="width:14px;height:14px;"></i> Draft tersimpan lokal';
+            } else if (state === 'offline' || state === 'error') {
+                html = '<i data-lucide="cloud-off" class="me-1 text-danger" style="width:14px;height:14px;"></i> Gagal sinkronisasi';
+            }
+
+            statusEl.innerHTML = html;
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        // Autosave to Server Interval (Every 30 seconds)
+        let autosaveInterval = null;
+        if (formEl) {
+            autosaveInterval = setInterval(async function() {
+                if (isDirty) {
+                    updateDraftStatus('saving');
+                    const success = await saveCurrentStepSilent();
+                    if (success) {
+                        isDirty = false;
+                        clearLocalDraft();
+                        updateDraftStatus('saved');
+                    } else {
+                        updateDraftStatus('offline');
+                    }
+                }
+            }, 30000);
+        }
+
+        // Silent save without redirect or alerts
+        async function saveCurrentStepSilent() {
+            if (!formEl) return true;
+            const formData = new FormData(formEl);
+            try {
+                const response = await fetch(`<?= base_url('/pendaftar/daftar/step/') ?>${currentStep}/save`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                return result.success === true;
+            } catch (error) {
+                console.error('Silent save failed:', error);
+                return false;
+            }
+        }
 
         // Save current step via AJAX
         async function saveCurrentStep() {

@@ -25,7 +25,7 @@ class RegistrationServiceTest extends CIUnitTestCase
 {
     use DatabaseTestTrait;
 
-    protected $migrate = true;
+    protected $migrate = false;
     protected $namespace = 'App';
 
     protected RegistrationService $service;
@@ -64,7 +64,7 @@ class RegistrationServiceTest extends CIUnitTestCase
         // Cleanup
         foreach (['payment_logs', 'payments', 'invoice_items', 'invoices', 'payment_methods'] as $table) {
             if ($db->tableExists($table)) {
-                $db->table($table)->truncate();
+                $db->table($table)->where('1=1')->delete();
             }
         }
 
@@ -421,6 +421,9 @@ class RegistrationServiceTest extends CIUnitTestCase
         ];
 
         $result = $this->service->saveStep($userId, 1, $data);
+        if (!$result['success']) {
+            fwrite(STDERR, "SAVE STEP FAILED WITH: " . print_r($result, true));
+        }
 
         $this->assertTrue($result['success']);
 

@@ -121,7 +121,13 @@ class RegistrationService
         $address = $this->addressModel->findByStudentId($studentId);
         $contact = $this->contactModel->findByStudentId($studentId);
 
-        return array_merge($address ?? [], $contact ?? []);
+        $merged = array_merge($address ?? [], $contact ?? []);
+        if (!empty($merged)) {
+            $merged['street_address'] = $merged['address'] ?? '';
+            $merged['subdistrict']    = $merged['district'] ?? '';
+            $merged['district']       = $merged['city'] ?? '';
+        }
+        return $merged;
     }
 
     /**
@@ -129,7 +135,17 @@ class RegistrationService
      */
     protected function getDraftFamilyData(int $studentId, string $familyType): array
     {
-        return $this->familyModel->findByStudentAndType($studentId, $familyType) ?? [];
+        $data = $this->familyModel->findByStudentAndType($studentId, $familyType);
+        if ($data === null) {
+            return [];
+        }
+
+        // Map database columns to view fields
+        $data['income'] = $data['monthly_income'] ?? null;
+        $data['phone_number'] = $data['phone'] ?? null;
+        $data['relation'] = $data['relationship'] ?? null;
+
+        return $data;
     }
 
     // -------------------------------------------------------------------------
@@ -217,7 +233,7 @@ class RegistrationService
             return [
                 'success' => false,
                 'errors'  => [],
-                'message' => 'Terjadi kesalahan. Silakan coba lagi.',
+                'message' => 'Terjadi kesalahan. Silakan coba lagi. Error: ' . $e->getMessage(),
             ];
         }
     }
@@ -249,6 +265,7 @@ class RegistrationService
             'birth_place'     => $data['birth_place'] ?? '',
             'birth_date'      => $data['birth_date'] ?? null,
             'religion'        => $data['religion'] ?? '',
+            'religion_subgroup_id' => !empty($data['religion_subgroup_id']) ? (int) $data['religion_subgroup_id'] : null,
             'citizenship'     => $data['citizenship'] ?? '',
             'family_status'   => $data['family_status'] ?? '',
             'nik'             => $data['nik'] ?? '',
@@ -257,7 +274,9 @@ class RegistrationService
             'special_needs'   => $data['special_needs'] ?? 'Tidak Ada',
         ];
 
-        $this->studentModel->update($studentId, $updateData);
+        if (!$this->studentModel->update($studentId, $updateData)) {
+            throw new \RuntimeException('Update failed: ' . json_encode($this->studentModel->errors()));
+        }
 
         return $errors;
     }
@@ -281,18 +300,21 @@ class RegistrationService
         // Simpan data address
         $addressData = [
             'student_id'      => $studentId,
-            'street_address'  => $data['street_address'] ?? '',
+            'address'         => $data['street_address'] ?? '',
             'rt'              => $data['rt'] ?? null,
             'rw'              => $data['rw'] ?? null,
             'hamlet'          => $data['hamlet'] ?? '',
             'village'         => $data['village'] ?? '',
-            'subdistrict'     => $data['subdistrict'] ?? '',
-            'district'        => $data['district'] ?? '',
+            'district'        => $data['subdistrict'] ?? '',
+            'city'            => $data['district'] ?? '',
             'province'        => $data['province'] ?? '',
             'postal_code'     => $data['postal_code'] ?? '',
             'residence_type'  => $data['residence_type'] ?? '',
             'distance_km'     => floatval($data['distance_km'] ?? 0),
             'transport_mode'  => $data['transport_mode'] ?? '',
+            'travel_duration_minutes' => !empty($data['travel_duration_minutes']) ? (int) $data['travel_duration_minutes'] : null,
+            'latitude'        => !empty($data['latitude']) ? floatval($data['latitude']) : null,
+            'longitude'       => !empty($data['longitude']) ? floatval($data['longitude']) : null,
         ];
 
         $existingAddress = $this->addressModel->findByStudentId($studentId);
@@ -359,18 +381,23 @@ class RegistrationService
             return $errors;
         }
 
+        $occupation = $data['occupation'] ?? null;
+        if ($occupation === 'Lainnya' && !empty($data['occupation_other'])) {
+            $occupation = trim($data['occupation_other']);
+        }
+
         $familyData = [
-            'student_id'   => $studentId,
-            'family_type'  => $familyType,
-            'full_name'    => $data['full_name'] ?? '',
-            'nik'          => $data['nik'] ?? null,
-            'birth_place'  => $data['birth_place'] ?? '',
-            'birth_date'   => $data['birth_date'] ?? null,
-            'education'    => $data['education'] ?? null,
-            'occupation'   => $data['occupation'] ?? null,
-            'income'       => $data['income'] ?? null,
-            'phone_number' => $data['phone_number'] ?? null,
-            'relation'     => $data['relation'] ?? null, // untuk wali
+            'student_id'     => $studentId,
+            'family_type'    => $familyType,
+            'full_name'      => $data['full_name'] ?? '',
+            'nik'            => $data['nik'] ?? null,
+            'birth_place'    => $data['birth_place'] ?? '',
+            'birth_date'     => $data['birth_date'] ?? null,
+            'education'      => $data['education'] ?? null,
+            'occupation'     => $occupation,
+            'monthly_income' => $data['income'] ?? null,
+            'phone'          => $data['phone_number'] ?? null,
+            'relationship'   => $data['relation'] ?? null, // untuk wali
         ];
 
         $existing = $this->familyModel->findByStudentAndType($studentId, $familyType);
@@ -445,7 +472,8 @@ class RegistrationService
     {
         $academicYear = $this->academicYearService->activeYear();
         $documentRequirementService = new DocumentRequirementService();
-        $missingDocuments = $documentRequirementService->missingRequiredDocuments($studentId, $academicYear);
+        $jalurId = !empty($data['jalur_id']) ? (int)$data['jalur_id'] : null;
+        $missingDocuments = $documentRequirementService->missingRequiredDocuments($studentId, $academicYear, $jalurId);
 
         if ($missingDocuments !== []) {
             return [

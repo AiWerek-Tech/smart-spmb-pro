@@ -27,6 +27,9 @@ class StudentAddressModel extends Model
         'residence_type',
         'distance_km',
         'transport_mode',
+        'travel_duration_minutes',
+        'latitude',
+        'longitude',
     ];
 
     protected $useTimestamps = true;

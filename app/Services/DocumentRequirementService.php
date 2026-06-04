@@ -144,6 +144,7 @@ class DocumentRequirementService
             $documentModel->select('document_type')
                 ->where('student_id', $studentId)
                 ->where('academic_year', $academicYear)
+                ->where('status !=', 'rejected')
                 ->findAll(),
             'document_type'
         );

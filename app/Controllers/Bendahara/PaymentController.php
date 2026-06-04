@@ -117,28 +117,54 @@ class PaymentController extends BaseController
             'search' => (string) $this->request->getGet('search'),
         ]);
 
-        $handle = fopen('php://temp', 'r+');
-        fputcsv($handle, ['Invoice', 'No Pendaftaran', 'Nama', 'Tahun Pelajaran', 'Status', 'Total', 'Dibayar', 'Sisa']);
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet       = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Rekap Pembayaran');
+
+        // Header row
+        $headers = ['Invoice', 'No Pendaftaran', 'Nama', 'Tahun Pelajaran', 'Status', 'Total', 'Dibayar', 'Sisa'];
+        $sheet->fromArray($headers, null, 'A1');
+
+        // Style header row
+        $headerStyle = [
+            'font'      => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill'      => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']],
+            'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
+        ];
+        $sheet->getStyle('A1:H1')->applyFromArray($headerStyle);
+
+        // Populate data
+        $rowNum = 2;
         foreach ($rows as $row) {
-            fputcsv($handle, [
-                $row['invoice_number'],
-                $row['registration_number'],
-                $row['full_name'],
-                $row['academic_year'],
-                $row['status'],
-                $row['total_amount'],
-                $row['paid_amount'],
-                $row['balance_amount'],
-            ]);
+            $sheet->setCellValue('A' . $rowNum, $row['invoice_number']);
+            $sheet->setCellValue('B' . $rowNum, $row['registration_number'] ?: '-');
+            $sheet->setCellValue('C' . $rowNum, $row['full_name']);
+            $sheet->setCellValue('D' . $rowNum, $row['academic_year']);
+            $sheet->setCellValue('E' . $rowNum, strtoupper($row['status']));
+            $sheet->setCellValue('F' . $rowNum, (float) $row['total_amount']);
+            $sheet->setCellValue('G' . $rowNum, (float) $row['paid_amount']);
+            $sheet->setCellValue('H' . $rowNum, (float) $row['balance_amount']);
+
+            // Format numbers
+            $sheet->getStyle('F' . $rowNum . ':H' . $rowNum)->getNumberFormat()->setFormatCode('#,##0.00');
+            $rowNum++;
         }
-        rewind($handle);
-        $csv = stream_get_contents($handle) ?: '';
-        fclose($handle);
+
+        // Auto-fit columns
+        foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'] as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        
+        ob_start();
+        $writer->save('php://output');
+        $excelData = ob_get_clean();
 
         return $this->response
-            ->setHeader('Content-Type', 'text/csv')
-            ->setHeader('Content-Disposition', 'attachment; filename="rekap-pembayaran-spmb-' . date('Y-m-d') . '.csv"')
-            ->setBody($csv);
+            ->setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->setHeader('Content-Disposition', 'attachment; filename="rekap-pembayaran-spmb-' . date('Y-m-d') . '.xlsx"')
+            ->setBody($excelData);
     }
 
     private function invoiceRows(array $filters): array
@@ -225,5 +251,36 @@ class PaymentController extends BaseController
         }
 
         return $summary;
+    }
+
+    public function approve(int $paymentId)
+    {
+        $actorId = (int)session()->get('user_id');
+        $result = $this->billingService->approvePendingPayment($paymentId, $actorId);
+        
+        if ($result['success']) {
+            return redirect()->to('bendahara/invoices/' . $result['invoice_id'])->with('success', $result['message']);
+        }
+        return redirect()->back()->with('error', $result['message']);
+    }
+
+    public function reject(int $paymentId)
+    {
+        $rules = [
+            'rejection_reason' => 'required|min_length[3]',
+        ];
+
+        if (! $this->validate($rules)) {
+            return redirect()->back()->withInput()->with('error', 'Alasan penolakan wajib diisi.');
+        }
+
+        $reason = $this->request->getPost('rejection_reason');
+        $actorId = (int)session()->get('user_id');
+        $result = $this->billingService->rejectPendingPayment($paymentId, $reason, $actorId);
+
+        if ($result['success']) {
+            return redirect()->to('bendahara/invoices/' . $result['invoice_id'])->with('success', $result['message']);
+        }
+        return redirect()->back()->with('error', $result['message']);
     }
 }

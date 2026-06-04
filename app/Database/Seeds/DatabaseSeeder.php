@@ -15,5 +15,9 @@ class DatabaseSeeder extends Seeder
         $this->call('JalurSeeder');
         $this->call('SettingsSeeder');
         $this->call('AdminUserSeeder');
+        $this->call('FeeTypeSeeder');
+        $this->call('PaymentMethodSeeder');
+        $this->call('ReligionSeeder');
+        $this->call('WilayahSeeder');
     }
 }

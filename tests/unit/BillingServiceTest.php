@@ -17,7 +17,7 @@ class BillingServiceTest extends CIUnitTestCase
 {
     use DatabaseTestTrait;
 
-    protected $migrate = true;
+    protected $migrate = false;
     protected $namespace = 'App';
 
     private UserModel $userModel;
@@ -49,7 +49,7 @@ class BillingServiceTest extends CIUnitTestCase
 
         foreach (['payment_logs', 'payments', 'invoice_items', 'invoices', 'payment_methods'] as $table) {
             if ($db->tableExists($table)) {
-                $db->table($table)->truncate();
+                $db->table($table)->where('1=1')->delete();
             }
         }
 

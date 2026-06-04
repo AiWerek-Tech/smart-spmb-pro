@@ -71,6 +71,11 @@ class RegistrationController extends BaseController
             return redirect()->to(base_url('pendaftar/dashboard'))->with('error', $gate['message']);
         }
 
+        $paymentGate = $this->registrationGateService->paymentGateStatus($userId, $academicYear);
+        if (! $paymentGate['is_open']) {
+            return redirect()->to(base_url('pendaftar/dashboard'))->with('error', $paymentGate['message']);
+        }
+
         // Ambil draft data sebelumnya
         $draftData = $this->registrationService->getDraftData($userId);
         $stepData  = $draftData["step_{$step}"] ?? [];
@@ -78,6 +83,20 @@ class RegistrationController extends BaseController
         // Ambil jalur untuk dropdown (Req 8.3)
         $jalurs = $this->jalurModel->where('is_active', 1)->findAll();
         $requirements = $this->documentRequirementService->requirements($academicYear);
+
+        $religions = [];
+        $religionSubgroups = [];
+        if ($step === 1) {
+            $religionModel = new \App\Models\ReligionModel();
+            $religions = $religionModel->orderBy('name', 'ASC')->findAll();
+            if (!empty($stepData['religion'])) {
+                $religionObj = $religionModel->where('name', $stepData['religion'])->first();
+                if ($religionObj) {
+                    $subgroupModel = new \App\Models\ReligionSubgroupModel();
+                    $religionSubgroups = $subgroupModel->getByReligionId((int)$religionObj['id']);
+                }
+            }
+        }
 
         // Tambahkan data jalur ke view
         $viewData = [
@@ -91,6 +110,8 @@ class RegistrationController extends BaseController
             'registrationGate' => $gate,
             'errors'       => [],
             'dapodikValues' => $this->getDapodikDropdownData(),
+            'religions'    => $religions,
+            'religionSubgroups' => $religionSubgroups,
         ];
 
         return view("pendaftar/registration/step_{$step}", $viewData);
@@ -119,6 +140,15 @@ class RegistrationController extends BaseController
                 'success' => false,
                 'message' => $gate['message'],
                 'errors'  => ['schedule' => $gate['message']],
+            ])->setStatusCode(403);
+        }
+
+        $paymentGate = $this->registrationGateService->paymentGateStatus($userId, $academicYear);
+        if (! $paymentGate['is_open']) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => $paymentGate['message'],
+                'errors'  => ['payment' => $paymentGate['message']],
             ])->setStatusCode(403);
         }
 
@@ -235,8 +265,15 @@ class RegistrationController extends BaseController
      */
     protected function getDapodikDropdownData(): array
     {
+        // Load religions from database, fallback to hardcoded if empty
+        $religionModel = new \App\Models\ReligionModel();
+        $dbReligions = $religionModel->orderBy('name', 'ASC')->findAll();
+        $agamaList = !empty($dbReligions)
+            ? array_map(fn ($r) => $r['name'], $dbReligions)
+            : ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
+
         return [
-            'agama' => ['Islam', 'Kristen Protestan', 'Kristen Katolik', 'Hindu', 'Buddha', 'Konghucu'],
+            'agama' => $agamaList,
             'jenis_tinggal' => ['Bersama orang tua', 'Kos', 'Asrama', 'Panti asuhan', 'Lainnya'],
             'moda_transportasi' => ['Jalan kaki', 'Sepeda', 'Sepeda motor', 'Mobil pribadi', 'Angkutan umum', 'Perahu'],
             'pendidikan' => ['Tidak tamat SD', 'SD/Sederajat', 'SMP/Sederajat', 'SMA/Sederajat', 'Diploma', 'Sarjana', 'Magister', 'Doktor'],
@@ -246,5 +283,31 @@ class RegistrationController extends BaseController
             'peringkat_prestasi' => ['Juara 1', 'Juara 2', 'Juara 3', 'Peserta'],
             'kondisi_khusus' => ['Tidak Ada', 'Tunanetra', 'Tunarungu', 'Tuna wicara', 'Tunagrahita', 'Tunadaksa', 'Autisme', 'ADHD'],
         ];
+    }
+
+    public function getReligionSubgroups()
+    {
+        $religionName = $this->request->getGet('religion');
+        if (empty($religionName)) {
+            return $this->response->setJSON([]);
+        }
+
+        // Handle specific frontend mappings if any
+        if ($religionName === 'Kristen Protestan') {
+            $religionName = 'Kristen';
+        } elseif ($religionName === 'Kristen Katolik') {
+            $religionName = 'Katolik';
+        }
+
+        $religionModel = new \App\Models\ReligionModel();
+        $subgroupModel = new \App\Models\ReligionSubgroupModel();
+
+        $religion = $religionModel->where('name', $religionName)->first();
+        if (!$religion) {
+            return $this->response->setJSON([]);
+        }
+
+        $subgroups = $subgroupModel->getByReligionId((int)$religion['id']);
+        return $this->response->setJSON($subgroups);
     }
 }

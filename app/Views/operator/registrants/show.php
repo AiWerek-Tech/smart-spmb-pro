@@ -8,6 +8,19 @@
             <i class="me-1" data-lucide="arrow-left"></i> Kembali ke Daftar Pendaftar
         </a>
         <div class="role-page-actions">
+            <!-- Form Override Access Button -->
+            <form action="<?= base_url('operator/registrants/'.$registration['id'].'/toggle-override') ?>" method="POST" class="d-inline me-2">
+                <?= csrf_field() ?>
+                <?php if ((int)($registration['form_override'] ?? 0) === 1): ?>
+                    <button type="submit" class="btn btn-sm btn-warning">
+                        <i class="me-1" data-lucide="unlock"></i> Matikan Override Akses
+                    </button>
+                <?php else: ?>
+                    <button type="submit" class="btn btn-sm btn-outline-warning">
+                        <i class="me-1" data-lucide="lock"></i> Override Akses Formulir
+                    </button>
+                <?php endif; ?>
+            </form>
             <!-- Verify documents link -->
             <a href="<?= base_url('operator/documents/'.$registration['id']) ?>" class="btn btn-sm btn-success me-2">
                 <i class="me-1" data-lucide="folder-open"></i> Verifikasi Dokumen
@@ -31,6 +44,10 @@
                             <h1 class="role-page-header__title me-3"><?= esc($registration['full_name']) ?></h1>
                             <span class="badge bg-light text-primary border me-2">Jalur <?= esc($registration['jalur_name']) ?></span>
                             
+                            <?php if ((int)($registration['form_override'] ?? 0) === 1): ?>
+                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-3 py-1 me-2"><i class="me-1" data-lucide="unlock" style="width: 12px; height: 12px;"></i> Override Aktif</span>
+                            <?php endif; ?>
+
                             <?php if ($registration['status'] === 'accepted'): ?>
                                 <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-1">Lulus</span>
                             <?php elseif ($registration['status'] === 'rejected'): ?>
@@ -387,11 +404,14 @@
                                                 <td class="small text-muted"><?= number_format($doc['file_size'] / 1024, 1) ?> KB</td>
                                                 <td>
                                                     <?php if ($doc['status'] === 'approved'): ?>
-                                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2">Disetujui</span>
+                                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 d-inline-flex align-items-center"><i class="me-1" data-lucide="check-circle" style="width:12px;height:12px;"></i> Disetujui</span>
                                                     <?php elseif ($doc['status'] === 'rejected'): ?>
-                                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-2">Ditolak</span>
+                                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-2 d-inline-flex align-items-center"><i class="me-1" data-lucide="alert-triangle" style="width:12px;height:12px;"></i> Ditolak</span>
+                                                        <?php if (!empty($doc['rejection_reason'])): ?>
+                                                            <div class="text-danger small mt-1 font-monospace" style="font-size: 0.75rem;">Alasan: <?= esc($doc['rejection_reason']) ?></div>
+                                                        <?php endif; ?>
                                                     <?php else: ?>
-                                                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-2">Pending</span>
+                                                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-2 d-inline-flex align-items-center"><i class="me-1" data-lucide="clock" style="width:12px;height:12px;"></i> Pending</span>
                                                     <?php endif; ?>
                                                 </td>
                                                 <td class="text-center">

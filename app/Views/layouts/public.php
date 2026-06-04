@@ -12,21 +12,31 @@ $footerAccreditation = $settingModel->getValue('accreditation', 'A');
 $footerNpsn = $settingModel->getValue('npsn', '-');
 $footerDesc = $settingModel->getValue('school_description', 'Membentuk generasi cerdas, berkarakter, dan siap menghadapi tantangan global dengan sistem pendidikan inovatif.');
 $footerSocialLinks = [
-    ['key' => 'facebook_url', 'label' => 'Facebook', 'icon' => 'facebook'],
-    ['key' => 'instagram_url', 'label' => 'Instagram', 'icon' => 'instagram'],
-    ['key' => 'youtube_url', 'label' => 'YouTube', 'icon' => 'youtube'],
-    ['key' => 'tiktok_url', 'label' => 'TikTok', 'icon' => 'music-2'],
-    ['key' => 'website_url', 'label' => 'Website', 'icon' => 'globe-2'],
-    ['key' => 'email', 'label' => 'Email', 'icon' => 'mail', 'prefix' => 'mailto:'],
-    ['key' => 'whatsapp', 'label' => 'WhatsApp', 'icon' => 'message-circle', 'prefix' => 'https://wa.me/'],
+    ['key' => 'social_facebook', 'label' => 'Facebook', 'icon' => 'facebook'],
+    ['key' => 'social_instagram', 'label' => 'Instagram', 'icon' => 'instagram'],
+    ['key' => 'social_youtube', 'label' => 'YouTube', 'icon' => 'youtube'],
+    ['key' => 'social_tiktok', 'label' => 'TikTok', 'icon' => 'music-2'],
+    ['key' => 'social_website', 'label' => 'Website', 'icon' => 'globe-2'],
+    ['key' => 'social_email', 'label' => 'Email', 'icon' => 'mail', 'prefix' => 'mailto:'],
+    ['key' => 'social_whatsapp', 'label' => 'WhatsApp', 'icon' => 'message-circle', 'prefix' => 'https://wa.me/'],
 ];
 $footerSocialLinks = array_values(array_filter(array_map(static function (array $item) use ($settingModel) {
     $value = trim((string) $settingModel->getValue($item['key'], ''));
+    
+    // Fallback to general email/whatsapp settings if custom social email/whatsapp is empty
+    if ($value === '') {
+        if ($item['key'] === 'social_email') {
+            $value = trim((string) $settingModel->getValue('email', ''));
+        } elseif ($item['key'] === 'social_whatsapp') {
+            $value = trim((string) $settingModel->getValue('whatsapp', ''));
+        }
+    }
+
     if ($value === '') {
         return null;
     }
 
-    if (($item['key'] ?? '') === 'whatsapp') {
+    if ($item['key'] === 'social_whatsapp') {
         $value = preg_replace('/[^0-9]/', '', $value);
         if ($value === '') {
             return null;
@@ -347,7 +357,13 @@ $schoolLogoUrl = !empty($schoolLogo) ? base_url($schoolLogo) : '';
                         <div class="sp-footer-social">
                             <?php foreach ($footerSocialLinks as $social): ?>
                                 <a href="<?= esc($social['url']) ?>" class="footer-social-link" aria-label="<?= esc($social['label']) ?>" target="_blank" rel="noopener">
-                                    <i data-lucide="<?= esc($social['icon']) ?>"></i>
+                                    <?php if ($social['icon'] === 'music-2'): ?>
+                                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="lucide-tiktok" style="vertical-align: middle;">
+                                            <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path>
+                                        </svg>
+                                    <?php else: ?>
+                                        <i data-lucide="<?= esc($social['icon']) ?>"></i>
+                                    <?php endif; ?>
                                 </a>
                             <?php endforeach; ?>
                         </div>

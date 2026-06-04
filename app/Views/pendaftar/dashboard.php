@@ -4,6 +4,8 @@
 <?php
 $registrationGate = $registrationGate ?? ['is_open' => true, 'status' => 'unconfigured', 'message' => ''];
 $canOpenRegistration = !empty($registration) || (bool) ($registrationGate['is_open'] ?? true);
+$settingModel = new \App\Models\SettingModel();
+$footerWhatsapp = preg_replace('/[^0-9]/', '', (string)$settingModel->getValue('whatsapp', '6282190822641'));
 ?>
 <div class="admin-page-shell role-page-shell">
     <!-- Welcome Header -->
@@ -47,9 +49,17 @@ $canOpenRegistration = !empty($registration) || (bool) ($registrationGate['is_op
                                 <div>
                                     <strong>Jadwal Pendaftaran Aktif</strong>
                                     <p class="mb-0 small"><?= esc($registrationGate['message'] ?? 'Pendaftaran sedang dibuka.') ?></p>
+                                    <?php if (!empty($registrationGate['gelombang'])): ?>
+                                        <div class="mt-2 small">
+                                            <span class="badge bg-success me-1"><?= esc($registrationGate['gelombang']['name'] ?? 'Gelombang') ?></span>
+                                            <span class="text-dark">Tahun Pelajaran <strong><?= esc($academicYear ?? '-') ?></strong></span>
+                                            <?php if (!empty($registrationGate['gelombang']['open_date']) && !empty($registrationGate['gelombang']['close_date'])): ?>
+                                                <br><span class="text-muted">Periode: <?= date('d M Y', strtotime($registrationGate['gelombang']['open_date'])) ?> — <?= date('d M Y', strtotime($registrationGate['gelombang']['close_date'])) ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
-                        <?php endif; ?>
                         <div class="alert alert-primary border-0 d-flex align-items-start mb-3">
                             <i data-lucide="save" class="me-2 mt-1 flex-shrink-0" style="width: 18px; height: 18px;"></i>
                             <div>
@@ -213,6 +223,100 @@ $canOpenRegistration = !empty($registration) || (bool) ($registrationGate['is_op
                 </div>
             </div>
         <?php endif; ?>
+
+        <!-- TAGIHAN & PEMBAYARAN -->
+        <div class="card shadow-sm border mb-4 mt-3">
+            <div class="card-header bg-transparent py-3 d-flex align-items-center justify-content-between">
+                <h5 class="card-title m-0 text-dark d-flex align-items-center">
+                    <i data-lucide="credit-card" class="me-2 text-primary" style="width: 20px; height: 20px;"></i> Tagihan & Status Pembayaran
+                </h5>
+                <span class="badge bg-label-secondary border rounded"><?= count($invoices ?? []) ?> Tagihan</span>
+            </div>
+            <div class="card-body p-0">
+                <?php if (empty($invoices)): ?>
+                    <div class="text-center py-5 text-muted">
+                        <i data-lucide="wallet" class="mb-2 text-muted" style="width: 48px; height: 48px;"></i>
+                        <p class="mb-0 fw-semibold">Belum ada tagihan diterbitkan</p>
+                        <small class="text-muted">Tagihan akan otomatis terbit setelah Anda mengirimkan pendaftaran atau jika terdapat biaya pendaftaran awal.</small>
+                    </div>
+                <?php else: ?>
+                    <div class="table-responsive text-nowrap">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>No. Invoice</th>
+                                    <th>Rincian Biaya</th>
+                                    <th>Total Tagihan</th>
+                                    <th>Sudah Dibayar</th>
+                                    <th>Status</th>
+                                    <th class="text-end" style="padding-right: 24px;">Rincian</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-border-bottom-0">
+                                <?php foreach ($invoices as $inv): ?>
+                                    <tr>
+                                        <td>
+                                            <code class="fw-bold text-dark"><?= esc($inv['invoice_number']) ?></code>
+                                            <?php if ((int)$inv['registration_id'] === 0): ?>
+                                                <span class="badge bg-label-warning text-dark ms-1" style="font-size: 0.65rem;">Biaya Awal</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex flex-column">
+                                                <?php if (!empty($inv['items'])): ?>
+                                                    <?php foreach ($inv['items'] as $item): ?>
+                                                        <span class="small text-dark fw-semibold">• <?= esc($item['name']) ?> (Rp <?= number_format($item['total_amount'], 0, ',', '.') ?>)</span>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
+                                                    <span class="text-muted small">Tidak ada rincian item</span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="fw-bold text-dark">Rp <?= number_format($inv['total_amount'], 0, ',', '.') ?></span>
+                                        </td>
+                                        <td>
+                                            <span class="text-success small">Rp <?= number_format($inv['paid_amount'], 0, ',', '.') ?></span>
+                                        </td>
+                                        <td>
+                                            <?php if ($inv['status'] === 'paid'): ?>
+                                                <span class="badge bg-label-success"><i class="me-1" data-lucide="check-circle" style="width:12px;height:12px;"></i> Lunas</span>
+                                            <?php elseif ($inv['has_pending_payment']): ?>
+                                                <span class="badge bg-label-info text-dark"><i class="me-1" data-lucide="clock" style="width:12px;height:12px;"></i> Menunggu Verifikasi</span>
+                                            <?php elseif ($inv['status'] === 'partial'): ?>
+                                                <span class="badge bg-label-warning text-dark"><i class="me-1" data-lucide="help-circle" style="width:12px;height:12px;"></i> Sebagian</span>
+                                            <?php else: ?>
+                                                <span class="badge bg-label-danger"><i class="me-1" data-lucide="alert-circle" style="width:12px;height:12px;"></i> Belum Bayar</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="text-end" style="padding-right: 24px;">
+                                            <?php if ($inv['status'] !== 'paid'): ?>
+                                                <?php if ($inv['has_pending_payment']): ?>
+                                                    <span class="badge bg-label-info text-dark">Sedang Diverifikasi</span>
+                                                <?php else: ?>
+                                                    <div class="d-inline-flex gap-1">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary show-payment-instructions" data-number="<?= esc($inv['invoice_number']) ?>" data-total="Rp <?= number_format($inv['total_amount'] - $inv['paid_amount'], 0, ',', '.') ?>">
+                                                            Cara Bayar
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary confirm-payment-btn" data-id="<?= esc($inv['id']) ?>" data-number="<?= esc($inv['invoice_number']) ?>" data-balance="<?= esc($inv['total_amount'] - $inv['paid_amount']) ?>" data-balance-formatted="Rp <?= number_format($inv['total_amount'] - $inv['paid_amount'], 0, ',', '.') ?>">
+                                                            Konfirmasi Bayar
+                                                        </button>
+                                                    </div>
+                                                <?php endif; ?>
+                                            <?php else: ?>
+                                                <button type="button" class="btn btn-sm btn-outline-success" disabled>
+                                                    <i data-lucide="check" style="width:14px;height:14px;"></i> Lunas
+                                                </button>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
 
     <!-- SIDE PANEL: Profile Summary & Action List -->
@@ -260,7 +364,149 @@ $canOpenRegistration = !empty($registration) || (bool) ($registrationGate['is_op
                 </div>
             </div>
         </div>
+
+        <!-- DETAIL PENERIMAAN -->
+        <div class="card shadow-sm border mb-4">
+            <div class="card-header bg-transparent py-3 d-flex align-items-center gap-2">
+                <i data-lucide="info" class="text-primary" style="width: 20px; height: 20px;"></i>
+                <h5 class="card-title m-0 text-dark">Detail Penerimaan</h5>
+            </div>
+            <div class="card-body p-3">
+                <ul class="list-group list-group-flush mb-0">
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-0 bg-transparent">
+                        <span class="text-muted small">Tahun Pelajaran</span>
+                        <span class="fw-bold small text-dark"><?= esc($academicYear) ?></span>
+                    </li>
+                    <?php if (!empty($registrationGate['gelombang'])): ?>
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-0 bg-transparent">
+                            <span class="text-muted small">Gelombang Aktif</span>
+                            <span class="badge bg-label-primary border"><?= esc($registrationGate['gelombang']['name']) ?></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-0 bg-transparent">
+                            <span class="text-muted small">Masa Pendaftaran</span>
+                            <span class="fw-bold small text-dark" style="font-size:0.72rem;">
+                                <?= date('d M Y', strtotime($registrationGate['gelombang']['open_date'])) ?> s/d <?= date('d M Y', strtotime($registrationGate['gelombang']['close_date'])) ?>
+                            </span>
+                        </li>
+                    <?php else: ?>
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-0 bg-transparent">
+                            <span class="text-muted small">Gelombang Aktif</span>
+                            <span class="text-muted small">-</span>
+                        </li>
+                    <?php endif; ?>
+                    <?php if (!empty($registration['jalur_name'])): ?>
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-0 bg-transparent">
+                            <span class="text-muted small">Jalur Pilihan</span>
+                            <span class="badge bg-label-info border"><?= esc($registration['jalur_name']) ?></span>
+                        </li>
+                    <?php elseif (!empty($registration['jalur_id'])): ?>
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-0 bg-transparent">
+                            <span class="text-muted small">Jalur Pilihan</span>
+                            <span class="badge bg-label-info border">ID: <?= esc($registration['jalur_id']) ?></span>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+        </div>
     </div>
     </div>
 </div>
+
+<!-- Modal Konfirmasi Pembayaran -->
+<div class="modal fade" id="paymentConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Konfirmasi Pembayaran</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="paymentConfirmForm" method="POST" enctype="multipart/form-data">
+                <?= csrf_field() ?>
+                <div class="modal-body">
+                    <div class="alert alert-warning border-0 small mb-3">
+                        Silakan unggah bukti transfer bank / struk pembayaran Anda. Panitia akan memverifikasi berkas dalam 1-2 hari kerja.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">No. Invoice</label>
+                        <input type="text" class="form-control" id="confirm_invoice_number" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required-field" for="confirm_payment_method_id">Metode Pembayaran Tujuan</label>
+                        <select class="form-select" id="confirm_payment_method_id" name="payment_method_id" required>
+                            <option value="">-- Pilih Rekening Tujuan --</option>
+                            <?php foreach (($paymentMethods ?? []) as $method): ?>
+                                <option value="<?= esc($method['id']) ?>"><?= esc($method['name']) ?> - <?= esc($method['account_number']) ?> a.n <?= esc($method['account_name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required-field" for="confirm_amount">Nominal yang Ditransfer</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rp</span>
+                            <input type="number" class="form-control" id="confirm_amount" name="amount" min="1" step="1" required>
+                        </div>
+                        <div class="help-text text-muted small mt-1">Sisa tagihan: <span id="confirm_balance_text" class="fw-bold"></span></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required-field" for="confirm_proof_file">Upload Bukti Transfer (Gambar / PDF, max 2MB)</label>
+                        <input type="file" class="form-control" id="confirm_proof_file" name="proof_file" accept=".jpg,.jpeg,.png,.pdf" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="confirm_notes">Catatan Tambahan (Opsional)</label>
+                        <textarea class="form-control" id="confirm_notes" name="notes" rows="2" placeholder="Contoh: Transfer dari rekening BNI atas nama..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Kirim Bukti Pembayaran</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+    $(document).ready(function() {
+        $(document).on('click', '.confirm-payment-btn', function() {
+            const invoiceId = $(this).data('id');
+            const invoiceNum = $(this).data('number');
+            const balance = $(this).data('balance');
+            const balanceFormatted = $(this).data('balance-formatted');
+            
+            $('#confirm_invoice_number').val(invoiceNum);
+            $('#confirm_amount').val(balance).attr('max', balance);
+            $('#confirm_balance_text').text(balanceFormatted);
+            $('#paymentConfirmForm').attr('action', `<?= base_url('pendaftar/tagihan') ?>/${invoiceId}/konfirmasi`);
+            
+            $('#paymentConfirmModal').modal('show');
+        });
+
+        $(document).on('click', '.show-payment-instructions', function() {
+            const num = $(this).data('number');
+            const total = $(this).data('total');
+            Swal.fire({
+                title: 'Instruksi Pembayaran',
+                html: `<div class="text-start small">
+                    <p>Silakan lakukan pembayaran untuk Invoice <strong>${num}</strong> sebesar <strong>${total}</strong> melalui salah satu metode berikut:</p>
+                    <hr>
+                    <h6><strong>1. Transfer Bank (Manual)</strong></h6>
+                    <p class="mb-1">Kirim ke rekening resmi sekolah:</p>
+                    <ul class="mb-2 ps-3">
+                        <li><strong>Bank Syariah Indonesia (BSI)</strong><br>No. Rekening: 7712345678<br>a.n. Panitia SPMB Nusantara Mandiri</li>
+                        <li><strong>Bank DKI</strong><br>No. Rekening: 10123456789<br>a.n. SMP Nusantara Mandiri</li>
+                    </ul>
+                    <p>Setelah melakukan transfer, harap kirimkan bukti bayar ke Bendahara via WhatsApp atau kunjungi sekretariat panitia.</p>
+                    <hr>
+                    <h6><strong>2. Konfirmasi Pembayaran</strong></h6>
+                    <p class="mb-0">Hubungi panitia via WhatsApp: <a href="https://wa.me/${encodeURIComponent('<?= esc($footerWhatsapp) ?>')}" target="_blank" class="fw-bold">Chat WhatsApp Panitia</a></p>
+                </div>`,
+                icon: 'info',
+                confirmButtonText: 'Tutup',
+                confirmButtonColor: '#6366f1'
+            });
+        });
+    });
+</script>
 <?= $this->endSection() ?>

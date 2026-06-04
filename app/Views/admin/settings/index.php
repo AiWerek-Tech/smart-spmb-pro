@@ -133,6 +133,9 @@
                         <button class="nav-link text-start py-3 px-4 mb-2 d-flex align-items-center border-0" id="nav-theme-tab" data-bs-toggle="pill" data-bs-target="#nav-theme" type="button" role="tab" aria-controls="nav-theme" aria-selected="false">
                             <i data-lucide="palette" class="me-3" style="width: 18px; height: 18px;"></i> Tema & Tampilan
                         </button>
+                        <button class="nav-link text-start py-3 px-4 mb-2 d-flex align-items-center border-0" id="nav-social-tab" data-bs-toggle="pill" data-bs-target="#nav-social" type="button" role="tab" aria-controls="nav-social" aria-selected="false">
+                            <i data-lucide="share-2" class="me-3" style="width: 18px; height: 18px;"></i> Media Sosial & Form
+                        </button>
                         <button class="nav-link text-start py-3 px-4 d-flex align-items-center border-0" id="nav-app-tab" data-bs-toggle="pill" data-bs-target="#nav-app" type="button" role="tab" aria-controls="nav-app" aria-selected="false">
                             <i data-lucide="badge-info" class="me-3" style="width: 18px; height: 18px;"></i> Aplikasi
                         </button>
@@ -447,6 +450,83 @@
                                                             </div>
                                                         </div>
                                                     </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- PANEL: SOCIAL MEDIA & REGISTRATION -->
+                                <div class="tab-pane fade" id="nav-social" role="tabpanel" aria-labelledby="nav-social-tab">
+                                    <div class="mb-4">
+                                        <h5 class="admin-section-title text-primary fw-bold d-flex align-items-center mb-1">
+                                            <i data-lucide="share-2" class="me-2" style="width: 20px; height: 20px;"></i> Media Sosial & Ketentuan Pendaftaran
+                                        </h5>
+                                        <p class="admin-section-subtitle text-muted small mb-0">Atur akun media sosial resmi sekolah dan aturan wajib email pada registrasi.</p>
+                                    </div>
+                                    <hr class="mb-4">
+
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-md-6">
+                                            <label for="social_facebook" class="form-label fw-bold small">Facebook</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i data-lucide="facebook" style="width: 16px; height: 16px;"></i></span>
+                                                <input type="text" class="form-control" id="social_facebook" name="social_facebook" value="<?= esc(old('social_facebook', $settings['social_facebook'] ?? '')) ?>" placeholder="https://facebook.com/sekolah">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="social_instagram" class="form-label fw-bold small">Instagram</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i data-lucide="instagram" style="width: 16px; height: 16px;"></i></span>
+                                                <input type="text" class="form-control" id="social_instagram" name="social_instagram" value="<?= esc(old('social_instagram', $settings['social_instagram'] ?? '')) ?>" placeholder="https://instagram.com/sekolah">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="social_youtube" class="form-label fw-bold small">YouTube</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i data-lucide="youtube" style="width: 16px; height: 16px;"></i></span>
+                                                <input type="text" class="form-control" id="social_youtube" name="social_youtube" value="<?= esc(old('social_youtube', $settings['social_youtube'] ?? '')) ?>" placeholder="https://youtube.com/c/sekolah">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="social_tiktok" class="form-label fw-bold small">TikTok</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i data-lucide="music" style="width: 16px; height: 16px;"></i></span>
+                                                <input type="text" class="form-control" id="social_tiktok" name="social_tiktok" value="<?= esc(old('social_tiktok', $settings['social_tiktok'] ?? '')) ?>" placeholder="https://tiktok.com/@sekolah">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="social_whatsapp" class="form-label fw-bold small">WhatsApp (Chat/Link)</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i data-lucide="message-square" style="width: 16px; height: 16px;"></i></span>
+                                                <input type="text" class="form-control" id="social_whatsapp" name="social_whatsapp" value="<?= esc(old('social_whatsapp', $settings['social_whatsapp'] ?? '')) ?>" placeholder="Contoh: 6281234567890">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="social_website" class="form-label fw-bold small">Website Utama Sekolah</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i data-lucide="globe" style="width: 16px; height: 16px;"></i></span>
+                                                <input type="text" class="form-control" id="social_website" name="social_website" value="<?= esc(old('social_website', $settings['social_website'] ?? '')) ?>" placeholder="https://sekolah.sch.id">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="social_email" class="form-label fw-bold small">Email Publik/Informasi</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i data-lucide="mail" style="width: 16px; height: 16px;"></i></span>
+                                                <input type="email" class="form-control" id="social_email" name="social_email" value="<?= esc(old('social_email', $settings['social_email'] ?? '')) ?>" placeholder="info@sekolah.sch.id">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <h6 class="fw-bold mb-3 text-dark"><i data-lucide="settings" class="me-1 text-secondary" style="width:18px;height:18px;"></i> Ketentuan Akun Pendaftar</h6>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-md-12">
+                                            <div class="form-check form-switch p-0 m-0 d-flex align-items-center">
+                                                <input class="form-check-input ms-0" type="checkbox" role="switch" id="registration_email_required" name="registration_email_required" value="1" <?= (int)($settings['registration_email_required'] ?? 1) === 1 ? 'checked' : '' ?> style="width: 2.4em; height: 1.2em; cursor: pointer;">
+                                                <div class="ms-3">
+                                                    <label class="form-check-label fw-bold text-dark small d-block" for="registration_email_required">Wajibkan Alamat Email Saat Registrasi Akun</label>
+                                                    <small class="text-muted d-block">Jika dinonaktifkan, pendaftar dapat mendaftar tanpa email (email bersifat opsional).</small>
                                                 </div>
                                             </div>
                                         </div>

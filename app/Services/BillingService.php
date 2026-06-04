@@ -236,4 +236,177 @@ class BillingService
             'created_at'  => date('Y-m-d H:i:s'),
         ]);
     }
+
+    public function generatePreFormInvoice(int $userId, string $academicYear): array
+    {
+        $student = $this->db->table('students')->where('user_id', $userId)->get()->getRowArray();
+        if (!$student) {
+            return ['success' => false, 'message' => 'Data siswa tidak ditemukan.', 'invoice' => null];
+        }
+        $studentId = (int)$student['id'];
+
+        $existing = $this->invoiceModel
+            ->where('student_id', $studentId)
+            ->where('academic_year', $academicYear)
+            ->where('registration_id', 0)
+            ->whereNotIn('status', ['cancelled'])
+            ->first();
+
+        if ($existing) {
+            return ['success' => true, 'message' => 'Invoice pre-form sudah tersedia.', 'invoice' => $existing];
+        }
+
+        $fees = $this->feeTypeModel
+            ->where('is_active', 1)
+            ->where('requires_payment_before_form', 1)
+            ->orderBy('sort_order', 'ASC')
+            ->findAll();
+
+        if ($fees === []) {
+            return ['success' => true, 'message' => 'Tidak ada biaya pre-form yang perlu ditagihkan.', 'invoice' => null];
+        }
+
+        $subtotal = 0.0;
+        foreach ($fees as $fee) {
+            $subtotal += (float) ($fee['amount'] ?? 0);
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $this->db->transBegin();
+
+        try {
+            $invoiceId = $this->invoiceModel->insert([
+                'invoice_number'      => $this->nextInvoiceNumber(),
+                'registration_id'     => 0, // 0 indicates pre-form invoice
+                'user_id'             => $userId,
+                'student_id'          => $studentId,
+                'academic_year'       => $academicYear,
+                'status'              => $subtotal > 0 ? 'unpaid' : 'paid',
+                'subtotal'            => $subtotal,
+                'discount_amount'     => 0,
+                'total_amount'        => $subtotal,
+                'paid_amount'         => $subtotal > 0 ? 0 : $subtotal,
+                'balance_amount'      => $subtotal > 0 ? $subtotal : 0,
+                'issued_at'           => $now,
+                'paid_at'             => $subtotal > 0 ? null : $now,
+            ]);
+
+            if (! $invoiceId) {
+                throw new \RuntimeException('Gagal membuat invoice pre-form.');
+            }
+
+            foreach ($fees as $fee) {
+                $amount = (float) ($fee['amount'] ?? 0);
+                $this->invoiceItemModel->insert([
+                    'invoice_id'   => (int) $invoiceId,
+                    'fee_type_id'  => (int) $fee['id'],
+                    'item_code'    => (string) $fee['code'],
+                    'name'         => (string) $fee['name'],
+                    'description'  => $fee['description'] ?? null,
+                    'quantity'     => 1,
+                    'unit_amount'  => $amount,
+                    'total_amount' => $amount,
+                    'is_required'  => 1,
+                ]);
+            }
+
+            $this->log((int) $invoiceId, null, 'invoice_created', null, $subtotal > 0 ? 'unpaid' : 'paid', null, 'Invoice pre-form dibuat otomatis.');
+            $this->db->transCommit();
+
+            return [
+                'success' => true,
+                'message' => 'Invoice pre-form berhasil dibuat.',
+                'invoice' => $this->invoiceModel->find((int) $invoiceId),
+            ];
+        } catch (\Throwable $e) {
+            $this->db->transRollback();
+            log_message('error', 'BillingService::generatePreFormInvoice failed: ' . $e->getMessage());
+
+            return ['success' => false, 'message' => $e->getMessage(), 'invoice' => null];
+        }
+    }
+
+    public function approvePendingPayment(int $paymentId, ?int $actorId = null): array
+    {
+        $payment = $this->paymentModel->find($paymentId);
+        if (!$payment) {
+            return ['success' => false, 'message' => 'Pembayaran tidak ditemukan.'];
+        }
+
+        if ($payment['status'] !== 'pending') {
+            return ['success' => false, 'message' => 'Pembayaran ini sudah diverifikasi atau ditolak sebelumnya.'];
+        }
+
+        $invoiceId = (int)$payment['invoice_id'];
+        $invoice = $this->invoiceModel->find($invoiceId);
+        if (!$invoice) {
+            return ['success' => false, 'message' => 'Invoice terkait tidak ditemukan.'];
+        }
+
+        $this->db->transBegin();
+        try {
+            $now = date('Y-m-d H:i:s');
+            // Update payment status
+            $this->paymentModel->update($paymentId, [
+                'status'      => 'verified',
+                'verified_at' => $now,
+                'verified_by' => $actorId,
+                'updated_at'  => $now,
+            ]);
+
+            // Recalculate invoice
+            $updatedInvoice = $this->recalculateInvoice($invoice, (float)$payment['amount'], $actorId);
+            
+            // Log the action
+            $this->log($invoiceId, $paymentId, 'payment_verified', (string)$invoice['status'], (string)$updatedInvoice['status'], $actorId, 'Bukti pembayaran disetujui oleh Bendahara.');
+            
+            $this->db->transCommit();
+            return ['success' => true, 'message' => 'Bukti pembayaran berhasil disetujui.', 'invoice_id' => $invoiceId];
+        } catch (\Throwable $e) {
+            $this->db->transRollback();
+            log_message('error', 'BillingService::approvePendingPayment failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    public function rejectPendingPayment(int $paymentId, string $reason, ?int $actorId = null): array
+    {
+        $payment = $this->paymentModel->find($paymentId);
+        if (!$payment) {
+            return ['success' => false, 'message' => 'Pembayaran tidak ditemukan.'];
+        }
+
+        if ($payment['status'] !== 'pending') {
+            return ['success' => false, 'message' => 'Pembayaran ini sudah diverifikasi atau ditolak sebelumnya.'];
+        }
+
+        $invoiceId = (int)$payment['invoice_id'];
+        $invoice = $this->invoiceModel->find($invoiceId);
+        if (!$invoice) {
+            return ['success' => false, 'message' => 'Invoice terkait tidak ditemukan.'];
+        }
+
+        $this->db->transBegin();
+        try {
+            $now = date('Y-m-d H:i:s');
+            // Update payment status
+            $this->paymentModel->update($paymentId, [
+                'status'           => 'rejected',
+                'rejection_reason' => $reason,
+                'verified_at'      => $now,
+                'verified_by'      => $actorId,
+                'updated_at'       => $now,
+            ]);
+
+            // Log the action
+            $this->log($invoiceId, $paymentId, 'payment_rejected', (string)$invoice['status'], (string)$invoice['status'], $actorId, 'Bukti pembayaran ditolak: ' . $reason);
+
+            $this->db->transCommit();
+            return ['success' => true, 'message' => 'Bukti pembayaran berhasil ditolak.', 'invoice_id' => $invoiceId];
+        } catch (\Throwable $e) {
+            $this->db->transRollback();
+            log_message('error', 'BillingService::rejectPendingPayment failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
 }

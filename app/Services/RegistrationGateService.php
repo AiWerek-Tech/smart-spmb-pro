@@ -147,4 +147,60 @@ class RegistrationGateService
 
         return date('d M Y', strtotime($date));
     }
+
+    public function paymentGateStatus(int $userId, string $academicYear): array
+    {
+        $db = \Config\Database::connect();
+        
+        $fees = $db->table('fee_types')
+            ->where('is_active', 1)
+            ->where('requires_payment_before_form', 1)
+            ->get()
+            ->getResultArray();
+
+        if (empty($fees)) {
+            return [
+                'is_open' => true,
+                'message' => 'No payment required before form.'
+            ];
+        }
+
+        $student = $db->table('students')->where('user_id', $userId)->get()->getRowArray();
+        if (!$student) {
+            return [
+                'is_open' => true,
+                'message' => 'Profil siswa belum lengkap.'
+            ];
+        }
+
+        if (isset($student['form_override']) && (int) $student['form_override'] === 1) {
+            return [
+                'is_open' => true,
+                'message' => 'Akses formulir dibuka khusus oleh panitia/admin.'
+            ];
+        }
+
+        $billingService = new \App\Services\BillingService();
+        $billingService->generatePreFormInvoice($userId, $academicYear);
+
+        $invoice = $db->table('invoices')
+            ->where('student_id', $student['id'])
+            ->where('academic_year', $academicYear)
+            ->where('registration_id', 0)
+            ->whereNotIn('status', ['cancelled'])
+            ->get()
+            ->getRowArray();
+
+        if ($invoice && $invoice['status'] !== 'paid') {
+            return [
+                'is_open' => false,
+                'message' => 'Formulir pendaftaran terkunci. Anda harus melunasi tagihan biaya pendaftaran awal terlebih dahulu.'
+            ];
+        }
+
+        return [
+            'is_open' => true,
+            'message' => 'Pre-form payment completed.'
+        ];
+    }
 }

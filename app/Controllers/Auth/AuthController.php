@@ -107,10 +107,23 @@ class AuthController extends BaseController
      */
     public function register()
     {
+        $settingModel = new \App\Models\SettingModel();
+        $isEmailRequired = (int)$settingModel->getValue('registration_email_required', '1') === 1;
+
+        $emailRule = 'permit_empty';
+        if ($isEmailRequired) {
+            $emailRule = 'required|valid_email|is_unique[users.email]';
+        } else {
+            $emailPost = $this->request->getPost('email');
+            if (!empty($emailPost)) {
+                $emailRule = 'valid_email|is_unique[users.email]';
+            }
+        }
+
         // Validasi input
         if (! $this->validate([
             'name'                 => 'required|min_length[3]|max_length[100]',
-            'email'                => 'required|valid_email|is_unique[users.email]',
+            'email'                => $emailRule,
             'password'             => 'required|min_length[8]|max_length[255]',
             'password_confirm'     => 'required|matches[password]',
         ], [
@@ -126,7 +139,7 @@ class AuthController extends BaseController
         }
 
         $name     = $this->request->getPost('name');
-        $email    = $this->request->getPost('email');
+        $email    = (string) $this->request->getPost('email');
         $password = $this->request->getPost('password');
 
         // Panggil AuthService untuk registrasi

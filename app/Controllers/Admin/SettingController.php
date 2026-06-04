@@ -56,6 +56,14 @@ class SettingController extends BaseController
             'developer_name'        => config('AppInfo')->developer,
             'developer_phone'       => config('AppInfo')->developerPhone,
             'developer_email'       => config('AppInfo')->developerEmail,
+            'social_facebook'       => '',
+            'social_instagram'      => '',
+            'social_youtube'        => '',
+            'social_tiktok'         => '',
+            'social_whatsapp'       => '',
+            'social_website'        => '',
+            'social_email'          => '',
+            'registration_email_required' => '1',
         ];
 
         $settings = array_merge($defaults, $settings);
@@ -86,6 +94,13 @@ class SettingController extends BaseController
             'theme_color'           => 'required|in_list[purple,navy,lightblue,emerald,red,orange,rose]',
             'theme_color_operator'  => 'required|in_list[purple,navy,lightblue,emerald,red,orange,rose]',
             'theme_color_pendaftar' => 'required|in_list[purple,navy,lightblue,emerald,red,orange,rose]',
+            'social_facebook'       => 'permit_empty|max_length[255]',
+            'social_instagram'      => 'permit_empty|max_length[255]',
+            'social_youtube'        => 'permit_empty|max_length[255]',
+            'social_tiktok'         => 'permit_empty|max_length[255]',
+            'social_whatsapp'       => 'permit_empty|max_length[50]',
+            'social_website'        => 'permit_empty|max_length[255]',
+            'social_email'          => 'permit_empty|valid_email|max_length[100]',
         ];
 
         // Validasi opsional untuk logo sekolah jika ada unggahan baru
@@ -118,6 +133,14 @@ class SettingController extends BaseController
             'theme_color'           => $this->request->getPost('theme_color'),
             'theme_color_operator'  => $this->request->getPost('theme_color_operator'),
             'theme_color_pendaftar' => $this->request->getPost('theme_color_pendaftar'),
+            'social_facebook'       => $this->request->getPost('social_facebook'),
+            'social_instagram'      => $this->request->getPost('social_instagram'),
+            'social_youtube'        => $this->request->getPost('social_youtube'),
+            'social_tiktok'         => $this->request->getPost('social_tiktok'),
+            'social_whatsapp'       => $this->request->getPost('social_whatsapp'),
+            'social_website'        => $this->request->getPost('social_website'),
+            'social_email'          => $this->request->getPost('social_email'),
+            'registration_email_required' => $this->request->getPost('registration_email_required') !== null ? '1' : '0',
         ];
 
         // Proses unggah logo sekolah jika valid

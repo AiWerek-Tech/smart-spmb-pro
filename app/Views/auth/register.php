@@ -28,24 +28,32 @@
                 <?php endif; ?>
             </div>
 
+<?php
+$settingModel = new \App\Models\SettingModel();
+$isEmailRequired = (int)$settingModel->getValue('registration_email_required', '1') === 1;
+?>
             <!-- Email -->
             <div class="form-group">
-                <label for="email" class="form-label">Email</label>
+                <label for="email" class="form-label">Email <?= $isEmailRequired ? '<span class="text-danger">*</span>' : '<span class="text-muted">(Opsional)</span>' ?></label>
                 <input 
                     type="email" 
                     class="form-control <?= isset($errors['email']) ? 'is-invalid' : '' ?>" 
                     id="email" 
                     name="email" 
                     value="<?= old('email') ?>" 
-                    placeholder="nama@example.com" 
-                    required
+                    placeholder="<?= $isEmailRequired ? 'nama@example.com' : 'nama@example.com (opsional)' ?>" 
+                    <?= $isEmailRequired ? 'required' : '' ?>
                     autocomplete="email"
                 >
                 <?php if (isset($errors['email'])): ?>
                     <div class="invalid-feedback"><?= $errors['email'] ?></div>
                 <?php endif; ?>
                 <small class="text-muted d-block mt-1" style="font-size:0.75rem;">
-                    Email digunakan untuk menerima informasi pendaftaran, status verifikasi, dan hasil seleksi. Jika belum memiliki email pribadi, dapat menggunakan email orang tua/wali/keluarga.
+                    <?php if ($isEmailRequired): ?>
+                        Email digunakan untuk menerima informasi pendaftaran, status verifikasi, dan hasil seleksi. Jika belum memiliki email pribadi, dapat menggunakan email orang tua/wali/keluarga.
+                    <?php else: ?>
+                        Email bersifat opsional dan boleh dikosongkan. <strong>Jika tidak mengisi email, Anda wajib mengecek status pendaftaran dan hasil seleksi secara berkala melalui website resmi sekolah.</strong>
+                    <?php endif; ?>
                 </small>
             </div>
 

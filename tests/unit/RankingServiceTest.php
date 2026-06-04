@@ -18,7 +18,7 @@ class RankingServiceTest extends CIUnitTestCase
 {
     use DatabaseTestTrait;
 
-    protected $migrate = true;
+    protected $migrate = false;
     protected $namespace = 'App';
 
     protected UserModel $userModel;

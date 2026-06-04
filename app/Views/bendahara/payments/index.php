@@ -16,7 +16,7 @@ $statusLabels = [
             <p class="role-page-header__subtitle">Pantau invoice, verifikasi pembayaran manual, dan ekspor rekap bendahara.</p>
         </div>
         <a href="<?= base_url('bendahara/export?' . http_build_query($filters ?? [])) ?>" class="btn btn-outline-primary d-inline-flex align-items-center">
-            <i data-lucide="download" class="me-2" style="width:16px;height:16px;"></i> Ekspor CSV
+            <i data-lucide="download" class="me-2" style="width:16px;height:16px;"></i> Ekspor Excel
         </a>
     </div>
 

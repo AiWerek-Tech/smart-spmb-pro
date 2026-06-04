@@ -128,13 +128,40 @@ $canCancel = !in_array($invoice['status'], ['paid', 'cancelled'], true);
                 <div class="table-responsive">
                     <table class="table mb-0">
                         <thead><tr><th>Tanggal</th><th>Metode</th><th>Status</th><th class="text-end">Nominal</th></tr></thead>
-                        <tbody>
-                            <?php foreach (($payments ?? []) as $payment): ?>
-                                <tr>
+                        <tbody>                                <tr>
                                     <td><?= esc($payment['verified_at'] ?? $payment['created_at']) ?></td>
                                     <td><?= esc($payment['method_name'] ?? 'Manual') ?></td>
-                                    <td><span class="badge bg-label-success border"><?= esc($payment['status']) ?></span></td>
-                                    <td class="text-end">Rp <?= number_format((float) $payment['amount'], 0, ',', '.') ?></td>
+                                    <td>
+                                        <?php if ($payment['status'] === 'verified'): ?>
+                                            <span class="badge bg-label-success border">Verified</span>
+                                        <?php elseif ($payment['status'] === 'rejected'): ?>
+                                            <span class="badge bg-label-danger border">Rejected</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-label-warning border">Pending</span>
+                                        <?php endif; ?>
+                                        
+                                        <?php if (!empty($payment['proof_file'])): ?>
+                                            <a href="<?= base_url(esc($payment['proof_file'])) ?>" target="_blank" class="btn btn-xs btn-outline-info py-0 px-2 ms-2">
+                                                <i class="me-1" data-lucide="external-link" style="width:10px;height:10px;"></i> Bukti
+                                            </a>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-flex flex-column align-items-end">
+                                            <span class="fw-bold">Rp <?= number_format((float) $payment['amount'], 0, ',', '.') ?></span>
+                                            <?php if ($payment['status'] === 'pending'): ?>
+                                                <div class="mt-2 d-flex gap-1">
+                                                    <form method="POST" action="<?= base_url('bendahara/payments/' . $payment['id'] . '/approve') ?>" class="d-inline">
+                                                        <?= csrf_field() ?>
+                                                        <button type="submit" class="btn btn-xs btn-success py-0 px-2 fw-semibold">Setujui</button>
+                                                    </form>
+                                                    <button type="button" class="btn btn-xs btn-danger py-0 px-2 fw-semibold reject-payment-btn" data-id="<?= esc($payment['id']) ?>">Tolak</button>
+                                                </div>
+                                            <?php elseif ($payment['status'] === 'rejected' && !empty($payment['rejection_reason'])): ?>
+                                                <small class="text-danger mt-1">Alasan: <?= esc($payment['rejection_reason']) ?></small>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                             <?php if (empty($payments)): ?>
@@ -167,7 +194,7 @@ $canCancel = !in_array($invoice['status'], ['paid', 'cancelled'], true);
                     <?php foreach (($logs ?? []) as $log): ?>
                         <div class="list-group-item">
                             <div class="fw-semibold"><?= esc($log['action']) ?></div>
-                            <div class="small text-muted"><?= esc($log['created_at']) ?> - <?= esc($log['old_status'] ?? '-') ?> to <?= esc($log['new_status'] ?? '-') ?></div>
+                            <div class="small text-muted"><?= esc($log['created_at']) - esc($log['old_status'] ?? '-') ?> to <?= esc($log['new_status'] ?? '-') ?></div>
                             <?php if (!empty($log['notes'])): ?><div class="small"><?= esc($log['notes']) ?></div><?php endif; ?>
                         </div>
                     <?php endforeach; ?>
@@ -179,4 +206,39 @@ $canCancel = !in_array($invoice['status'], ['paid', 'cancelled'], true);
         </div>
     </div>
 </div>
-<?= $this->endSection() ?>
+
+<!-- Modal Penolakan Pembayaran -->
+<div class="modal fade" id="paymentRejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tolak Pembayaran</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="paymentRejectForm" method="POST">
+                <?= csrf_field() ?>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label required-field" for="rejection_reason">Alasan Penolakan</label>
+                        <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="3" placeholder="Contoh: Bukti transfer tidak terbaca / nominal tidak sesuai" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger">Tolak Pembayaran</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    $(document).on('click', '.reject-payment-btn', function() {
+        const paymentId = $(this).data('id');
+        $('#paymentRejectForm').attr('action', `<?= base_url('bendahara/payments') ?>/${paymentId}/reject`);
+        $('#paymentRejectModal').modal('show');
+    });
+});
+</script>
+<?= $this->endSection() ?>>

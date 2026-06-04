@@ -20,7 +20,7 @@ class BackupServiceTest extends CIUnitTestCase
     use DatabaseTestTrait;
     use FeatureTestTrait;
 
-    protected $migrate     = true;
+    protected $migrate     = false;
     protected $namespace   = 'App';
     protected $userModel;
     protected BackupService $backupService;

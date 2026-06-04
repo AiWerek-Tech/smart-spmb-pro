@@ -83,7 +83,7 @@ class RegistrationModel extends Model
                         'students.full_name, students.nik, students.nisn, students.birth_date, students.birth_place, ' .
                         'students.gender, students.religion, students.citizenship, students.family_status, ' .
                         'students.birth_cert_number, students.special_needs, ' .
-                        'students.dapodik_percentage, students.is_dapodik_ready, ' .
+                        'students.dapodik_percentage, students.is_dapodik_ready, students.form_override, ' .
                         'jalur.name AS jalur_name, ' .
                         'users.email AS user_email'
                     )

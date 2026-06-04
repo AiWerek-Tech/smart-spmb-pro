@@ -295,4 +295,42 @@ class RegistrantController extends BaseController
 
         return redirect()->to('operator/registrants/'.$registrationId)->with('success', 'Profil pendaftar berhasil dikoreksi.');
     }
+
+    /**
+     * Override akses formulir pendaftaran.
+     */
+    public function toggleOverride(int $registrationId)
+    {
+        $registration = $this->registrationModel->find($registrationId);
+        if (!$registration) {
+            return redirect()->back()->with('error', 'Pendaftaran tidak ditemukan.');
+        }
+
+        $student = $this->studentModel->find($registration['student_id']);
+        if (!$student) {
+            return redirect()->back()->with('error', 'Data siswa tidak ditemukan.');
+        }
+
+        $newOverride = (int)($student['form_override'] ?? 0) === 1 ? 0 : 1;
+        
+        $this->studentModel->update($student['id'], [
+            'form_override' => $newOverride
+        ]);
+
+        // Record audit log
+        $auditLogService = new \App\Services\AuditLogService();
+        $auditLogService->record('operator', 'TOGGLE_FORM_OVERRIDE', [
+            'entity_type' => 'students',
+            'entity_id'   => $student['id'],
+            'old_data'    => ['form_override' => $student['form_override'] ?? 0],
+            'new_data'    => ['form_override' => $newOverride],
+        ]);
+
+        $message = $newOverride === 1 
+            ? 'Akses override formulir berhasil diaktifkan. Siswa dapat mengisi formulir tanpa lunas biaya pendaftaran.' 
+            : 'Akses override formulir berhasil dinonaktifkan.';
+
+        return redirect()->back()->with('success', $message);
+    }
 }
+

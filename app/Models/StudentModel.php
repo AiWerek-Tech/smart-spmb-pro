@@ -20,6 +20,8 @@ class StudentModel extends Model
         'birth_place',
         'birth_date',
         'religion',
+        'religion_subgroup_id',
+        'form_override',
         'citizenship',
         'family_status',
         'nik',
@@ -38,15 +40,16 @@ class StudentModel extends Model
     protected $updatedField  = 'updated_at';
 
     protected $validationRules = [
-        'user_id'       => 'required|integer',
-        'full_name'     => 'required|max_length[100]',
-        'gender'        => 'required|in_list[L,P]',
-        'birth_place'   => 'required|max_length[100]',
-        'birth_date'    => 'required|valid_date',
-        'religion'      => 'required|in_list[Islam,Kristen,Katolik,Hindu,Buddha,Konghucu]',
-        'citizenship'   => 'required|in_list[WNI,WNA]',
-        'family_status' => 'required|max_length[50]',
-        'nik'           => 'required|exact_length[16]|numeric',
+        'user_id'              => 'required|integer',
+        'full_name'            => 'required|max_length[100]',
+        'gender'               => 'required|in_list[L,P]',
+        'birth_place'          => 'required|max_length[100]',
+        'birth_date'           => 'required|valid_date',
+        'religion'             => 'required|in_list[Islam,Kristen,Katolik,Hindu,Buddha,Konghucu]',
+        'religion_subgroup_id' => 'permit_empty|integer',
+        'citizenship'          => 'required|in_list[WNI,WNA]',
+        'family_status'        => 'required|max_length[50]',
+        'nik'                  => 'required|exact_length[16]|numeric',
     ];
 
     /**

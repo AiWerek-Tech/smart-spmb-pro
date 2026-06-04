@@ -46,7 +46,7 @@
 
         <div class="row">
             <!-- Agama -->
-            <div class="col-md-4 form-group">
+            <div class="col-md-3 form-group">
                 <label for="religion" class="form-label required-field">Agama</label>
                 <select class="form-select" id="religion" name="religion" required>
                     <option value="">-- Pilih Agama --</option>
@@ -56,8 +56,19 @@
                 </select>
             </div>
 
+            <!-- Sub-Agama -->
+            <div class="col-md-3 form-group" id="sub_religion_wrapper" style="<?= empty($stepData['religion']) ? 'display: none;' : '' ?>">
+                <label for="religion_subgroup_id" class="form-label required-field">Sub-Agama / Aliran</label>
+                <select class="form-select" id="religion_subgroup_id" name="religion_subgroup_id" <?= !empty($religionSubgroups) ? 'required' : '' ?>>
+                    <option value="">-- Pilih Aliran --</option>
+                    <?php foreach (($religionSubgroups ?? []) as $sub): ?>
+                        <option value="<?= esc($sub['id']) ?>" <?= (int)($stepData['religion_subgroup_id'] ?? 0) === (int)$sub['id'] ? 'selected' : '' ?>><?= esc($sub['name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
             <!-- Kewarganegaraan -->
-            <div class="col-md-4 form-group">
+            <div class="col-md-3 form-group">
                 <label for="citizenship" class="form-label required-field">Kewarganegaraan</label>
                 <select class="form-select" id="citizenship" name="citizenship" required>
                     <option value="WNI" <?= ($stepData['citizenship'] ?? 'WNI') === 'WNI' ? 'selected' : '' ?>>Warga Negara Indonesia (WNI)</option>
@@ -66,7 +77,7 @@
             </div>
 
             <!-- Status Hubungan Keluarga -->
-            <div class="col-md-4 form-group">
+            <div class="col-md-3 form-group">
                 <label for="family_status" class="form-label required-field">Status dalam Keluarga</label>
                 <select class="form-select" id="family_status" name="family_status" required>
                     <option value="">-- Pilih Status --</option>
@@ -122,6 +133,41 @@
         dateFormat: "Y-m-d",
         maxDate: "today",
         locale: "id"
+    });
+
+    $(document).ready(function() {
+        $('#religion').change(function() {
+            const religion = $(this).val();
+            const $subWrapper = $('#sub_religion_wrapper');
+            const $subSelect = $('#religion_subgroup_id');
+            
+            if (!religion) {
+                $subWrapper.hide();
+                $subSelect.val('').prop('required', false);
+                return;
+            }
+            
+            // Fetch subgroups
+            fetch(`<?= base_url('api/religion/subgroups') ?>?religion=${encodeURIComponent(religion)}`)
+                .then(res => res.json())
+                .then(data => {
+                    $subSelect.empty().append('<option value="">-- Pilih Aliran --</option>');
+                    if (data && data.length > 0) {
+                        data.forEach(item => {
+                            const isSelected = item.id == '<?= $stepData['religion_subgroup_id'] ?? 0 ?>' ? 'selected' : '';
+                            $subSelect.append(`<option value="${item.id}" ${isSelected}>${item.name}</option>`);
+                        });
+                        $subWrapper.show();
+                        $subSelect.prop('required', true);
+                    } else {
+                        $subWrapper.hide();
+                        $subSelect.prop('required', false);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching sub-religions:', err);
+                });
+        });
     });
 </script>
 <?= $this->endSection() ?>

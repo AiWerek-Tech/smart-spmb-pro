@@ -13,9 +13,8 @@ class AuthControllerTest extends CIUnitTestCase
     use DatabaseTestTrait;
     use FeatureTestTrait;
 
-    protected $migrate            = true;
-    protected $migrateOnce        = false;
-    protected $refresh            = true;
+    protected $migrate            = false;
+    protected $refresh            = false;
     protected $namespace          = 'App';
     protected $seeders            = ['SampleSeeder'];
 
@@ -29,6 +28,12 @@ class AuthControllerTest extends CIUnitTestCase
 
     protected function tearDown(): void
     {
+        $db = \Config\Database::connect();
+        $db->query('SET FOREIGN_KEY_CHECKS=0;');
+        $this->userModel->where('1=1')->delete();
+        $db->table('password_resets')->where('1=1')->delete();
+        $db->query('SET FOREIGN_KEY_CHECKS=1;');
+
         parent::tearDown();
         // Cleanup sessions if any
         session()->destroy();

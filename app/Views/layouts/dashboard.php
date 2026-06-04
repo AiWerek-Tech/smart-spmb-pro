@@ -101,9 +101,9 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
                 <!-- ------------------- ADMIN SIDEBAR ------------------- -->
                 <?php if ($role === 'admin'): ?>
                     <?php
-                        $spmbMenuOpen = in_array($segment2, ['academic-years', 'jalur', 'gelombang', 'document-requirements', 'seleksi'], true);
+                        $spmbMenuOpen = in_array($segment2, ['academic-years', 'jalur', 'gelombang', 'document-requirements', 'seleksi', 'fee-types'], true);
                         $contentMenuOpen = in_array($segment2, ['content', 'teachers', 'gallery', 'banners', 'announcements', 'testimonials', 'statistics', 'faq'], true);
-                        $systemMenuOpen = in_array($segment2, ['users', 'access', 'settings', 'backup'], true);
+                        $systemMenuOpen = in_array($segment2, ['users', 'access', 'settings', 'backup', 'religions'], true);
                     ?>
                     <li class="menu-header">Menu</li>
                     <li class="menu-item <?= ($segment1 === 'admin' && ($segment2 === '' || $segment2 === 'dashboard')) ? 'active' : '' ?>">
@@ -124,6 +124,7 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
                             <li><a href="<?= base_url('admin/jalur') ?>" class="submenu-link <?= $segment2 === 'jalur' ? 'active' : '' ?>"><i data-lucide="git-fork"></i><span>Jalur Pendaftaran</span></a></li>
                             <li><a href="<?= base_url('admin/gelombang') ?>" class="submenu-link <?= $segment2 === 'gelombang' ? 'active' : '' ?>"><i data-lucide="calendar"></i><span>Gelombang</span></a></li>
                             <li><a href="<?= base_url('admin/document-requirements') ?>" class="submenu-link <?= $segment2 === 'document-requirements' ? 'active' : '' ?>"><i data-lucide="file-check-2"></i><span>Syarat Dokumen</span></a></li>
+                            <li><a href="<?= base_url('admin/fee-types') ?>" class="submenu-link <?= $segment2 === 'fee-types' ? 'active' : '' ?>"><i data-lucide="wallet"></i><span>Jenis Biaya</span></a></li>
                             <li><a href="<?= base_url('admin/seleksi') ?>" class="submenu-link <?= $segment2 === 'seleksi' ? 'active' : '' ?>"><i data-lucide="award"></i><span>Hasil Seleksi</span></a></li>
                         </ul>
                     </li>
@@ -156,6 +157,7 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
                             <li><a href="<?= base_url('admin/users') ?>" class="submenu-link <?= $segment2 === 'users' ? 'active' : '' ?>"><i data-lucide="users"></i><span>Pengguna</span></a></li>
                             <li><a href="<?= base_url('admin/access') ?>" class="submenu-link <?= $segment2 === 'access' ? 'active' : '' ?>"><i data-lucide="shield-check"></i><span>Mode & Hak Akses</span></a></li>
                             <li><a href="<?= base_url('admin/settings') ?>" class="submenu-link <?= $segment2 === 'settings' ? 'active' : '' ?>"><i data-lucide="sliders-horizontal"></i><span>Konfigurasi</span></a></li>
+                            <li><a href="<?= base_url('admin/religions') ?>" class="submenu-link <?= $segment2 === 'religions' ? 'active' : '' ?>"><i data-lucide="activity"></i><span>Sub-Agama</span></a></li>
                             <li><a href="<?= base_url('admin/backup') ?>" class="submenu-link <?= $segment2 === 'backup' ? 'active' : '' ?>"><i data-lucide="database"></i><span>Backup & Restore</span></a></li>
                         </ul>
                     </li>
@@ -195,6 +197,16 @@ $supportEmail = (string) $settingModel->getValue('email', $appInfo->developerEma
                         <a href="<?= base_url('operator/export/excel') ?>" class="menu-link">
                             <i data-lucide="download"></i>
                             <span>Ekspor Data</span>
+                        </a>
+                    </li>
+
+                <!-- ------------------- BENDAHARA SIDEBAR ------------------- -->
+                <?php elseif ($role === 'bendahara'): ?>
+                    <li class="menu-header">Menu Utama</li>
+                    <li class="menu-item <?= ($segment1 === 'bendahara') ? 'active' : '' ?>">
+                        <a href="<?= base_url('bendahara/invoices') ?>" class="menu-link">
+                            <i data-lucide="wallet"></i>
+                            <span>Daftar Tagihan</span>
                         </a>
                     </li>
 

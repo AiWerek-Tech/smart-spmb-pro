@@ -58,11 +58,14 @@ class FeeService
 
     private function buildPaymentFaqAnswer(array $fees): string
     {
-        $parts = array_map(
-            fn (array $fee): string => $fee['name'] . ' sebesar ' . $fee['amount'],
+        $lines = array_map(
+            fn (array $fee): string => '• ' . $fee['name'] . ': ' . $fee['amount'] . ' (' . $fee['period'] . ')' . ($fee['is_required'] ? ' — Wajib' : ' — Opsional'),
             $fees
         );
 
-        return 'Biaya aktif saat ini: ' . implode('; ', $parts) . '. Silakan pantau tagihan resmi pada panel pendaftar.';
+        $total = array_sum(array_map(fn (array $f): float => $f['raw_amount'], $fees));
+        $totalFormatted = 'Rp ' . number_format($total, 0, ',', '.');
+
+        return "Berikut rincian biaya pendaftaran yang berlaku:\n" . implode("\n", $lines) . "\n\nTotal estimasi biaya satu kali: {$totalFormatted}.\nSilakan pantau tagihan resmi pada panel pendaftar setelah mendaftar.";
     }
 }

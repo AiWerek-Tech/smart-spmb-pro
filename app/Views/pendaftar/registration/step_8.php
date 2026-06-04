@@ -64,7 +64,7 @@
     
     $isComplete = true;
     foreach (array_keys($requiredTypes) as $type) {
-        if (!isset($docs[$type])) {
+        if (!isset($docs[$type]) || $docs[$type]['status'] === 'rejected') {
             $isComplete = false;
             break;
         }
@@ -100,36 +100,61 @@
                         <div>
                             <?php if (isset($docs[$type])): ?>
                                 <!-- Already Uploaded State -->
-                                <div class="bg-light p-2 rounded mb-2 text-truncate" style="font-size: 0.85rem;">
-                                    <span class="text-success"><i  data-lucide="check-circle-2"></i> Sudah Diunggah</span>
-                                    <div class="text-secondary mt-1" title="<?= esc($docs[$type]['file_name']) ?>"><?= esc($docs[$type]['file_name']) ?></div>
-                                    <div class="text-muted" style="font-size: 0.75rem;">Status: 
-                                        <?php if ($docs[$type]['status'] === 'approved'): ?>
-                                            <span class="badge bg-success">Disetujui</span>
-                                        <?php elseif ($docs[$type]['status'] === 'rejected'): ?>
-                                            <span class="badge bg-danger">Ditolak</span>
-                                            <div class="text-danger mt-1" style="font-size: 0.7rem;">Alasan: <?= esc($docs[$type]['rejection_reason']) ?></div>
-                                        <?php else: ?>
-                                            <span class="badge bg-warning text-dark">Menanti Verifikasi</span>
+                                <?php 
+                                    $ext = pathinfo($docs[$type]['file_name'], PATHINFO_EXTENSION);
+                                    $isImage = in_array(strtolower($ext), ['jpg', 'jpeg', 'png']);
+                                    $status = $docs[$type]['status'];
+                                    
+                                    $cardBg = 'bg-light';
+                                    $statusBadge = '';
+                                    if ($status === 'approved') {
+                                        $cardBg = 'bg-success bg-opacity-10';
+                                        $statusBadge = '<span class="badge bg-success text-white"><i data-lucide="check-circle" class="me-1" style="width:12px;height:12px;"></i> Berhasil (Disetujui)</span>';
+                                    } elseif ($status === 'rejected') {
+                                        $cardBg = 'bg-danger bg-opacity-10';
+                                        $statusBadge = '<span class="badge bg-danger text-white"><i data-lucide="alert-triangle" class="me-1" style="width:12px;height:12px;"></i> Perlu Upload Ulang (Ditolak)</span>';
+                                    } else {
+                                        $cardBg = 'bg-info bg-opacity-10';
+                                        $statusBadge = '<span class="badge bg-info text-white"><i data-lucide="clock" class="me-1" style="width:12px;height:12px;"></i> Sudah Diunggah</span>';
+                                    }
+                                ?>
+                                <div class="<?= $cardBg ?> p-2 rounded mb-2 border" style="font-size: 0.85rem;">
+                                    <?php if ($isImage): ?>
+                                        <div class="text-center mb-2 bg-white p-1 rounded border">
+                                            <img src="<?= base_url('writable/' . $docs[$type]['file_path']) ?>" alt="Preview" class="img-fluid rounded" style="max-height: 80px; object-fit: contain;">
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="text-center mb-2 bg-white p-2 rounded border">
+                                            <i class="text-primary" data-lucide="file-text" style="width:36px;height:36px;"></i>
+                                            <span class="d-block small text-muted mt-1"><?= strtoupper($ext) ?> Document</span>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <div class="text-secondary text-truncate fw-semibold mb-1" title="<?= esc($docs[$type]['file_name']) ?>"><?= esc($docs[$type]['file_name']) ?></div>
+                                    <div style="font-size: 0.8rem;">
+                                        <?= $statusBadge ?>
+                                        <?php if ($status === 'rejected' && !empty($docs[$type]['rejection_reason'])): ?>
+                                            <div class="text-danger mt-1 font-monospace" style="font-size: 0.75rem; line-height: 1.2;">Alasan: <?= esc($docs[$type]['rejection_reason']) ?></div>
                                         <?php endif; ?>
                                     </div>
                                 </div>
                                 <div class="d-flex gap-1">
                                     <a href="<?= base_url('writable/' . $docs[$type]['file_path']) ?>" class="btn btn-sm btn-outline-primary flex-fill" target="_blank">
-                                        <i  data-lucide="eye"></i> Lihat
+                                        <i data-lucide="external-link"></i> Buka
                                     </a>
                                     <button type="button" class="btn btn-sm btn-outline-danger delete-doc-btn" data-id="<?= $docs[$type]['id'] ?>">
-                                        <i  data-lucide="trash-2"></i> Hapus
+                                        <i data-lucide="trash-2"></i> Hapus
                                     </button>
                                 </div>
                             <?php else: ?>
                                 <!-- Not Uploaded State -->
                                 <div class="text-center p-3 border border-dashed rounded mb-2 bg-light">
                                     <i class="text-muted mb-2" data-lucide="file-x" style="width:32px;height:32px;"></i>
-                                    <span class="d-block text-muted" style="font-size: 0.8rem;">Belum ada file</span>
+                                    <span class="badge bg-secondary mb-1">Belum Diunggah</span>
+                                    <span class="d-block text-muted" style="font-size: 0.75rem;">Silakan unggah dokumen wajib</span>
                                 </div>
                                 <button type="button" class="btn btn-sm btn-primary w-100 trigger-upload-btn" data-type="<?= esc($type) ?>">
-                                    <i  data-lucide="upload"></i> Unggah File
+                                    <i data-lucide="upload"></i> Unggah File
                                 </button>
                             <?php endif; ?>
                         </div>

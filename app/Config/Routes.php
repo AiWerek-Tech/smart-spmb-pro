@@ -104,6 +104,21 @@ $routes->group('admin', ['filter' => ['auth', 'role:admin']], function ($routes)
     $routes->post('academic-years/(:num)/archive', 'Admin\AcademicYearController::archive/$1', ['filter' => 'permission:academic_years.manage,manage_system']);
     $routes->post('academic-years/(:num)/delete', 'Admin\AcademicYearController::delete/$1', ['filter' => 'permission:academic_years.manage,manage_system']);
 
+    // Fee Types Management
+    $routes->get('fee-types', 'Admin\FeeTypeController::index', ['filter' => 'permission:manage_settings,manage_system']);
+    $routes->post('fee-types/store', 'Admin\FeeTypeController::store', ['filter' => 'permission:manage_settings,manage_system']);
+    $routes->post('fee-types/(:num)/update', 'Admin\FeeTypeController::update/$1', ['filter' => 'permission:manage_settings,manage_system']);
+    $routes->post('fee-types/(:num)/toggle', 'Admin\FeeTypeController::toggle/$1', ['filter' => 'permission:manage_settings,manage_system']);
+    $routes->post('fee-types/(:num)/delete', 'Admin\FeeTypeController::delete/$1', ['filter' => 'permission:manage_settings,manage_system']);
+
+    // Religion & Subgroup Management
+    $routes->get('religions', 'Admin\ReligionController::index', ['filter' => 'permission:manage_settings,manage_system']);
+    $routes->post('religions/store', 'Admin\ReligionController::store', ['filter' => 'permission:manage_settings,manage_system']);
+    $routes->post('religions/(:num)/update', 'Admin\ReligionController::update/$1', ['filter' => 'permission:manage_settings,manage_system']);
+    $routes->post('religions/(:num)/delete', 'Admin\ReligionController::delete/$1', ['filter' => 'permission:manage_settings,manage_system']);
+    $routes->post('religions/subgroups/store', 'Admin\ReligionController::storeSubgroup', ['filter' => 'permission:manage_settings,manage_system']);
+    $routes->post('religions/subgroups/(:num)/delete', 'Admin\ReligionController::deleteSubgroup/$1', ['filter' => 'permission:manage_settings,manage_system']);
+
     // Banner Management
     $routes->get('banners', 'Admin\ContentController::banners', ['filter' => 'permission:public_content.manage,manage_public_homepage']);
     $routes->post('banners/store', 'Admin\ContentController::bannerStore', ['filter' => 'permission:public_content.manage,manage_public_homepage']);
@@ -179,6 +194,7 @@ $routes->group('operator', ['filter' => ['auth', 'role:operator,admin']], functi
     $routes->get('registrants/(:num)', 'Operator\RegistrantController::show/$1', ['filter' => 'permission:registrants.view,view_registrants']);
     $routes->get('registrants/(:num)/edit', 'Operator\RegistrantController::edit/$1', ['filter' => 'permission:registrants.edit,edit_registrant']);
     $routes->post('registrants/(:num)/update', 'Operator\RegistrantController::update/$1', ['filter' => 'permission:registrants.edit,edit_registrant']);
+    $routes->post('registrants/(:num)/toggle-override', 'Operator\RegistrantController::toggleOverride/$1', ['filter' => 'permission:registrants.edit,edit_registrant']);
 
     // Document Verification
     $routes->get('documents/(:num)', 'Operator\DocumentController::index/$1', ['filter' => 'permission:documents.verify,verify_documents,view_documents']);
@@ -205,6 +221,8 @@ $routes->group('bendahara', ['filter' => ['auth', 'role:bendahara,admin']], func
     $routes->get('invoices', 'Bendahara\PaymentController::index', ['filter' => 'permission:payments.view']);
     $routes->get('invoices/(:num)', 'Bendahara\PaymentController::show/$1', ['filter' => 'permission:payments.view']);
     $routes->post('invoices/(:num)/payment', 'Bendahara\PaymentController::recordPayment/$1', ['filter' => 'permission:payments.verify']);
+    $routes->post('payments/(:num)/approve', 'Bendahara\PaymentController::approve/$1', ['filter' => 'permission:payments.verify']);
+    $routes->post('payments/(:num)/reject', 'Bendahara\PaymentController::reject/$1', ['filter' => 'permission:payments.verify']);
     $routes->post('invoices/(:num)/cancel', 'Bendahara\PaymentController::cancel/$1', ['filter' => 'permission:payments.cancel']);
     $routes->get('invoices/(:num)/slip', 'Bendahara\PaymentController::slip/$1', ['filter' => 'permission:payments.view']);
     $routes->get('export', 'Bendahara\PaymentController::export', ['filter' => 'permission:payments.export']);
@@ -218,6 +236,7 @@ $routes->group('bendahara', ['filter' => ['auth', 'role:bendahara,admin']], func
 $routes->group('pendaftar', ['filter' => ['auth', 'role:pendaftar']], function ($routes) {
     $routes->get('/', 'Pendaftar\DashboardController::index');
     $routes->get('dashboard', 'Pendaftar\DashboardController::index');
+    $routes->post('tagihan/(:num)/konfirmasi', 'Pendaftar\DashboardController::confirmPayment/$1');
 
     // Registration Wizard
     $routes->get('daftar', 'Pendaftar\RegistrationController::wizard', ['filter' => 'permission:registration.manage,submit_registration']);
@@ -245,6 +264,11 @@ $routes->get('api/stats', 'Public\HomeController::stats');
 $routes->group('api', ['filter' => 'auth'], function ($routes) {
     $routes->get('search', 'Api\SearchController::index');
     $routes->post('theme/save', 'Api\ThemeController::save');
+    $routes->get('religion/subgroups', 'Pendaftar\RegistrationController::getReligionSubgroups');
+    $routes->get('wilayah/provinces', 'Api\WilayahController::provinces');
+    $routes->get('wilayah/regencies', 'Api\WilayahController::regencies');
+    $routes->get('wilayah/districts', 'Api\WilayahController::districts');
+    $routes->get('wilayah/villages', 'Api\WilayahController::villages');
 });
 
 /*
