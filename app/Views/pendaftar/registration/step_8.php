@@ -236,8 +236,10 @@
             }
         });
 
-        const formData = new FormData(document.getElementById('docUploadForm'));
-        formData.append('document_file', this.files[0]);
+        // Use the form data and ensure the file is set
+        const formEl = document.getElementById('docUploadForm');
+        const formData = new FormData(formEl);
+        formData.set('document_file', this.files[0]);
 
         try {
             // Post via standard AJAX form upload
@@ -246,15 +248,29 @@
                 body: formData
             });
 
-            // Refresh page to show uploaded state
-            Swal.fire({
-                icon: 'success',
-                title: 'Dokumen Berhasil Diunggah',
-                timer: 1500,
-                showConfirmButton: false
-            }).then(() => {
-                window.location.reload();
-            });
+            const result = await response.json();
+            if (result.csrf_token) {
+                updateCsrfToken(result.csrf_token);
+            }
+
+            if (result.success) {
+                // Refresh page to show uploaded state
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Dokumen Berhasil Diunggah',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Mengunggah',
+                    text: result.message || 'Ukuran file melebihi batas maksimal atau format file tidak diizinkan.',
+                    confirmButtonColor: '#667eea'
+                });
+            }
 
         } catch (error) {
             console.error('Upload error:', error);
@@ -281,8 +297,8 @@
                 cancelButtonColor: '#6c757d',
                 confirmButtonText: 'Ya, Hapus!',
                 cancelButtonText: 'Batal'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
+            }).then(async (sweetResult) => {
+                if (sweetResult.isConfirmed) {
                     Swal.fire({
                         title: 'Menghapus Berkas...',
                         allowOutsideClick: false,
@@ -291,6 +307,10 @@
                         }
                     });
 
+                    // Get latest CSRF hash from form input
+                    const csrfInput = document.querySelector('input[name="csrf_token"]');
+                    const csrfHash = csrfInput ? csrfInput.value : '<?= csrf_hash() ?>';
+
                     try {
                         const response = await fetch(`<?= base_url('/pendaftar/dokumen/') ?>${docId}/delete`, {
                             method: 'POST',
@@ -298,18 +318,32 @@
                                 'Content-Type': 'application/x-www-form-urlencoded',
                             },
                             body: new URLSearchParams({
-                                '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                                '<?= csrf_token() ?>': csrfHash
                             })
                         });
 
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Dokumen Terhapus',
-                            timer: 1500,
-                            showConfirmButton: false
-                        }).then(() => {
-                            window.location.reload();
-                        });
+                        const result = await response.json();
+                        if (result.csrf_token) {
+                            updateCsrfToken(result.csrf_token);
+                        }
+
+                        if (result.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Dokumen Terhapus',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal Menghapus',
+                                text: result.message || 'Terjadi kesalahan saat menghapus dokumen.',
+                                confirmButtonColor: '#667eea'
+                            });
+                        }
 
                     } catch (error) {
                         console.error('Delete error:', error);

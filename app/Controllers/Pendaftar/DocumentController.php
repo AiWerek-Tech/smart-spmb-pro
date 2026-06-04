@@ -71,6 +71,9 @@ class DocumentController extends BaseController
         $student = $this->studentModel->findByUserId($userId);
 
         if (!$student) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Siswa tidak ditemukan.', 'csrf_token' => csrf_hash()]);
+            }
             return redirect()->to('pendaftar/dashboard')->with('error', 'Siswa tidak ditemukan.');
         }
 
@@ -82,6 +85,9 @@ class DocumentController extends BaseController
         $definition = $this->documentRequirementService->uploadDefinition($academicYear, $jalurId, $docType);
 
         if (!$definition) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Jenis dokumen tidak tersedia untuk tahun pelajaran atau jalur pendaftaran ini.', 'csrf_token' => csrf_hash()]);
+            }
             return redirect()->back()->withInput()->with('error', 'Jenis dokumen tidak tersedia untuk tahun pelajaran atau jalur pendaftaran ini.');
         }
 
@@ -94,13 +100,22 @@ class DocumentController extends BaseController
         ];
 
         if (!$this->validate($rules)) {
-            return redirect()->back()->withInput()->with('error', 'Ukuran file melebihi batas maksimal atau format file tidak diizinkan untuk jenis dokumen ini.');
+            $validationErrors = $this->validator->getErrors();
+            $errorMsg = reset($validationErrors) ?: 'Ukuran file melebihi batas maksimal atau format file tidak diizinkan untuk jenis dokumen ini.';
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['success' => false, 'message' => $errorMsg, 'csrf_token' => csrf_hash()]);
+            }
+            return redirect()->back()->withInput()->with('error', $errorMsg);
         }
 
         $file = $this->request->getFile('document_file');
         if ($file->isValid() && !$file->hasMoved()) {
             if (!$this->isAllowedDocumentMime($this->documentRequirementService->extensionList($definition), (string) $file->getMimeType())) {
-                return redirect()->back()->withInput()->with('error', 'Format file tidak sesuai dengan isi dokumen yang diunggah.');
+                $errorMsg = 'Format file tidak sesuai dengan isi dokumen yang diunggah.';
+                if ($this->request->isAJAX()) {
+                    return $this->response->setJSON(['success' => false, 'message' => $errorMsg, 'csrf_token' => csrf_hash()]);
+                }
+                return redirect()->back()->withInput()->with('error', $errorMsg);
             }
 
             $newName = $file->getRandomName();
@@ -146,10 +161,16 @@ class DocumentController extends BaseController
                 $dapodikService = new \App\Services\DapodikService();
                 $dapodikService->updateDapodikStatus($studentId);
 
+                if ($this->request->isAJAX()) {
+                    return $this->response->setJSON(['success' => true, 'message' => 'Dokumen berhasil diunggah dan sedang menanti peninjauan.', 'csrf_token' => csrf_hash()]);
+                }
                 return redirect()->to('pendaftar/dokumen')->with('success', 'Dokumen berhasil diunggah dan sedang menanti peninjauan.');
             }
         }
 
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Gagal memindahkan file.', 'csrf_token' => csrf_hash()]);
+        }
         return redirect()->back()->with('error', 'Gagal memindahkan file.');
     }
 
@@ -162,6 +183,9 @@ class DocumentController extends BaseController
         $student = $this->studentModel->findByUserId($userId);
 
         if (!$student) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Siswa tidak ditemukan.', 'csrf_token' => csrf_hash()]);
+            }
             return redirect()->to('pendaftar/dashboard')->with('error', 'Siswa tidak ditemukan.');
         }
 
@@ -170,10 +194,16 @@ class DocumentController extends BaseController
         // Ambil data berkas dan pastikan milik siswa yang bersangkutan
         $doc = $this->documentModel->find($docId);
         if (!$doc || (int)$doc['student_id'] !== $studentId) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Dokumen tidak ditemukan.', 'csrf_token' => csrf_hash()]);
+            }
             return redirect()->to('pendaftar/dokumen')->with('error', 'Dokumen tidak ditemukan.');
         }
 
         if (($doc['academic_year'] ?? '') !== $this->academicYearService->activeYear()) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Dokumen arsip tahun pelajaran lain tidak dapat dihapus dari tahun aktif.', 'csrf_token' => csrf_hash()]);
+            }
             return redirect()->to('pendaftar/dokumen')->with('error', 'Dokumen arsip tahun pelajaran lain tidak dapat dihapus dari tahun aktif.');
         }
 
@@ -189,9 +219,15 @@ class DocumentController extends BaseController
             $dapodikService = new \App\Services\DapodikService();
             $dapodikService->updateDapodikStatus($studentId);
 
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['success' => true, 'message' => 'Dokumen berhasil dihapus.', 'csrf_token' => csrf_hash()]);
+            }
             return redirect()->to('pendaftar/dokumen')->with('success', 'Dokumen berhasil dihapus.');
         }
 
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Gagal menghapus dokumen.', 'csrf_token' => csrf_hash()]);
+        }
         return redirect()->to('pendaftar/dokumen')->with('error', 'Gagal menghapus dokumen.');
     }
 
