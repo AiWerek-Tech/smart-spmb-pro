@@ -484,28 +484,80 @@ $footerWhatsapp = preg_replace('/[^0-9]/', '', (string)$settingModel->getValue('
             $('#paymentConfirmModal').modal('show');
         });
 
+        const paymentMethods = <?= json_encode($paymentMethods ?? []) ?>;
+
         $(document).on('click', '.show-payment-instructions', function() {
             const num = $(this).data('number');
             const total = $(this).data('total');
+            
+            let methodsHtml = '';
+            paymentMethods.forEach((method, idx) => {
+                let details = '';
+                let iconName = 'landmark';
+                
+                if (method.code === 'QRIS') {
+                    iconName = 'qr-code';
+                    details = `
+                        <div class="text-center my-3 bg-white p-2 rounded border d-inline-block w-100">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(method.account_number)}" alt="QRIS QR Code" class="img-fluid" style="width:180px;height:180px;">
+                            <div class="small fw-bold text-dark mt-2">${method.account_name}</div>
+                            <div class="small text-muted font-monospace">${method.account_number}</div>
+                        </div>
+                    `;
+                } else if (method.code === 'BANK_TRANSFER') {
+                    iconName = 'landmark';
+                    details = `
+                        <div class="bg-light p-2 rounded border mb-2">
+                            <span class="small text-muted d-block">Tujuan Transfer:</span>
+                            <span class="fw-bold text-dark">${method.account_number}</span>
+                            <span class="small text-muted d-block mt-1">Atas Nama:</span>
+                            <span class="fw-bold text-dark">${method.account_name}</span>
+                        </div>
+                    `;
+                } else if (method.code === 'CASH') {
+                    iconName = 'banknote';
+                }
+                
+                const formattedInstructions = method.instructions.replace(/\n/g, '<br>');
+
+                methodsHtml += `
+                    <div class="accordion-item mb-2 border rounded">
+                        <h2 class="accordion-header" id="heading-${idx}">
+                            <button class="accordion-button collapsed py-2 px-3 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${idx}" aria-expanded="false" style="font-size:0.85rem;">
+                                <i data-lucide="${iconName}" class="me-2" style="width:16px;height:16px;"></i> ${method.name}
+                            </button>
+                        </h2>
+                        <div id="collapse-${idx}" class="accordion-collapse collapse" data-bs-parent="#paymentMethodsAccordion">
+                            <div class="accordion-body py-3 px-3 bg-light bg-opacity-10 small text-start">
+                                ${details}
+                                <div class="mb-2 text-dark" style="line-height:1.4;">${formattedInstructions}</div>
+                                <p class="mb-0 text-muted small border-top pt-2 mt-2">${method.description}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
             Swal.fire({
                 title: 'Instruksi Pembayaran',
-                html: `<div class="text-start small">
-                    <p>Silakan lakukan pembayaran untuk Invoice <strong>${num}</strong> sebesar <strong>${total}</strong> melalui salah satu metode berikut:</p>
-                    <hr>
-                    <h6><strong>1. Transfer Bank (Manual)</strong></h6>
-                    <p class="mb-1">Kirim ke rekening resmi sekolah:</p>
-                    <ul class="mb-2 ps-3">
-                        <li><strong>Bank Syariah Indonesia (BSI)</strong><br>No. Rekening: 7712345678<br>a.n. Panitia SPMB Nusantara Mandiri</li>
-                        <li><strong>Bank DKI</strong><br>No. Rekening: 10123456789<br>a.n. SMP Nusantara Mandiri</li>
-                    </ul>
-                    <p>Setelah melakukan transfer, harap kirimkan bukti bayar ke Bendahara via WhatsApp atau kunjungi sekretariat panitia.</p>
-                    <hr>
-                    <h6><strong>2. Konfirmasi Pembayaran</strong></h6>
-                    <p class="mb-0">Hubungi panitia via WhatsApp: <a href="https://wa.me/${encodeURIComponent('<?= esc($footerWhatsapp) ?>')}" target="_blank" class="fw-bold">Chat WhatsApp Panitia</a></p>
-                </div>`,
-                icon: 'info',
+                html: `
+                    <div class="text-start mb-3">
+                        <p class="small text-muted mb-3">Pilih salah satu metode pembayaran untuk Invoice <strong>${num}</strong> sebesar <strong>${total}</strong>:</p>
+                        <div class="accordion" id="paymentMethodsAccordion">
+                            ${methodsHtml}
+                        </div>
+                        <div class="mt-3 text-center">
+                            <span class="small text-muted">Butuh bantuan? Hubungi panitia via WhatsApp: <a href="https://wa.me/${encodeURIComponent('<?= esc($footerWhatsapp) ?>')}" target="_blank" class="fw-bold text-primary">Chat WhatsApp</a></span>
+                        </div>
+                    </div>
+                `,
                 confirmButtonText: 'Tutup',
-                confirmButtonColor: '#6366f1'
+                confirmButtonColor: '#6366f1',
+                didOpen: () => {
+                    if (typeof lucide !== 'undefined') {
+                        try { lucide.createIcons(); } catch (e) {}
+                    }
+                }
             });
         });
     });
