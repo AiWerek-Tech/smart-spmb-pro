@@ -221,7 +221,7 @@
     <div style="page-break-after: always;"></div>
 
     <!-- 4. Data Keluarga -->
-    <div class="section-title">IV. DATA KELUARGA KANDUNG</div>
+    <div class="section-title">IV. DATA KELUARGA KANDUNG & WALI</div>
     <h3 style="margin: 5px 0; color: #555; font-size: 11px;">A. DATA AYAH KANDUNG</h3>
     <table class="data-table">
         <tr>
@@ -238,7 +238,7 @@
         </tr>
         <tr>
             <td class="label">Penghasilan Bulanan</td>
-            <td class="value"><?= esc($father['income'] ?? '-') ?></td>
+            <td class="value"><?= esc($father['monthly_income'] ?? $father['income'] ?? '-') ?></td>
         </tr>
     </table>
 
@@ -258,9 +258,41 @@
         </tr>
         <tr>
             <td class="label">Penghasilan Bulanan</td>
-            <td class="value"><?= esc($mother['income'] ?? '-') ?></td>
+            <td class="value"><?= esc($mother['monthly_income'] ?? $mother['income'] ?? '-') ?></td>
         </tr>
     </table>
+
+    <h3 style="margin: 15px 0 5px 0; color: #555; font-size: 11px;">C. DATA WALI (PILIHAN)</h3>
+    <?php if (empty($guardian) || empty($guardian['full_name'])): ?>
+        <table class="data-table">
+            <tr>
+                <td colspan="2" style="text-align: center; color: #888; padding: 6px; border: 1px dashed #ccc; background-color: #fafafa;">Tidak ada data wali yang diisi (Siswa tinggal bersama orang tua kandung)</td>
+            </tr>
+        </table>
+    <?php else: ?>
+        <table class="data-table">
+            <tr>
+                <td class="label">Nama Lengkap Wali</td>
+                <td class="value" style="font-weight: bold; text-transform: uppercase;"><?= esc($guardian['full_name']) ?></td>
+            </tr>
+            <tr>
+                <td class="label">NIK Wali</td>
+                <td class="value"><?= esc($guardian['nik'] ?? '-') ?></td>
+            </tr>
+            <tr>
+                <td class="label">Hubungan Keluarga</td>
+                <td class="value"><?= esc($guardian['relationship'] ?? '-') ?></td>
+            </tr>
+            <tr>
+                <td class="label">Pendidikan / Pekerjaan</td>
+                <td class="value"><?= esc($guardian['education'] ?? '-') ?> / <?= esc($guardian['occupation'] ?? '-') ?></td>
+            </tr>
+            <tr>
+                <td class="label">Penghasilan Bulanan</td>
+                <td class="value"><?= esc($guardian['monthly_income'] ?? $guardian['income'] ?? '-') ?></td>
+            </tr>
+        </table>
+    <?php endif; ?>
 
     <!-- 5. Data Periodik -->
     <div class="section-title">V. DATA PERIODIK & KESEHATAN</div>

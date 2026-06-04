@@ -125,7 +125,7 @@ $footerWhatsapp = preg_replace('/[^0-9]/', '', (string)$settingModel->getValue('
 
                     <div class="d-flex justify-content-end mt-4">
                         <a href="<?= base_url('pendaftar/cetak/bukti') ?>" class="btn btn-outline-primary d-inline-flex align-items-center" target="_blank">
-                            <i data-lucide="download" class="me-2" style="width: 16px; height: 16px;"></i> Unduh Bukti Pendaftaran
+                            <i data-lucide="printer" class="me-2" style="width: 16px; height: 16px;"></i> Cetak Formulir F-PD (Arsip Fisik)
                         </a>
                     </div>
                 </div>
@@ -155,7 +155,7 @@ $footerWhatsapp = preg_replace('/[^0-9]/', '', (string)$settingModel->getValue('
 
                     <div class="d-flex justify-content-end mt-3 gap-2">
                         <a href="<?= base_url('pendaftar/cetak/bukti') ?>" class="btn btn-outline-primary d-inline-flex align-items-center" target="_blank">
-                            <i data-lucide="download" class="me-1" style="width: 14px; height: 14px;"></i> Bukti
+                            <i data-lucide="printer" class="me-1" style="width: 14px; height: 14px;"></i> Cetak Formulir F-PD (Arsip Fisik)
                         </a>
                         <a href="<?= base_url('pendaftar/cetak/kartu') ?>" class="btn btn-info text-white d-inline-flex align-items-center" target="_blank">
                             <i data-lucide="credit-card" class="me-1" style="width: 14px; height: 14px;"></i> Unduh Kartu Peserta
@@ -188,7 +188,7 @@ $footerWhatsapp = preg_replace('/[^0-9]/', '', (string)$settingModel->getValue('
 
                     <div class="d-flex justify-content-end gap-2 flex-wrap">
                         <a href="<?= base_url('pendaftar/cetak/bukti') ?>" class="btn btn-outline-success d-inline-flex align-items-center" target="_blank">
-                            <i data-lucide="download" class="me-1" style="width: 14px; height: 14px;"></i> Bukti
+                            <i data-lucide="printer" class="me-1" style="width: 14px; height: 14px;"></i> Cetak Formulir F-PD (Arsip Fisik)
                         </a>
                         <a href="<?= base_url('pendaftar/cetak/kartu') ?>" class="btn btn-outline-info d-inline-flex align-items-center" target="_blank">
                             <i data-lucide="credit-card" class="me-1" style="width: 14px; height: 14px;"></i> Kartu

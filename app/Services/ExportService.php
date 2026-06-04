@@ -187,6 +187,7 @@ class ExportService
             $address      = $this->addressModel->findByStudentId($studentId);
             $father       = $this->familyModel->getFather($studentId);
             $mother       = $this->familyModel->getMother($studentId);
+            $guardian     = $this->familyModel->getGuardian($studentId);
 
             if (! $student || ! $registration) {
                 return [
@@ -208,6 +209,7 @@ class ExportService
                 'address'      => $address,
                 'father'       => $father,
                 'mother'       => $mother,
+                'guardian'     => $guardian,
                 'qrCode'       => $qrCode,
             ]);
 

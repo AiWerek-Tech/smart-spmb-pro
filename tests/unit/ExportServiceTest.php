@@ -142,8 +142,8 @@ class ExportServiceTest extends CIUnitTestCase
             'birth_date'   => '1970-05-15',
             'education'    => 'SMA/Sederajat',
             'occupation'   => 'Wiraswasta',
-            'income'       => '2-5 juta',
-            'phone_number' => '08122334455',
+            'monthly_income' => '2-5 juta',
+            'phone'        => '08122334455',
         ]);
 
         $this->familyModel->insert([
@@ -155,8 +155,22 @@ class ExportServiceTest extends CIUnitTestCase
             'birth_date'   => '1975-12-25',
             'education'    => 'Diploma',
             'occupation'   => 'Ibu Rumah Tangga',
-            'income'       => 'Tidak bekerja',
-            'phone_number' => '08988776655',
+            'monthly_income' => 'Tidak bekerja',
+            'phone'        => '08988776655',
+        ]);
+
+        $this->familyModel->insert([
+            'student_id'   => $studentId,
+            'family_type'  => 'wali',
+            'full_name'    => 'Wawan Setiawan',
+            'nik'          => '3273012512750003',
+            'birth_place'  => 'Cianjur',
+            'birth_date'   => '1980-01-01',
+            'education'    => 'S1/Sederajat',
+            'occupation'   => 'Pegawai Negeri',
+            'monthly_income' => '5-10 juta',
+            'phone'        => '08123456789',
+            'relationship' => 'Paman',
         ]);
 
         // Periodic
