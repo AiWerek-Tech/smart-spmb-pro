@@ -128,7 +128,9 @@ $canCancel = !in_array($invoice['status'], ['paid', 'cancelled'], true);
                 <div class="table-responsive">
                     <table class="table mb-0">
                         <thead><tr><th>Tanggal</th><th>Metode</th><th>Status</th><th class="text-end">Nominal</th></tr></thead>
-                        <tbody>                                <tr>
+                        <tbody>
+                            <?php foreach (($payments ?? []) as $payment): ?>
+                                <tr>
                                     <td><?= esc($payment['verified_at'] ?? $payment['created_at']) ?></td>
                                     <td><?= esc($payment['method_name'] ?? 'Manual') ?></td>
                                     <td>

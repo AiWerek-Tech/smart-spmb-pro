@@ -84,6 +84,7 @@ $footerWhatsapp = preg_replace('/[^0-9]/', '', (string)$settingModel->getValue('
                                 <?php endforeach; ?>
                             </ul>
                         </div>
+                        <?php endif; ?>
                     </div>
                     
                     <div class="mt-3">
