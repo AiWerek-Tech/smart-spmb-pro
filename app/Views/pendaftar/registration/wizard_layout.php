@@ -395,7 +395,7 @@ $registrationGate = $registrationGate ?? ['is_open' => true, 'status' => 'unconf
                 
                 <!-- Status Draft Indikator -->
                 <div class="d-flex align-items-center ms-3 text-muted small" id="draftStatus">
-                    <i data-lucide="cloud-check" class="me-1 text-success" style="width:14px;height:14px;"></i> Draft tersimpan
+                    <i data-lucide="cloud" class="me-1 text-success" style="width:14px;height:14px;"></i> Draft tersimpan
                 </div>
 
                 <button type="button" class="btn btn-primary wizard-nav-btn align-items-center ms-auto" id="nextBtn">
@@ -636,7 +636,7 @@ $registrationGate = $registrationGate ?? ['is_open' => true, 'status' => 'unconf
 
             let html = '';
             if (state === 'saved') {
-                html = '<i data-lucide="cloud-check" class="me-1 text-success" style="width:14px;height:14px;"></i> Draft tersimpan';
+                html = '<i data-lucide="cloud" class="me-1 text-success" style="width:14px;height:14px;"></i> Draft tersimpan';
             } else if (state === 'saving') {
                 html = '<span class="spinner-border spinner-border-sm me-1 text-primary" role="status" style="width:12px;height:12px;"></span> Menyimpan...';
             } else if (state === 'local') {
