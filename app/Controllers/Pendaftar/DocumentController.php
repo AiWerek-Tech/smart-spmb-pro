@@ -110,7 +110,21 @@ class DocumentController extends BaseController
 
         $file = $this->request->getFile('document_file');
         if ($file->isValid() && !$file->hasMoved()) {
-            if (!$this->isAllowedDocumentMime($this->documentRequirementService->extensionList($definition), (string) $file->getMimeType())) {
+            $mimeType = '';
+            try {
+                $tempPath = $file->getTempName();
+                if (!empty($tempPath) && file_exists($tempPath)) {
+                    $mimeType = $file->getMimeType();
+                }
+            } catch (\Throwable $e) {
+                log_message('warning', 'Failed to get server mime type: ' . $e->getMessage());
+            }
+
+            if (empty($mimeType)) {
+                $mimeType = $file->getClientMimeType();
+            }
+
+            if (!$this->isAllowedDocumentMime($this->documentRequirementService->extensionList($definition), (string) $mimeType)) {
                 $errorMsg = 'Format file tidak sesuai dengan isi dokumen yang diunggah.';
                 if ($this->request->isAJAX()) {
                     return $this->response->setJSON(['success' => false, 'message' => $errorMsg, 'csrf_token' => csrf_hash()]);
@@ -324,22 +338,22 @@ class DocumentController extends BaseController
     private function isAllowedDocumentMime(array $extensions, string $mimeType): bool
     {
         $extensionMimeMap = [
-            'jpg'  => 'image/jpeg',
-            'jpeg' => 'image/jpeg',
-            'png'  => 'image/png',
-            'gif'  => 'image/gif',
-            'webp' => 'image/webp',
-            'pdf'  => 'application/pdf',
+            'jpg'  => ['image/jpeg', 'image/pjpeg'],
+            'jpeg' => ['image/jpeg', 'image/pjpeg'],
+            'png'  => ['image/png', 'image/x-png'],
+            'gif'  => ['image/gif'],
+            'webp' => ['image/webp'],
+            'pdf'  => ['application/pdf', 'application/x-pdf', 'application/acrobat', 'applications/vnd.pdf', 'text/pdf'],
         ];
 
         $allowed = [];
         foreach ($extensions as $extension) {
             if (isset($extensionMimeMap[$extension])) {
-                $allowed[] = $extensionMimeMap[$extension];
+                $allowed = array_merge($allowed, $extensionMimeMap[$extension]);
             }
         }
 
-        return in_array($mimeType, array_unique($allowed), true);
+        return in_array(strtolower($mimeType), array_unique($allowed), true);
     }
 
     private function resolveDocumentPath(string $storedPath): string
